@@ -8,6 +8,12 @@ from email.mime.multipart import MIMEMultipart
 
 app = FastAPI(title="ANATOLIA-Q", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+MODEL_CANDIDATES = [
+    os.environ.get("ANTHROPIC_MODEL", "").strip(),
+    "claude-sonnet-4-20250514",
+    "claude-3-7-sonnet-20250219",
+    "claude-3-5-sonnet-20241022",
+]
 
 DOMAIN_PROMPTS = {
     "savunma": 'Sen ANATOLIA-Q Savunma Analiz Modülüsün. SADECE JSON formatında yanıt ver: {"ozet":"...","tehdit_seviyesi":"KRİTİK","tehdit_analizi":"...","senaryolar":[{"baslik":"...","olasilik":"Yüksek","aciklama":"...","aksiyon":"..."},{"baslik":"...","olasilik":"Orta","aciklama":"...","aksiyon":"..."},{"baslik":"...","olasilik":"Düşük","aciklama":"...","aksiyon":"..."}],"oncelikli_oneri":"...","etkilenen_kurumlar":["MSB","SGK"],"zaman_cercevesi":"Acil (0-48 saat)"}',
@@ -107,28 +113,62 @@ async def verify(data: dict):
 async def analyze(req: dict):
     domain = req.get("domain", "")
     situation = req.get("situation", "")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", req.get("api_key", ""))
+    req_api_key = (req.get("api_key", "") or "").strip()
+    env_api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    api_candidates = []
+    for key in [req_api_key, env_api_key]:
+        if key and key not in api_candidates:
+            api_candidates.append(key)
     if domain not in DOMAIN_PROMPTS:
         raise HTTPException(400, "Geçersiz alan.")
     if not situation:
         raise HTTPException(400, "Durum bildirimi boş.")
-    if not api_key:
+    if not api_candidates:
         raise HTTPException(400, "API anahtarı eksik.")
-    client = anthropic.Anthropic(api_key=api_key)
     user_msg = f"Durum:\n{situation}\n\nTarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\nSADECE JSON formatında yanıt ver."
     try:
-        msg = client.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=2000,
-            system=DOMAIN_PROMPTS[domain],
-            messages=[{"role": "user", "content": user_msg}]
+        auth_error = None
+        model_error = None
+        msg = None
+        for api_key in api_candidates:
+            client = anthropic.Anthropic(api_key=api_key)
+            try:
+                for model in [m for m in MODEL_CANDIDATES if m]:
+                    try:
+                        msg = client.messages.create(
+                            model=model, max_tokens=2000,
+                            system=DOMAIN_PROMPTS[domain],
+                            messages=[{"role": "user", "content": user_msg}]
+                        )
+                        break
+                    except anthropic.BadRequestError as e:
+                        model_error = e
+                        err = str(e).lower()
+                        if "model" not in err and "not_found_error" not in err:
+                            raise
+                if msg:
+                    break
+            except anthropic.AuthenticationError as e:
+                auth_error = e
+                continue
+        if not msg and auth_error:
+            raise HTTPException(401, "Geçersiz API anahtarı. API key'i kontrol edin.")
+        if not msg:
+            raise HTTPException(500, f"Uygun model bulunamadı: {str(model_error)}")
+        raw = "\n".join(
+            block.text.strip() for block in msg.content
+            if getattr(block, "type", "") == "text" and getattr(block, "text", "").strip()
         )
-        raw = msg.content[0].text.strip()
+        if not raw:
+            raise HTTPException(500, "AI yanıtında metin bulunamadı.")
         if "```json" in raw: raw = raw.split("```json")[1].split("```")[0].strip()
         elif "```" in raw: raw = raw.split("```")[1].split("```")[0].strip()
         result = json.loads(raw)
         aid = "AQ-" + uuid.uuid4().hex[:6].upper()
         analysis_store[aid] = {"id": aid, "domain": domain, "situation": situation, "result": result, "timestamp": datetime.now().isoformat()}
         return {"analysis_id": aid, "timestamp": datetime.now().strftime('%d.%m.%Y %H:%M'), **result}
+    except HTTPException:
+        raise
     except anthropic.AuthenticationError:
         raise HTTPException(401, "Geçersiz API anahtarı.")
     except json.JSONDecodeError:

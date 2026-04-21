@@ -395,6 +395,9 @@ footer{position:relative;z-index:10;height:28px;background:rgba(8,12,20,0.97);bo
       <div class="card">
         <div class="card-title">DURUM BİLDİRİMİ</div>
         <textarea class="sit-input" id="sitInput" placeholder="Analiz edilecek durumu buraya yazın..."></textarea>
+        <div style="margin-top:10px">
+          <input class="login-input" id="apiKeyInput" type="password" placeholder="Anthropic API anahtarı (opsiyonel, boş bırakılırsa sunucu anahtarı kullanılır)" autocomplete="off"/>
+        </div>
         <div class="btn-row">
           <button class="btn btn-primary" id="runBtn" onclick="runAnalysis()">ANALİZ BAŞLAT</button>
           <button class="btn btn-ghost btn-sm" onclick="clearAll()">TEMİZLE</button>
@@ -616,6 +619,7 @@ function setDomain(d) {
 // ─── ANALİZ ───
 async function runAnalysis() {
   const sit = document.getElementById('sitInput').value.trim();
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
   if(!sit) { showErr('Durum bildirimi boş bırakılamaz.'); return; }
 
   currentSituation = sit;
@@ -628,7 +632,7 @@ async function runAnalysis() {
     const resp = await fetch(API + '/api/analyze', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({domain, situation: sit})
+      body: JSON.stringify({domain, situation: sit, api_key: apiKey})
     });
     const data = await resp.json();
     if(!resp.ok) { showErr(data.detail || 'Analiz başarısız.'); return; }
