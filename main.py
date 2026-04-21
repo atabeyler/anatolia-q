@@ -4,20 +4,20 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-
 import json
-import openai
 import os
 import random
 import smtplib
 import string
 import uuid
+
+import openai
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from openai import OpenAI
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.3")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.4")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -398,13 +398,169 @@ def get_session_from_token(token: str) -> dict[str, str]:
     return session
 
 
+def patch_frontend(html: str) -> str:
+    injected = """
+<script>
+(() => {
+  function hotfixCenterPanel() {
+    const overlay = document.getElementById("centerOverlay");
+    const panel = overlay ? overlay.querySelector(".center-panel") : null;
+    const note = document.getElementById("centerNote");
+    const statusBox = document.getElementById("centerStatus");
+    const loadTrack = document.getElementById("centerLoad");
+    const actionButton = document.getElementById("contactCenterBtn");
+    const closeButton = document.getElementById("closeCenterBtn");
+    if (!overlay || !panel) return;
+
+    const refreshLayout = () => {
+      overlay.style.overflowY = "auto";
+      overlay.style.alignItems = window.innerWidth <= 900 ? "flex-start" : "center";
+      overlay.style.padding = window.innerWidth <= 560 ? "12px" : "24px";
+      panel.style.maxHeight = window.innerWidth <= 560 ? "calc(100vh - 24px)" : "min(calc(100vh - 48px), 900px)";
+      panel.style.overflowY = "auto";
+      panel.style.overscrollBehavior = "contain";
+    };
+
+    const clearStatus = () => {
+      if (!statusBox) return;
+      statusBox.textContent = "";
+      statusBox.removeAttribute("data-kind");
+    };
+
+    const setStatus = (kind, message) => {
+      if (!statusBox) return;
+      statusBox.setAttribute("data-kind", kind);
+      statusBox.textContent = message;
+    };
+
+    const openCenter = () => {
+      refreshLayout();
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      clearStatus();
+      requestAnimationFrame(() => {
+        if (note) note.focus();
+      });
+    };
+
+    const closeCenter = () => {
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+    };
+
+    [
+      "centerBtnLogin",
+      "centerBtnInline",
+      "centerBtnApp",
+      "centerBtnSide",
+      "centerBtnDash",
+      "centerBtnAnalysis"
+    ].forEach((id) => {
+      const button = document.getElementById(id);
+      if (!button || button.dataset.centerHotfix === "1") return;
+      button.dataset.centerHotfix = "1";
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        openCenter();
+      }, true);
+    });
+
+    if (closeButton && closeButton.dataset.centerHotfix !== "1") {
+      closeButton.dataset.centerHotfix = "1";
+      closeButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeCenter();
+      }, true);
+    }
+
+    if (overlay.dataset.centerOverlayHotfix !== "1") {
+      overlay.dataset.centerOverlayHotfix = "1";
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) closeCenter();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && overlay.classList.contains("open")) closeCenter();
+      });
+      window.addEventListener("resize", refreshLayout);
+    }
+
+    if (actionButton && actionButton.dataset.centerActionHotfix !== "1") {
+      actionButton.dataset.centerActionHotfix = "1";
+      actionButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const sessionKeys = ["anatolia_q_session_v4", "anatolia_q_session_v3", "anatolia_q_session_v2", "anatolia_q_session"];
+        let token = "";
+        for (const key of sessionKeys) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            token = parsed.token || parsed.sessionToken || "";
+            if (token) break;
+          } catch (_) {}
+        }
+
+        if (!token && window.state && typeof window.state === "object") {
+          token = window.state.sessionToken || "";
+        }
+
+        if (!token) {
+          setStatus("error", "Once giris yapmaniz gerekiyor.");
+          return;
+        }
+
+        actionButton.disabled = true;
+        if (loadTrack) loadTrack.classList.add("active");
+        setStatus("info", "Merkeze bildirim hazirlaniyor...");
+
+        try {
+          const response = await fetch("/api/contact-center", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+              "X-Auth-Token": token,
+            },
+            body: JSON.stringify({ token, note: note ? note.value.trim() : "" }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.detail || data.message || `Istek basarisiz (${response.status})`);
+          }
+          setStatus("success", data.message || "Merkez iletisim talebiniz gonderildi.");
+          if (note) note.value = "";
+        } catch (error) {
+          setStatus("error", error.message || "Merkez bildirimi gonderilemedi.");
+        } finally {
+          if (loadTrack) loadTrack.classList.remove("active");
+          actionButton.disabled = false;
+        }
+      }, true);
+    }
+
+    refreshLayout();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", hotfixCenterPanel);
+  } else {
+    hotfixCenterPanel();
+  }
+})();
+</script>
+"""
+    return html.replace("</body>", injected + "\n</body>") if "</body>" in html else html + injected
+
+
 @app.get("/")
 async def root() -> HTMLResponse:
     html_path = os.path.join(os.path.dirname(__file__), "index.html")
     if not os.path.exists(html_path):
         return HTMLResponse("<h1>T.C. ANATOLIA-Q</h1>")
     with open(html_path, "r", encoding="utf-8") as handle:
-        return HTMLResponse(handle.read())
+        return HTMLResponse(patch_frontend(handle.read()))
 
 
 @app.get("/health")
@@ -412,7 +568,7 @@ async def health() -> dict[str, str]:
     return {
         "status": "online",
         "system": "T.C. ANATOLIA-Q",
-        "version": "1.4.3",
+        "version": "1.4.4",
         "provider": "openai-with-fallback",
     }
 
