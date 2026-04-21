@@ -3,46 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>T.C. ANATOLIA-Q | Ulusal Karar Destek Sistemi</title>
+  <title>T.C. ANATOLIA-Q</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #030712;
-      --bg-2: #071524;
-      --panel: rgba(7, 18, 32, 0.86);
-      --panel-2: rgba(9, 22, 38, 0.94);
-      --line: rgba(115, 176, 255, 0.18);
-      --line-strong: rgba(132, 210, 255, 0.4);
-      --text: #eef7ff;
-      --text-soft: #92abc5;
-      --text-dim: #67809d;
-      --cyan: #5fdcff;
-      --blue: #4f87ff;
-      --gold: #ffcf76;
-      --good: #71d598;
-      --warn: #ffb357;
-      --danger: #ff758a;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+      --bg-soft: #081221;
+      --panel: rgba(8, 18, 32, 0.88);
+      --line: rgba(104, 196, 255, 0.18);
+      --line-strong: rgba(104, 196, 255, 0.4);
+      --text: #edf7ff;
+      --muted: #9fb8d3;
+      --dim: #6d86a0;
+      --cyan: #63ddff;
+      --blue: #5d8dff;
+      --gold: #ffcf74;
+      --danger: #ff8093;
+      --warn: #ffc56c;
+      --good: #79d7a0;
+      --shadow: 0 30px 70px rgba(0, 0, 0, 0.42);
       --radius-xl: 30px;
       --radius-lg: 22px;
       --radius-md: 16px;
       --radius-sm: 12px;
-      --content: 1380px;
+      --content: 1320px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html {
       min-height: 100%;
       background:
-        radial-gradient(circle at 15% 20%, rgba(95, 220, 255, 0.12), transparent 28%),
-        radial-gradient(circle at 84% 12%, rgba(79, 135, 255, 0.14), transparent 24%),
-        radial-gradient(circle at 50% 100%, rgba(255, 207, 118, 0.08), transparent 34%),
-        linear-gradient(180deg, #02050b 0%, #040b15 55%, #030813 100%);
+        radial-gradient(circle at 10% 14%, rgba(99, 221, 255, 0.12), transparent 24%),
+        radial-gradient(circle at 84% 8%, rgba(93, 141, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(255, 207, 116, 0.08), transparent 30%),
+        linear-gradient(180deg, #02050b 0%, #040a12 56%, #030712 100%);
     }
 
     body {
@@ -51,371 +48,216 @@
       color: var(--text);
       font-family: "Orbitron", sans-serif;
       background:
-        linear-gradient(rgba(120, 164, 214, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(120, 164, 214, 0.06) 1px, transparent 1px);
+        linear-gradient(rgba(111, 155, 201, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(111, 155, 201, 0.05) 1px, transparent 1px);
       background-size: 42px 42px;
-      overflow-x: hidden;
     }
 
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::before {
-      background:
-        radial-gradient(circle at 0% 0%, rgba(95, 220, 255, 0.18), transparent 26%),
-        radial-gradient(circle at 100% 0%, rgba(79, 135, 255, 0.16), transparent 28%),
-        radial-gradient(circle at 50% 100%, rgba(255, 207, 118, 0.08), transparent 34%);
-      filter: blur(10px);
-    }
-
-    body::after {
-      background:
-        linear-gradient(120deg, transparent 0%, rgba(95, 220, 255, 0.03) 30%, transparent 52%),
-        linear-gradient(300deg, transparent 0%, rgba(79, 135, 255, 0.04) 38%, transparent 58%);
-      animation: sweep 16s linear infinite;
-    }
-
-    @keyframes sweep {
-      from { transform: translateX(-3%) translateY(0); }
-      50% { transform: translateX(3%) translateY(-1.2%); }
-      to { transform: translateX(-3%) translateY(0); }
-    }
-
-    button,
-    input,
-    textarea {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .app-shell,
-    .login-shell {
+    .shell {
+      width: min(calc(100% - 28px), var(--content));
+      margin: 14px auto;
       position: relative;
       z-index: 1;
-      width: min(calc(100% - 32px), var(--content));
-      margin: 16px auto;
     }
 
-    .login-shell {
-      min-height: calc(100vh - 32px);
+    .hidden { display: none !important; }
+
+    .login-layout {
+      min-height: calc(100vh - 28px);
       display: grid;
-      grid-template-columns: minmax(320px, 1.08fr) minmax(340px, 0.92fr);
+      grid-template-columns: 1.1fr 0.9fr;
       gap: 22px;
       align-items: stretch;
     }
 
-    .hero-panel,
-    .auth-panel,
+    .hero,
+    .login-panel,
     .app-frame,
-    .center-panel {
-      border: 1px solid var(--line);
+    .modal-panel {
       background: var(--panel);
-      backdrop-filter: blur(18px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
       box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+      position: relative;
     }
 
-    .hero-panel {
-      position: relative;
-      overflow: hidden;
-      border-radius: var(--radius-xl);
-      padding: 34px;
+    .hero,
+    .login-panel,
+    .app-frame { padding: 28px; }
+
+    .hero::before,
+    .app-frame::before,
+    .login-panel::before,
+    .modal-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(99, 221, 255, 0.12), transparent 20%),
+        radial-gradient(circle at 84% 10%, rgba(93, 141, 255, 0.14), transparent 18%),
+        linear-gradient(140deg, rgba(99, 221, 255, 0.03), transparent 42%);
+    }
+
+    .hero {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
-    .hero-panel::before,
-    .app-frame::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 12% 18%, rgba(95, 220, 255, 0.18), transparent 20%),
-        radial-gradient(circle at 82% 12%, rgba(79, 135, 255, 0.16), transparent 18%),
-        linear-gradient(135deg, rgba(95, 220, 255, 0.06), transparent 36%);
-      pointer-events: none;
-    }
-
-    .hero-panel::after {
-      content: "";
-      position: absolute;
-      inset: auto -120px -120px auto;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(95, 220, 255, 0.2), transparent 65%);
-      filter: blur(12px);
-      pointer-events: none;
-    }
-
-    .hero-kicker,
-    .section-kicker,
-    .capsule,
-    .metric-label,
-    .soft-label,
-    .threat-chip,
-    .field-note,
-    .foot-chip,
-    .contact-line,
-    .preset-button,
-    .domain-button span,
-    .nav-button,
+    .kicker,
+    .mono,
+    label,
+    .chip,
+    .stat-label,
+    .domain-btn span,
     .button,
-    .ghost-button,
-    .soft-button {
+    .ghost,
+    .status,
+    .mini-note {
       font-family: "IBM Plex Mono", monospace;
       letter-spacing: 0.08em;
     }
 
-    .hero-kicker,
-    .section-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
+    .kicker {
       color: var(--cyan);
       text-transform: uppercase;
       font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .hero-kicker::before,
-    .section-kicker::before {
+    .kicker::before {
       content: "";
-      width: 42px;
+      width: 38px;
       height: 1px;
       background: linear-gradient(90deg, var(--cyan), transparent);
     }
 
-    .hero-title {
-      margin: 18px 0 12px;
-      max-width: 10ch;
-      font-size: clamp(44px, 7vw, 88px);
-      line-height: 0.92;
+    .hero h1,
+    .brand h2 {
+      margin: 18px 0 10px;
       text-transform: uppercase;
-      text-shadow: 0 0 24px rgba(95, 220, 255, 0.18);
+      line-height: 0.95;
     }
 
-    .hero-copy,
-    .brand-sub,
-    .sidebar-copy,
-    .metric-copy,
-    .panel-copy,
-    .center-copy,
-    .card-copy {
+    .hero h1 {
+      font-size: clamp(42px, 7vw, 80px);
+      max-width: 10ch;
+    }
+
+    .hero p,
+    .brand p,
+    .text,
+    .result-text,
+    .mini-card span,
+    .history-table,
+    .modal-copy {
       font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
+      color: var(--muted);
       line-height: 1.7;
     }
 
-    .hero-copy {
-      max-width: 58ch;
-      margin: 0 0 28px;
-      font-size: 15px;
-    }
-
-    .hero-grid {
+    .hero-grid,
+    .stats,
+    .actions,
+    .main-grid,
+    .result-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      gap: 16px;
     }
 
-    .hero-card,
-    .metric,
-    .action-card,
+    .hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .main-grid { grid-template-columns: 300px minmax(0, 1fr); }
+    .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .mini-card,
+    .stat,
     .panel,
-    .sidebar-card,
-    .result-card {
+    .action,
+    .result-card,
+    .side-card {
+      background: rgba(5, 13, 24, 0.8);
+      border: 1px solid rgba(104, 196, 255, 0.14);
+      border-radius: var(--radius-lg);
+      padding: 18px;
       position: relative;
       overflow: hidden;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(132, 210, 255, 0.14);
-      background: linear-gradient(180deg, rgba(8, 20, 34, 0.92), rgba(5, 12, 22, 0.96));
     }
 
-    .hero-card {
-      padding: 16px;
-      min-height: 122px;
-    }
-
-    .hero-card::after,
-    .metric::after,
-    .action-card::after,
-    .panel::after,
-    .sidebar-card::after,
-    .result-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, rgba(95, 220, 255, 0.04), transparent 34%, rgba(79, 135, 255, 0.03));
-      pointer-events: none;
-    }
-
-    .hero-card strong,
-    .metric-value,
+    .mini-card strong,
+    .stat-value,
+    .panel h3,
     .result-card h3,
-    .action-card h3,
-    .sidebar-card h3,
-    .sidebar-card h2 {
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-card strong {
+    .side-card h3 {
       display: block;
       margin-bottom: 8px;
-      color: var(--text);
-      font-size: 20px;
-    }
-
-    .hero-card span {
       position: relative;
       z-index: 1;
-      display: block;
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .auth-panel {
-      border-radius: var(--radius-xl);
-      padding: 34px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 26px;
-    }
-
-    .brand-lockup {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-    }
-
-    .brand-mark {
-      display: flex;
-      align-items: center;
-      gap: 14px;
     }
 
     .brand-badge {
-      width: 56px;
-      height: 56px;
+      width: 58px;
+      height: 58px;
       border-radius: 18px;
-      background:
-        linear-gradient(135deg, rgba(95, 220, 255, 0.22), rgba(79, 135, 255, 0.08)),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
-      border: 1px solid rgba(132, 210, 255, 0.34);
-      box-shadow:
-        inset 0 0 24px rgba(95, 220, 255, 0.18),
-        0 0 28px rgba(79, 135, 255, 0.18);
-      position: relative;
+      border: 1px solid rgba(104, 196, 255, 0.34);
+      background: linear-gradient(135deg, rgba(99, 221, 255, 0.18), rgba(93, 141, 255, 0.1));
+      box-shadow: inset 0 0 22px rgba(99, 221, 255, 0.14), 0 0 26px rgba(93, 141, 255, 0.14);
     }
 
-    .brand-badge::before,
-    .brand-badge::after {
-      content: "";
-      position: absolute;
-      inset: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 12px;
-    }
-
-    .brand-badge::after {
-      inset: 20px;
-      border-color: rgba(95, 220, 255, 0.42);
-    }
-
-    .brand-title {
-      margin: 0 0 8px;
-      font-size: clamp(24px, 4vw, 38px);
-      text-transform: uppercase;
-    }
-
-    .brand-sub {
-      margin: 0;
-      font-size: 14px;
-      max-width: 44ch;
-    }
-
-    .capsule-row,
-    .button-row,
-    .page-actions,
+    .brand-row,
+    .topbar,
     .toolbar,
-    .preset-row,
-    .inline-row,
-    .topbar-right,
-    .topbar-left,
-    .nav-row {
+    .inline,
+    .footer,
+    .row {
       display: flex;
+      align-items: center;
+      gap: 12px;
       flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
     }
 
-    .capsule {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(132, 210, 255, 0.18);
-      background: rgba(9, 19, 33, 0.88);
-      color: var(--text-soft);
-      text-transform: uppercase;
-      font-size: 12px;
-    }
+    .brand-row { justify-content: space-between; }
+    .topbar { justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid rgba(104, 196, 255, 0.1); }
+    .footer { justify-content: space-between; border-top: 1px solid rgba(104, 196, 255, 0.1); padding-top: 16px; margin-top: 18px; }
 
-    .capsule strong {
-      color: var(--gold);
-      font-weight: 600;
-    }
-
-    .auth-form {
+    .form {
       display: grid;
-      gap: 16px;
-      padding: 22px;
+      gap: 14px;
+      background: rgba(7, 16, 29, 0.8);
+      border: 1px solid rgba(104, 196, 255, 0.14);
       border-radius: var(--radius-lg);
-      border: 1px solid rgba(132, 210, 255, 0.14);
-      background: rgba(7, 16, 29, 0.78);
+      padding: 20px;
     }
 
-    .field {
-      display: grid;
-      gap: 8px;
-    }
+    .field { display: grid; gap: 8px; }
 
     label {
+      color: var(--muted);
       font-size: 13px;
-      color: var(--text-soft);
-      font-family: "IBM Plex Mono", monospace;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
     }
 
     input,
     textarea {
       width: 100%;
-      border: 1px solid rgba(132, 210, 255, 0.16);
       border-radius: 14px;
-      padding: 14px 16px;
-      background: rgba(3, 10, 18, 0.88);
+      border: 1px solid rgba(104, 196, 255, 0.16);
+      background: rgba(3, 10, 18, 0.92);
       color: var(--text);
+      padding: 14px 16px;
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       font-family: "IBM Plex Mono", monospace;
     }
 
@@ -427,512 +269,167 @@
 
     input:focus,
     textarea:focus {
-      border-color: rgba(95, 220, 255, 0.5);
-      box-shadow: 0 0 0 4px rgba(95, 220, 255, 0.08);
+      border-color: rgba(99, 221, 255, 0.4);
+      box-shadow: 0 0 0 4px rgba(99, 221, 255, 0.08);
+    }
+
+    .button,
+    .ghost,
+    .domain-btn,
+    .tab-btn {
+      border-radius: 14px;
+      padding: 13px 16px;
+      border: 1px solid rgba(104, 196, 255, 0.18);
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .button {
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(99, 221, 255, 0.22), rgba(93, 141, 255, 0.18));
+    }
+
+    .ghost,
+    .domain-btn,
+    .tab-btn {
+      color: var(--muted);
+      background: rgba(7, 15, 28, 0.78);
+    }
+
+    .button:hover,
+    .ghost:hover,
+    .domain-btn:hover,
+    .tab-btn:hover,
+    .domain-btn.active,
+    .tab-btn.active {
+      border-color: rgba(99, 221, 255, 0.42);
       transform: translateY(-1px);
     }
 
-    .field-note {
-      color: var(--text-dim);
+    .domain-list,
+    .tab-list,
+    .stack,
+    .history-wrap,
+    .result-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .domain-btn {
+      text-align: left;
+      width: 100%;
+    }
+
+    .domain-btn strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .domain-btn span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    .stat-label {
+      color: var(--muted);
       font-size: 12px;
       text-transform: uppercase;
     }
 
-    .status-box {
-      min-height: 24px;
-      padding: 0;
-      border: 1px solid transparent;
-      color: var(--text-soft);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 13px;
+    .stat-value {
+      font-size: clamp(24px, 5vw, 36px);
+      color: var(--text);
     }
 
-    .status-box[data-kind] {
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(8, 18, 30, 0.86);
-    }
-
-    .status-box[data-kind="success"],
-    .status-box[data-kind="info"] {
-      border-color: rgba(95, 220, 255, 0.18);
-      color: #ccefff;
-    }
-
-    .status-box[data-kind="warn"] {
-      border-color: rgba(255, 179, 87, 0.22);
-      color: #ffe1b8;
-    }
-
-    .status-box[data-kind="error"] {
-      border-color: rgba(255, 117, 138, 0.24);
-      color: #ffc0ca;
-    }
-
-    .load-track {
-      height: 3px;
-      width: 100%;
+    .chip {
+      padding: 10px 14px;
+      border: 1px solid rgba(104, 196, 255, 0.16);
       border-radius: 999px;
-      background: rgba(132, 210, 255, 0.08);
+      background: rgba(8, 16, 28, 0.76);
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .status {
+      min-height: 22px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .status[data-kind="error"] { color: #ffc6d1; }
+    .status[data-kind="success"] { color: #c5ffe0; }
+    .status[data-kind="warn"] { color: #ffe2a8; }
+    .status[data-kind="info"] { color: #d0f2ff; }
+
+    .loadbar {
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(104, 196, 255, 0.08);
       overflow: hidden;
       opacity: 0;
-      transition: opacity 0.2s ease;
     }
 
-    .load-track.active {
-      opacity: 1;
-    }
-
-    .load-track.active::after {
+    .loadbar.active { opacity: 1; }
+    .loadbar.active::after {
       content: "";
       display: block;
+      width: 28%;
       height: 100%;
-      width: 26%;
       background: linear-gradient(90deg, transparent, var(--cyan), transparent);
       animation: loading 1s linear infinite;
     }
 
     @keyframes loading {
-      from { transform: translateX(-120%); }
-      to { transform: translateX(420%); }
+      from { transform: translateX(-130%); }
+      to { transform: translateX(430%); }
     }
 
-    .button,
-    .ghost-button,
-    .soft-button,
-    .nav-button,
-    .menu-button,
-    .domain-button,
-    .preset-button {
-      border-radius: 14px;
-      padding: 13px 16px;
-      border: 1px solid rgba(132, 210, 255, 0.18);
-      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-    }
+    .page { display: none; }
+    .page.active { display: grid; gap: 18px; }
 
-    .button,
-    .soft-button,
-    .nav-button,
-    .preset-button {
-      background: linear-gradient(135deg, rgba(95, 220, 255, 0.2), rgba(79, 135, 255, 0.14));
-      color: var(--text);
-    }
+    .result-card.full { grid-column: 1 / -1; }
 
-    .button:hover,
-    .soft-button:hover,
-    .nav-button:hover,
-    .menu-button:hover,
-    .domain-button:hover,
-    .ghost-button:hover,
-    .preset-button:hover {
-      transform: translateY(-1px);
-      border-color: rgba(95, 220, 255, 0.42);
-    }
-
-    .button {
-      box-shadow: 0 0 24px rgba(95, 220, 255, 0.14);
-    }
-
-    .soft-button {
-      background: rgba(255, 207, 118, 0.1);
-      color: #ffe3ab;
-      border-color: rgba(255, 207, 118, 0.24);
-    }
-
-    .ghost-button,
-    .menu-button {
-      background: rgba(8, 16, 28, 0.72);
-      color: var(--text-soft);
-    }
-
-    .nav-button.active,
-    .preset-button.active,
-    .domain-button.active {
-      background: linear-gradient(135deg, rgba(95, 220, 255, 0.26), rgba(79, 135, 255, 0.2));
-      border-color: rgba(95, 220, 255, 0.42);
-      color: var(--text);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 0 26px rgba(95, 220, 255, 0.08);
-    }
-
-    .auth-footer {
-      display: grid;
-      gap: 12px;
-      justify-items: start;
-    }
-
-    .company-line {
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      font-size: 13px;
-    }
-
-    .company-line strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .app-frame {
-      position: relative;
-      overflow: hidden;
-      border-radius: var(--radius-xl);
-      padding: 22px;
-    }
-
-    .app-topbar {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: center;
-      padding-bottom: 18px;
-      border-bottom: 1px solid rgba(132, 210, 255, 0.1);
-    }
-
-    .brand-mini {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-mini h1 {
-      margin: 0 0 4px;
-      font-size: 20px;
-      text-transform: uppercase;
-    }
-
-    .brand-mini p,
-    .live-chip,
-    .clock-box,
-    .user-box,
-    .foot-chip {
-      margin: 0;
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .live-chip,
-    .clock-box,
-    .user-box,
-    .foot-chip {
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(132, 210, 255, 0.16);
-      background: rgba(8, 16, 28, 0.72);
-    }
-
-    .app-body {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 310px minmax(0, 1fr);
-      gap: 18px;
-      margin-top: 20px;
-      align-items: start;
-    }
-
-    .sidebar {
-      display: grid;
-      gap: 16px;
-      position: sticky;
-      top: 16px;
-    }
-
-    .sidebar-card,
-    .panel,
-    .metric,
-    .action-card,
-    .result-card {
-      padding: 20px;
-    }
-
-    .sidebar-card h2,
-    .sidebar-card h3,
-    .panel h2,
-    .action-card h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: var(--text);
-    }
-
-    .sidebar-copy,
-    .metric-copy,
-    .panel-copy,
-    .card-copy {
-      margin: 0;
-      font-size: 13px;
-    }
-
-    .domain-list,
-    .mini-stat-list,
-    .result-stack,
-    .scenario-list,
-    .impact-list,
-    .institution-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .domain-button {
-      width: 100%;
-      display: grid;
-      gap: 6px;
-      text-align: left;
-      background: rgba(5, 12, 22, 0.84);
-      color: var(--text);
-    }
-
-    .domain-button strong {
-      font-size: 15px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .domain-button span {
-      position: relative;
-      z-index: 1;
-      color: var(--text-soft);
-      font-size: 11px;
-      line-height: 1.5;
-      text-transform: uppercase;
-    }
-
-    .workspace {
-      display: grid;
-      gap: 18px;
-    }
-
-    .page {
-      display: none;
-      gap: 18px;
-    }
-
-    .page.active {
-      display: grid;
-    }
-
-    .hero-strip {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
-    }
-
-    .hero-strip h2 {
-      margin: 12px 0 10px;
-      font-size: clamp(24px, 4vw, 38px);
-      max-width: 18ch;
-      text-transform: uppercase;
-    }
-
-    .hero-strip p {
-      margin: 0;
-      max-width: 68ch;
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    .metrics,
-    .quick-actions,
-    .result-grid,
-    .analysis-grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    .metrics {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .metric-label {
-      color: var(--text-soft);
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .metric-value {
-      margin: 14px 0 8px;
-      font-size: clamp(26px, 5vw, 40px);
-      color: var(--text);
-    }
-
-    .quick-actions {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .analysis-grid {
-      grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
-    }
-
-    .toolbar,
-    .preset-row {
-      margin-top: 16px;
-    }
-
-    .preset-button {
-      font-size: 12px;
-      text-transform: uppercase;
-      background: rgba(10, 20, 34, 0.82);
-      color: var(--text-soft);
-    }
-
-    .mini-stat {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(132, 210, 255, 0.1);
-      background: rgba(5, 12, 22, 0.76);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 13px;
-      color: var(--text-soft);
-    }
-
-    .mini-stat strong {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .summary-banner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(132, 210, 255, 0.16);
-      background: linear-gradient(135deg, rgba(95, 220, 255, 0.12), rgba(79, 135, 255, 0.08));
-    }
-
-    .summary-banner strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 18px;
-    }
-
-    .summary-banner span {
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      font-size: 12px;
-    }
-
-    .threat-chip {
-      padding: 12px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(132, 210, 255, 0.18);
-      background: rgba(8, 16, 28, 0.76);
-      text-transform: uppercase;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .threat-chip[data-level="DUSUK"] { color: var(--good); }
-    .threat-chip[data-level="ORTA"] { color: var(--warn); }
-    .threat-chip[data-level="YUKSEK"] { color: #ffd788; }
-    .threat-chip[data-level="KRITIK"] { color: var(--danger); }
-
-    .result-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .result-card.full {
-      grid-column: 1 / -1;
-    }
-
-    .soft-label {
-      color: var(--cyan);
-      text-transform: uppercase;
-      font-size: 12px;
-      margin-bottom: 12px;
-    }
-
-    .result-card p,
-    .result-card li {
-      margin: 0;
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    .scenario-item,
-    .impact-item,
-    .institution-item {
+    .result-item,
+    .history-item {
       padding: 14px 16px;
       border-radius: 14px;
-      border: 1px solid rgba(132, 210, 255, 0.1);
-      background: rgba(4, 10, 18, 0.78);
+      border: 1px solid rgba(104, 196, 255, 0.12);
+      background: rgba(4, 10, 18, 0.8);
       font-family: "IBM Plex Mono", monospace;
-      color: var(--text-soft);
-      line-height: 1.6;
-      font-size: 13px;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border-radius: 16px;
-      border: 1px solid rgba(132, 210, 255, 0.12);
-      background: rgba(4, 10, 18, 0.76);
+      color: var(--muted);
+      line-height: 1.7;
     }
 
     .history-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 780px;
-      font-family: "IBM Plex Mono", monospace;
       font-size: 13px;
     }
 
     .history-table th,
     .history-table td {
-      padding: 14px 16px;
       text-align: left;
-      border-bottom: 1px solid rgba(132, 210, 255, 0.08);
-      color: var(--text-soft);
-      vertical-align: top;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(104, 196, 255, 0.08);
+      color: var(--muted);
     }
 
     .history-table th {
       color: var(--cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
       font-size: 12px;
-      background: rgba(7, 16, 28, 0.92);
-      position: sticky;
-      top: 0;
+      text-transform: uppercase;
     }
 
-    .empty-state {
-      padding: 28px;
-      border-radius: 16px;
-      border: 1px dashed rgba(132, 210, 255, 0.18);
-      color: var(--text-soft);
-      font-family: "IBM Plex Mono", monospace;
-      background: rgba(4, 10, 18, 0.68);
-    }
-
-    .footer-bar {
-      position: relative;
-      z-index: 1;
-      margin-top: 18px;
-      padding-top: 18px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      border-top: 1px solid rgba(132, 210, 255, 0.1);
-    }
-
-    .center-overlay {
+    .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(2, 6, 12, 0.72);
+      background: rgba(2, 6, 12, 0.76);
       backdrop-filter: blur(8px);
       display: none;
       align-items: center;
@@ -941,656 +438,308 @@
       z-index: 20;
     }
 
-    .center-overlay.open {
-      display: flex;
+    .overlay.open { display: flex; }
+
+    .modal-panel {
+      width: min(720px, 100%);
+      padding: 26px;
     }
 
-    .center-panel {
-      width: min(680px, 100%);
-      border-radius: 28px;
-      padding: 28px;
-      position: relative;
+    .modal-copy { margin: 0 0 16px; }
+
+    .company {
+      font-family: "IBM Plex Mono", monospace;
+      color: var(--muted);
+      font-size: 13px;
     }
 
-    .center-panel h2 {
-      margin: 14px 0 10px;
-      font-size: clamp(24px, 4vw, 38px);
-      text-transform: uppercase;
-    }
+    .company strong { color: var(--text); }
 
-    .center-copy {
-      margin: 0 0 18px;
-      font-size: 14px;
-    }
-
-    .center-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .contact-card {
-      padding: 18px;
-      border-radius: 18px;
-      border: 1px solid rgba(132, 210, 255, 0.14);
-      background: rgba(6, 14, 24, 0.84);
-    }
-
-    .contact-card h3 {
-      margin: 0 0 10px;
-      font-size: 16px;
-    }
-
-    .contact-line {
-      color: var(--text-soft);
-      font-size: 12px;
-      line-height: 1.7;
-      text-transform: uppercase;
-    }
-
-    .login-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .menu-button {
-      display: none;
-    }
-
-    @media (max-width: 1200px) {
-      .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .quick-actions,
-      .analysis-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-strip h2 {
-        max-width: none;
-      }
-    }
-
-    @media (max-width: 1080px) {
-      .login-shell,
-      .app-body {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-      }
-
-      .menu-button {
-        display: inline-flex;
-      }
-    }
-
-    @media (max-width: 800px) {
-      .hero-grid,
-      .quick-actions,
-      .metrics,
-      .result-grid,
-      .center-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .summary-banner,
-      .hero-strip,
-      .brand-lockup,
-      .app-topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .hero-title {
-        max-width: none;
-      }
-
-      .app-frame,
-      .hero-panel,
-      .auth-panel,
-      .center-panel {
-        padding: 22px;
-      }
-    }
-
-    @media (max-width: 560px) {
-      .app-shell,
-      .login-shell {
-        width: min(calc(100% - 18px), var(--content));
-        margin: 9px auto;
-      }
-
-      .hero-panel,
-      .auth-panel,
-      .app-frame {
-        border-radius: 22px;
-      }
-
-      .button,
-      .ghost-button,
-      .soft-button,
-      .nav-button,
-      .menu-button,
-      .preset-button {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .login-actions,
-      .button-row,
-      .page-actions,
-      .toolbar,
-      .preset-row,
-      .nav-row,
-      .topbar-right {
-        width: 100%;
-      }
-
-      .brand-title {
-        font-size: 24px;
-      }
+    @media (max-width: 1100px) {
+      .login-layout,
+      .main-grid,
+      .actions,
+      .stats,
+      .result-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <section class="login-shell" id="loginScreen">
-    <div class="hero-panel">
-      <div>
-        <div class="hero-kicker">T.C. kritik karar destek katmani</div>
-        <h1 class="hero-title">T.C. ANATOLIA-Q</h1>
-        <p class="hero-copy">
-          Savunma, enerji, ekonomi, dis politika, toplumsal olaylar ve genel sohbet akislarini tek
-          operasyon duzleminde toplayan merkez komuta arayuzu.
-        </p>
+  <div class="shell" id="loginScreen">
+    <div class="login-layout">
+      <section class="hero">
+        <div>
+          <div class="kicker">Ulusal Karar Destek Sistemi</div>
+          <h1>T.C. ANATOLIA-Q</h1>
+          <p class="text">Savunma, enerji, ekonomi, dis politika, toplumsal olaylar, genel chat ve capraz sentez akislari icin tek merkezli analiz ortami.</p>
+        </div>
         <div class="hero-grid">
-          <div class="hero-card">
-            <strong>7 modul</strong>
-            <span>Alan bazli analiz, genel chat ve cok alanli sentez ayni operasyon masasi altinda calisir.</span>
-          </div>
-          <div class="hero-card">
-            <strong>Merkez irtibat</strong>
-            <span>Kullanici dogrudan merkez paneline ulasip yonlendirme ve iletisim kanalini gorebilir.</span>
-          </div>
-          <div class="hero-card">
-            <strong>Iki asamali oturum</strong>
-            <span>Kullanici adi ve sifre sonrasi dogrulama kodu merkez e-posta hattina yonlendirilir.</span>
-          </div>
-          <div class="hero-card">
-            <strong>Tek vitrinde komuta</strong>
-            <span>Operasyon notu, hizli analiz, gecmis ve rapor ciktilari ayri ekran daginikligina dusmez.</span>
-          </div>
+          <div class="mini-card"><strong>Canli analiz</strong><span>Modul secimi, durum girişi ve hizli sonuc paneli ayni akista ilerler.</span></div>
+          <div class="mini-card"><strong>Merkeze ulas</strong><span>Giris yapan kullanici koduyla merkeze bildirim gonderen dahili baglanti paneli acilir.</span></div>
+          <div class="mini-card"><strong>Iki asamali giris</strong><span>Dogrulama kodu merkez e-posta hattina gider ve oturum oradan dogrulanir.</span></div>
+          <div class="mini-card"><strong>Kurumsal cikti</strong><span>Sonuclar ozet, tehdit analizi, senaryo ve oncelikli oneriler olarak ayrilir.</span></div>
         </div>
-      </div>
-      <div class="capsule-row">
-        <div class="capsule"><strong>QTR-2026</strong> operasyon hatti</div>
-        <div class="capsule"><strong>merkez</strong> kurumsal giris</div>
-      </div>
-    </div>
+      </section>
 
-    <div class="auth-panel">
-      <div class="brand-lockup">
-        <div class="brand-mark">
-          <div class="brand-badge" aria-hidden="true"></div>
-          <div>
-            <h1 class="brand-title">T.C. ANATOLIA-Q</h1>
-            <p class="brand-sub">
-              Ulusal karar destek sistemi. Savunma, enerji, ekonomi, dis politika, toplumsal olaylar,
-              genel chat ve capraz sentez modulleri tek vitrinde.
-            </p>
+      <section class="login-panel">
+        <div class="brand-row">
+          <div class="row">
+            <div class="brand-badge"></div>
+            <div class="brand">
+              <h2>T.C. ANATOLIA-Q</h2>
+              <p class="text">Giris, dogrulama ve merkez bildirimi ayni komuta akisinda ilerler.</p>
+            </div>
           </div>
+          <button class="ghost" id="centerBtnLogin" type="button">Merkeze ulas</button>
         </div>
-        <button class="ghost-button" id="centerBtnLogin" type="button">Merkez</button>
-      </div>
 
-      <div id="step1">
-        <div class="section-kicker">Kimlik dogrulama | adim 1/2</div>
-        <div class="auth-form">
+        <div class="form" id="step1">
           <div class="field">
-            <label for="loginUser">Kullanici adi</label>
-            <input id="loginUser" type="text" autocomplete="username" placeholder="Kullanici adinizi girin">
+            <label for="loginUser">Kullanici kodu</label>
+            <input id="loginUser" type="text" inputmode="numeric" maxlength="6" autocomplete="username" placeholder="6 haneli kullanici kodunu girin">
           </div>
           <div class="field">
             <label for="loginPass">Sifre</label>
-            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Sifrenizi girin">
+            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Sifreyi girin">
           </div>
-          <div class="field-note">Dogrulama kodu merkez e-posta hattina yonlendirilir.</div>
-          <div class="load-track" id="loginLoad"></div>
-          <div class="status-box" id="loginStatus" aria-live="polite"></div>
-          <div class="login-actions">
-            <button class="button" id="loginBtn" type="button">Giris yap</button>
-            <button class="ghost-button" id="centerBtnInline" type="button">Merkez paneli</button>
-          </div>
+          <div class="status" id="loginStatus"></div>
+          <div class="loadbar" id="loginLoad"></div>
+          <button class="button" id="loginBtn" type="button">Giris yap</button>
         </div>
-      </div>
 
-      <div id="step2" class="hidden">
-        <div class="section-kicker">Ikinci dogrulama | adim 2/2</div>
-        <div class="auth-form">
-          <div class="status-box" id="codeInfo" data-kind="info" aria-live="polite"></div>
+        <div class="form hidden" id="step2">
           <div class="field">
             <label for="loginCode">Dogrulama kodu</label>
-            <input id="loginCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 haneli kod">
+            <input id="loginCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 haneli kodu girin">
           </div>
-          <div class="load-track" id="verifyLoad"></div>
-          <div class="status-box" id="verifyStatus" aria-live="polite"></div>
-          <div class="button-row">
-            <button class="button" id="verifyBtn" type="button">Dogrula ve ac</button>
-            <button class="ghost-button" id="backBtn" type="button">Geri don</button>
+          <div class="status" id="codeInfo"></div>
+          <div class="status" id="verifyStatus"></div>
+          <div class="loadbar" id="verifyLoad"></div>
+          <div class="inline">
+            <button class="button" id="verifyBtn" type="button">Onayla</button>
+            <button class="ghost" id="backBtn" type="button">Geri</button>
           </div>
         </div>
-      </div>
 
-      <div class="auth-footer">
-        <div class="company-line"><strong>Bold Askeri Teknoloji ve Savunma Sanayi A.S.</strong></div>
-        <div class="company-line">Merkez dogrulama ve oturum yonetimi kurumsal e-posta hatti uzerinden ilerler.</div>
-      </div>
+        <div class="footer">
+          <div class="company"><strong>Bold Askeri Teknoloji ve Savunma Sanayi A.S.</strong></div>
+          <div class="chip">Merkez hat onayli</div>
+        </div>
+      </section>
     </div>
-  </section>
+  </div>
 
-  <section class="app-shell hidden" id="mainSystem">
-    <div class="app-frame">
-      <header class="app-topbar">
-        <div class="topbar-left">
-          <div class="brand-mini">
-            <div class="brand-badge" aria-hidden="true"></div>
-            <div>
-              <h1>T.C. ANATOLIA-Q</h1>
-              <p>Ulusal karar destek sistemi</p>
-            </div>
-          </div>
-          <div class="live-chip">Oturum aktif</div>
+  <div class="shell hidden" id="mainSystem">
+    <section class="app-frame">
+      <div class="topbar">
+        <div>
+          <div class="kicker">Merkezi Operasyon Paneli</div>
+          <h2 style="margin:10px 0 0;">T.C. ANATOLIA-Q</h2>
         </div>
-
-        <div class="topbar-right">
-          <div class="nav-row">
-            <button class="nav-button active" type="button" data-page="dashboard">Panel</button>
-            <button class="nav-button" type="button" data-page="analysis">Analiz</button>
-            <button class="nav-button" type="button" data-page="history">Gecmis</button>
-          </div>
-          <button class="ghost-button" id="centerBtnApp" type="button">Merkez</button>
-          <div class="clock-box" id="clockBox">--:--:--</div>
-          <div class="user-box" id="userBadge">Kullanici: --</div>
-          <button class="ghost-button" id="logoutBtn" type="button">Cikis</button>
+        <div class="inline">
+          <div class="chip" id="userBadge">Kullanici kodu: --</div>
+          <button class="ghost" id="centerBtnApp" type="button">Merkeze ulas</button>
+          <button class="ghost" id="logoutBtn" type="button">Cikis</button>
         </div>
-      </header>
+      </div>
 
-      <div class="app-body">
-        <aside class="sidebar" id="sidebar">
-          <div class="sidebar-card">
-            <div class="section-kicker">Moduller</div>
+      <div class="stats" style="margin-top:18px;">
+        <div class="stat"><span class="stat-label">Toplam analiz</span><div class="stat-value" id="stTotal">0</div></div>
+        <div class="stat"><span class="stat-label">Kritik kayit</span><div class="stat-value" id="stCritical">0</div></div>
+        <div class="stat"><span class="stat-label">Rapor indirme</span><div class="stat-value" id="stReport">0</div></div>
+        <div class="stat"><span class="stat-label">Aktif kullanici kodu</span><div class="stat-value" id="stUser">--</div></div>
+      </div>
+
+      <div class="main-grid" style="margin-top:18px;">
+        <aside class="stack">
+          <div class="side-card">
+            <h3>Moduller</h3>
             <div class="domain-list" id="domainList"></div>
           </div>
-
-          <div class="sidebar-card">
-            <h2>Operasyon notu</h2>
-            <p class="sidebar-copy">
-              Aktor, zaman, lokasyon, tetikleyici, muhtemel hedef ve belirsizlik seviyesini ayni olay
-              akisi icinde vermek sonuc kalitesini ciddi bicimde artirir.
-            </p>
-          </div>
-
-          <div class="sidebar-card">
-            <h3>Oturum ozeti</h3>
-            <div class="mini-stat-list">
-              <div class="mini-stat"><span>Secili alan</span><strong id="sidebarDomain">Savunma</strong></div>
-              <div class="mini-stat"><span>Analiz sayisi</span><strong id="sidebarCount">0</strong></div>
-              <div class="mini-stat"><span>Indirilen rapor</span><strong id="sidebarReports">0</strong></div>
-            </div>
-          </div>
-
-          <div class="sidebar-card">
-            <h3>Merkez kanali</h3>
-            <p class="sidebar-copy">
-              Dogrudan merkez ile irtibat, oturum ve dogrulama akislarini tek panelde takip etmek icin
-              merkez dugmesini kullan.
-            </p>
-            <div class="button-row" style="margin-top: 14px;">
-              <button class="soft-button" id="centerBtnSide" type="button">Merkez paneli</button>
+          <div class="side-card">
+            <h3>Gezinme</h3>
+            <div class="tab-list">
+              <button class="tab-btn active" data-page="dashboard" type="button">Genel gorunum</button>
+              <button class="tab-btn" data-page="analysis" type="button">Analiz</button>
+              <button class="tab-btn" data-page="history" type="button">Gecmis</button>
             </div>
           </div>
         </aside>
 
-        <main class="workspace">
+        <main>
           <section class="page active" id="page-dashboard">
+            <div class="actions">
+              <div class="action"><h3>Hazir analiz akisi</h3><p class="text">Modul sec, durumu yaz, tek tusla analizi al.</p><button class="button" data-jump="analysis" type="button">Analize git</button></div>
+              <div class="action"><h3>Merkez baglantisi</h3><p class="text">Iletisim panelinden merkeze otomatik bildirim gonder.</p><button class="ghost" id="centerBtnDash" type="button">Merkeze ulas</button></div>
+              <div class="action"><h3>Kayitlar</h3><p class="text">Uretilen analizlerin son kayitlarini tek ekranda izle.</p><button class="ghost" data-jump="history" type="button">Gecmise git</button></div>
+            </div>
             <div class="panel">
-              <div class="hero-strip">
-                <div>
-                  <div class="section-kicker">Komuta paneli</div>
-                  <h2>Durumu gor, alani sec, hizli sonuc uret.</h2>
-                  <p>
-                    Alan bazli analiz, toplumsal olay okumasi, genel chat ve capraz sentez ayni komuta
-                    akisi altinda birlikte calisir. Merkez irtibat kanali her ekrandan erisilebilir.
-                  </p>
-                </div>
-                <div class="page-actions">
-                  <button class="button" type="button" data-jump="analysis">Yeni analiz baslat</button>
-                  <button class="ghost-button" type="button" id="loadHistoryBtn">Sunucu gecmisini yenile</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="metrics">
-              <div class="metric">
-                <div class="metric-label">Toplam analiz</div>
-                <p class="metric-value" id="stTotal">0</p>
-                <p class="metric-copy">Bu oturumda uretilen toplam kayit.</p>
-              </div>
-              <div class="metric">
-                <div class="metric-label">Kritik tespit</div>
-                <p class="metric-value" id="stCritical" style="color: var(--danger);">0</p>
-                <p class="metric-copy">Tehdit seviyesi kritik olan analizler.</p>
-              </div>
-              <div class="metric">
-                <div class="metric-label">Indirilen rapor</div>
-                <p class="metric-value" id="stReport" style="color: var(--gold);">0</p>
-                <p class="metric-copy">DOC tabanli indirilen cikti adedi.</p>
-              </div>
-              <div class="metric">
-                <div class="metric-label">Aktif kullanici</div>
-                <p class="metric-value" id="stUser" style="font-size: 22px;">--</p>
-                <p class="metric-copy">Merkez dogrulamasi tamamlanan oturum.</p>
-              </div>
-            </div>
-
-            <div class="quick-actions">
-              <div class="action-card">
-                <h3>Alan odakli giris</h3>
-                <p class="card-copy">
-                  Savunma, enerji, ekonomi, dis politika, toplumsal olaylar veya genel chat secip
-                  ekrana tek tikla gec.
-                </p>
-                <div class="button-row" style="margin-top: 16px;">
-                  <button class="soft-button" type="button" data-jump="analysis">Analiz modulunu ac</button>
-                </div>
-              </div>
-
-              <div class="action-card">
-                <h3>Son sonuc ozeti</h3>
-                <p class="card-copy" id="lastSummary">
-                  Henuz analiz yapilmadi. Ilk sonuc olustugunda kisa ozet burada gorunecek.
-                </p>
-                <div class="button-row" style="margin-top: 16px;">
-                  <button class="ghost-button" type="button" data-jump="history">Gecmisi goruntule</button>
-                </div>
-              </div>
-
-              <div class="action-card">
-                <h3>Merkez yonlendirme</h3>
-                <p class="card-copy">
-                  Dogrulama, irtibat, yonetsel iletisim ve kurumsal kanal bilgileri icin merkez panelini ac.
-                </p>
-                <div class="button-row" style="margin-top: 16px;">
-                  <button class="ghost-button" id="centerBtnDash" type="button">Merkez ac</button>
-                </div>
-              </div>
+              <div class="kicker">Aktif modul</div>
+              <h3 id="activeDomainTitle">Savunma</h3>
+              <p class="text" id="activeDomainDesc">Kritik guvenlik, saha ve caydricilik basliklari icin hizli analiz.</p>
             </div>
           </section>
 
           <section class="page" id="page-analysis">
-            <div class="analysis-grid">
-              <div class="panel">
-                <div class="hero-strip">
-                  <div>
-                    <div class="section-kicker">Analiz modulu</div>
-                    <h2 id="analysisTitle">Savunma odakli degerlendirme</h2>
-                    <p id="analysisSubtitle">
-                      Durum girdisini net ver. Sistem secili modula gore senaryo, risk ve aksiyon paketi uretir.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="toolbar" id="domainToolbar"></div>
-
-                <div class="field" style="margin-top: 18px;">
-                  <label for="sitInput">Durum bildirimi</label>
-                  <textarea id="sitInput" placeholder="Ornek: Sinir hattinda IHA hareketliligi, eszamanli elektronik karistirma, enerji altyapisina yonelik siber baski ve sosyal medyada koordineli panik uretimi belirtileri goruluyor..."></textarea>
-                  <div class="inline-row">
-                    <div class="field-note" id="wordCount">0 karakter</div>
-                  </div>
-                </div>
-
-                <div class="preset-row" id="presetRow">
-                  <button class="preset-button" type="button" data-preset="border">Sinir hatti</button>
-                  <button class="preset-button" type="button" data-preset="energy">Enerji baskisi</button>
-                  <button class="preset-button" type="button" data-preset="economy">Piyasa baskisi</button>
-                  <button class="preset-button" type="button" data-preset="social">Toplumsal olay</button>
-                  <button class="preset-button" type="button" data-preset="general">Genel chat</button>
-                  <button class="preset-button" type="button" data-preset="cross">Capraz sentez</button>
-                </div>
-
-                <div class="button-row" style="margin-top: 18px;">
-                  <button class="button" type="button" id="runBtn">Analiz baslat</button>
-                  <button class="ghost-button" type="button" id="clearBtn">Temizle</button>
-                  <button class="soft-button" type="button" id="downloadBtn" disabled>Rapor indir</button>
-                  <button class="ghost-button" type="button" id="centerBtnAnalysis">Merkez</button>
-                </div>
-
-                <div class="load-track" id="analysisLoad" style="margin-top: 18px;"></div>
-                <div class="status-box" id="analysisStatus" aria-live="polite" style="margin-top: 18px;"></div>
+            <div class="panel">
+              <div class="kicker">Analiz girdisi</div>
+              <h3 id="analysisTitle">Savunma Analizi</h3>
+              <p class="text" id="analysisDesc">Somut durum bilgisini yazin ve sistemin stratejik degerlendirmesini alin.</p>
+              <div class="toolbar" id="domainToolbar"></div>
+              <div class="field" style="margin-top:16px;">
+                <label for="sitInput">Durum bildirimi</label>
+                <textarea id="sitInput" placeholder="Ornek: Sinir hattinda IHA hareketliligi, elektronik karistirma, enerji altyapisina siber baski ve sosyal medyada koordineli panik sinyalleri goruluyor..."></textarea>
+                <div class="mini-note" id="wordCount">0 karakter</div>
               </div>
-
-              <div class="panel">
-                <div class="section-kicker">Hazir kontrol listesi</div>
-                <div class="mini-stat-list">
-                  <div class="mini-stat"><span>Aktorler acik mi</span><strong>Evet / Hayir</strong></div>
-                  <div class="mini-stat"><span>Zaman bilgisi var mi</span><strong>Ekle</strong></div>
-                  <div class="mini-stat"><span>Belirsizlik notu</span><strong>Onerilir</strong></div>
-                  <div class="mini-stat"><span>Capraz etki ihtimali</span><strong>Gozden gecir</strong></div>
-                  <div class="mini-stat"><span>Merkez temasi gerekir mi</span><strong>Degerlendir</strong></div>
-                </div>
-                <p class="sidebar-copy" style="margin-top: 16px;">
-                  Toplumsal olaylar ve genel chat modullerinde de somut baglam, hedef kitle ve olasi
-                  tetikleyici basliklar sonucu guclendirir.
-                </p>
+              <div class="status" id="analysisStatus"></div>
+              <div class="loadbar" id="analysisLoad"></div>
+              <div class="inline" style="margin-top:12px;">
+                <button class="button" id="runBtn" type="button">Analiz baslat</button>
+                <button class="ghost" id="injectBtn" type="button">Hazir metin</button>
+                <button class="ghost" id="clearBtn" type="button">Temizle</button>
+                <button class="ghost" id="centerBtnAnalysis" type="button">Merkeze ulas</button>
               </div>
             </div>
 
-            <div class="result-stack hidden" id="resultArea">
-              <div class="summary-banner">
-                <div>
-                  <strong id="resultHeading">Analiz sonucu hazir</strong>
-                  <span id="resultMeta">Analiz ID ve alan bilgisi burada gosterilir.</span>
-                </div>
-                <div class="threat-chip" data-level="BILINMEYEN" id="threatBadge">Tehdit seviyesi: --</div>
+            <div class="result-grid hidden" id="resultArea">
+              <div class="result-card full">
+                <h3 id="resultHeading">Analiz sonucu</h3>
+                <p class="result-text" id="resultMeta"></p>
               </div>
-
-              <div class="result-grid">
-                <article class="result-card full">
-                  <div class="soft-label">Ozet degerlendirme</div>
-                  <p id="summaryText"></p>
-                </article>
-
-                <article class="result-card">
-                  <div class="soft-label">Tehdit / risk analizi</div>
-                  <p id="threatText"></p>
-                </article>
-
-                <article class="result-card">
-                  <div class="soft-label">Zaman cercevesi</div>
-                  <p id="timelineText"></p>
-                </article>
-
-                <article class="result-card full">
-                  <div class="soft-label">Alan bazli etki</div>
-                  <div class="impact-list" id="impactList"></div>
-                </article>
-
-                <article class="result-card full">
-                  <div class="soft-label">Senaryo analizi</div>
-                  <div class="scenario-list" id="scenarioList"></div>
-                </article>
-
-                <article class="result-card">
-                  <div class="soft-label">Oncelikli aksiyonlar</div>
-                  <div class="scenario-list" id="priorityList"></div>
-                </article>
-
-                <article class="result-card">
-                  <div class="soft-label">Etkilenen kurumlar</div>
-                  <div class="institution-list" id="institutionList"></div>
-                </article>
-
-                <article class="result-card full">
-                  <div class="soft-label">Kritik baglanti</div>
-                  <p id="criticalLinkText">Bu analiz icin kritik baglanti bilgisi bulunmuyor.</p>
-                </article>
+              <div class="result-card">
+                <h3>Ozet</h3>
+                <div class="result-item" id="summaryText"></div>
+              </div>
+              <div class="result-card">
+                <h3>Tehdit seviyesi</h3>
+                <div class="result-item" id="threatText"></div>
+              </div>
+              <div class="result-card full">
+                <h3>Tehdit analizi</h3>
+                <div class="result-item" id="riskText"></div>
+              </div>
+              <div class="result-card">
+                <h3>Senaryolar</h3>
+                <div class="result-list" id="scenarioList"></div>
+              </div>
+              <div class="result-card">
+                <h3>Oncelikli oneri</h3>
+                <div class="result-list" id="priorityList"></div>
+              </div>
+              <div class="result-card">
+                <h3>Etkilenen kurumlar</h3>
+                <div class="result-list" id="institutionList"></div>
+              </div>
+              <div class="result-card">
+                <h3>Zaman cercevesi</h3>
+                <div class="result-item" id="timelineText"></div>
               </div>
             </div>
           </section>
 
           <section class="page" id="page-history">
             <div class="panel">
-              <div class="hero-strip">
+              <div class="row" style="justify-content:space-between;">
                 <div>
-                  <div class="section-kicker">Gecmis</div>
-                  <h2>Oturum kayitlari ve son ciktilar</h2>
-                  <p>Yerel oturum kayitlari ile sunucu gecmisi ayni masada toplanir.</p>
+                  <div class="kicker">Son kayitlar</div>
+                  <h3>Analiz gecmisi</h3>
                 </div>
-                <div class="page-actions">
-                  <button class="ghost-button" type="button" id="refreshHistoryBtn">Yenile</button>
-                </div>
+                <button class="ghost" id="loadHistoryBtn" type="button">Yenile</button>
               </div>
-            </div>
-
-            <div class="panel">
-              <div class="table-wrap hidden" id="historyTableWrap">
+              <div class="history-wrap" style="margin-top:12px; overflow:auto;">
                 <table class="history-table">
                   <thead>
                     <tr>
                       <th>ID</th>
                       <th>Alan</th>
-                      <th>Tehdit</th>
+                      <th>Mod</th>
                       <th>Ozet</th>
-                      <th>Saat</th>
+                      <th>Zaman</th>
                     </tr>
                   </thead>
                   <tbody id="historyTableBody"></tbody>
                 </table>
               </div>
-              <div class="empty-state" id="historyEmpty">
-                Henuz kayit gorunmuyor. Ilk analiz uretildiginde gecmis burada listelenecek.
-              </div>
             </div>
           </section>
         </main>
       </div>
+    </section>
+  </div>
 
-      <footer class="footer-bar">
-        <div class="foot-chip">Sistem: T.C. ANATOLIA-Q</div>
-        <div class="foot-chip"><strong>Bold Askeri Teknoloji ve Savunma Sanayi A.S.</strong></div>
-        <div class="foot-chip" id="footerClock">--:--:--</div>
-      </footer>
-    </div>
-  </section>
-
-  <div class="center-overlay" id="centerOverlay" aria-hidden="true">
-    <div class="center-panel">
-      <div class="section-kicker">Merkez irtibat paneli</div>
-      <h2>Merkez ile dogrudan temas</h2>
-      <p class="center-copy">
-        Kullanici oturumu, dogrulama akisi ve yonetsel yonlendirme ayni merkez hattindan yonetilir.
-        Iletisim ve teyit adimlari icin bu panel her ekrandan erisilebilir durumda tutulur.
-      </p>
-
-      <div class="center-grid">
-        <div class="contact-card">
-          <h3>Kurumsal hat</h3>
-          <div class="contact-line">Merkez e-posta: info@boldkimya.com.tr</div>
-          <div class="contact-line">Sirket: Bold Askeri Teknoloji ve Savunma Sanayi A.S.</div>
-          <div class="contact-line">Kullanim: Oturum, dogrulama, yonetsel teyit</div>
+  <div class="overlay" id="centerOverlay" aria-hidden="true">
+    <div class="modal-panel">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <div class="kicker">Merkez Paneli</div>
+          <h3 style="margin:10px 0 6px;">Merkeze ulas</h3>
         </div>
-        <div class="contact-card">
-          <h3>Yonlendirme</h3>
-          <div class="contact-line">Sifre ve ikinci asama dogrulama merkez hatti ile ilerler.</div>
-          <div class="contact-line">Gerekli durumda yonetsel irtibat bu panel uzerinden acilir.</div>
-          <div class="contact-line">Yetkilendirme merkezde tutulur.</div>
-        </div>
+        <button class="ghost" id="closeCenterBtn" type="button">Kapat</button>
       </div>
-
-      <div class="button-row" style="margin-top: 18px;">
-        <a class="button" href="mailto:info@boldkimya.com.tr" style="text-decoration: none;">Merkeze e-posta ac</a>
-        <button class="ghost-button" id="closeCenterBtn" type="button">Kapat</button>
+      <p class="modal-copy center-copy">Bu panelden merkeze ulas talebi gonderebilirsiniz. Giris yapan kullanici kodu ve notunuz otomatik bildirim olarak iletilir.</p>
+      <div class="form">
+        <div class="field">
+          <label for="centerNote">Merkez notu</label>
+          <textarea id="centerNote" placeholder="Isterseniz kisa bir not ekleyin"></textarea>
+        </div>
+        <div class="status" id="centerStatus"></div>
+        <div class="loadbar" id="centerLoad"></div>
+        <button class="button" id="contactCenterBtn" type="button">Merkeze ulas</button>
+      </div>
+      <div class="footer">
+        <div class="company"><strong>Bold Askeri Teknoloji ve Savunma Sanayi A.S.</strong></div>
+        <div class="chip">Merkez bildirim bagli</div>
       </div>
     </div>
   </div>
 
   <script>
-    const FALLBACK_API = "https://anatolia-q.onrender.com";
-    const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-    const API_BASE = window.location.protocol.startsWith("http") && !isLocalHost
-      ? window.location.origin
-      : FALLBACK_API;
-    const SESSION_KEY = "anatolia_q_session_v2";
-
     const DOMAINS = {
       savunma: {
         title: "Savunma",
-        short: "Savunma odakli degerlendirme",
-        description: "Askeri hareketlilik, sinir guvenligi, caydricilik ve taktik baski olasiliklari.",
-        placeholder: "Ornek: Sinir hattinda IHA hareketliligi, elektronik karistirma ve ileri us lojistiginde duzensizlik birlikte goruldu...",
-      },
-      enerji: {
-        title: "Enerji",
-        short: "Enerji odakli degerlendirme",
-        description: "Altyapi guvenligi, arz surekliligi, kritik tesis etkisi ve teknik-siber baski basliklari.",
-        placeholder: "Ornek: Iletim hatti arizalari ile sosyal medya kaynakli panik uretimi ayni saat araliginda goruldu...",
+        desc: "Kritik guvenlik, saha ve caydiricilik basliklari icin hizli analiz.",
+        placeholder: "Ornek: Sinir hattinda IHA hareketliligi, elektronik karistirma ve ileri us lojistiginde duzensizlik goruluyor...",
       },
       ekonomi: {
         title: "Ekonomi",
-        short: "Ekonomi odakli degerlendirme",
-        description: "Kur baskisi, piyasa guveni, finansal kirilganlik ve uretim zinciri etkileri.",
-        placeholder: "Ornek: Kur oynakligi, rezerv anlatisi ve bankacilik hisselerine yonelik baski ayni gun yogunlasti...",
+        desc: "Piyasa, kurumsal baski ve finansal kirilganlik okumasi.",
+        placeholder: "Ornek: Kur oynakligi, banka likiditesi, yabanci cikis ve sosyal algi bozulmasi ayni anda artiyor...",
+      },
+      enerji: {
+        title: "Enerji",
+        desc: "Arz guvenligi, kritik altyapi ve operasyon surekliligi analizi.",
+        placeholder: "Ornek: Dogal gaz tedarik riski, iletim hatlarinda ariza baskisi ve kamuoyu panigi birlikte goruluyor...",
       },
       dis_politika: {
         title: "Dis Politika",
-        short: "Dis politika odakli degerlendirme",
-        description: "Diplomatik yansimalar, bolgesel denge, uluslararasi tepki ve muhatap hatlari.",
-        placeholder: "Ornek: Es zamanli diplomatik aciklamalar, sinir komsularinda askeri beyanlar ve uluslararasi basin anlatilari arttı...",
+        desc: "Bolgesel aktorler, diplomatik baski ve uluslararasi anlatilarin sentezi.",
+        placeholder: "Ornek: Komsu ulkelerden sert aciklamalar, basin baskisi ve muhataplarla temas trafigi ayni anda artis gosteriyor...",
       },
       toplumsal_olaylar: {
         title: "Toplumsal Olaylar",
-        short: "Toplumsal olay odakli degerlendirme",
-        description: "Saha gerilimi, kitle davranisi, provokasyon, dezenformasyon ve guvenlik yansimalari.",
-        placeholder: "Ornek: Belirli kent merkezlerinde cagri hesaplari, toplanma davetleri ve kamu duzeni riskini artiran soylemler hizlandi...",
+        desc: "Saha hareketliligi, kamu duzeni ve algi takibi.",
+        placeholder: "Ornek: Meydan hareketliligi, sosyal medyada cagri zinciri ve yerel guvenlik baskisi birlikte buyuyor...",
       },
       genel_chat: {
         title: "Genel Chat",
-        short: "Genel chat odakli degerlendirme",
-        description: "Serbest soru-cevap, genel durum toparlama ve yoneticilere hizli briefing olusturma.",
-        placeholder: "Ornek: Yonetim kuruluna ozet gececegim. Son gelismeleri sade ve guclu bir dille toparla...",
+        desc: "Serbest stratejik danisma ve hizli kurumsal yorumlama.",
+        placeholder: "Ornek: Guncel tabloya gore riskleri, olasi etkileri ve merkez icin net mesajlari ozetle...",
       },
       cross: {
         title: "Capraz Sentez",
-        short: "Capraz alan degerlendirmesi",
-        description: "Savunma, enerji, ekonomi, dis politika ve toplumsal olay etkilerini tek cercevede birlestirir.",
-        placeholder: "Ornek: Sinir hareketliligi, enerji baskisi, kur salinimi ve sosyal gerilim ayni zamanlamada artiyor...",
+        desc: "Alanlar arasi etkileri tek karar destek ciktisinda birlestirir.",
+        placeholder: "Ornek: Savunma, ekonomi, enerji ve toplumsal alandaki baskilar ayni zaman diliminde birbirini tetikliyor...",
       },
     };
 
     const PRESETS = {
-      border: "Sinir hattinda artan insansiz hava araci hareketliligi, es zamanli elektronik karistirma sinyalleri ve ileri us bolgelerine yakin lojistik akista duzensizlik tespit edildi. Olası amac kesif ile baski kurmak ve kisa sureli caydricilik testi yapmak olabilir.",
-      energy: "Stratejik enerji iletim hatlarinda teknik ariza goruntusu veren ancak senkron zamanlamaya sahip kesintiler yasaniyor. Ayni anda sosyal medyada tedarik guvenligine dair panik ureten kampanyalar hizlaniyor.",
-      economy: "Kur oynakligi yukselirken bankacilik hisseleri uzerinde baski olustu. Es zamanli olarak dis basinda ulke risk primi ve rezerv yeterliligi hakkinda olumsuz anlatilar yogunlasti. Kisa vadeli finansal guven etkisi degerlendirilmelidir.",
-      social: "Kent merkezlerinde hizla yayilan cagri paylasimlari, bazi gruplarin ayni saat araliginda toplanma mesajlari ve emniyet birimlerine yonelik provokatif soylem artisi tespit edildi. Toplumsal gerilim, kamu duzeni ve dezenformasyon riski birlikte ele alinmalidir.",
-      general: "Yonetim icin hizli bir durum ozetine ihtiyac var. Eldeki verileri sade, net ve guclu basliklarla toparla; olasi riskleri ve one cikan aksiyonlari one cikar.",
-      cross: "Sinir bolgesindeki guvenlik hareketliligi, enerji altyapisina donuk siber baski belirtileri, doviz piyasasinda es zamanli spekulatif dalga ve toplumsal tansiyonu yukselten dijital cagrilar birlikte degerlendirildiginde cok alanli bir baski mimarisi ihtimali olusuyor.",
-    };
-
-    const state = {
-      domain: "savunma",
-      currentPage: "dashboard",
-      currentResult: null,
-      currentSituation: "",
-      sessionToken: "",
-      sessionUser: "",
-      pendingUsername: "",
-      reportCount: 0,
-      historyList: [],
+      savunma: "Sinir hattinda artan IHA hareketliligi, es zamanli elektronik karistirma ve ileri lojistik noktalarda baski isaretleri tespit edildi.",
+      ekonomi: "Piyasa oynakligi, banka likidite baskisi ve sosyal medyada guven kaybi mesaji ayni anda artiyor.",
+      enerji: "Enerji altyapisina yonelik siber baski, tedarik akisinda daralma ve kamuoyu panigi birlikte goruluyor.",
+      dis_politika: "Bolgesel aktorlerin sert aciklamalari, diplomatik temas trafigi ve uluslararasi basin anlatilari ayni anda siklasiyor.",
+      toplumsal_olaylar: "Toplumsal hareketlilik, alan cagrilari ve kamu duzeni baskisi birden fazla sehirde ayni anda artiyor.",
+      genel_chat: "Guncel tablo icin hizli bir stratejik degerlendirme, oncelikler ve merkeze iletilecek ana mesajlar hazirla.",
+      cross: "Savunma, ekonomi, enerji ve toplumsal olay eksenlerinde ayni anda gerilim artiyor; capraz etkileri tek tabloda degerlendir.",
     };
 
     const refs = {
@@ -1604,140 +753,100 @@
       loginBtn: document.getElementById("loginBtn"),
       verifyBtn: document.getElementById("verifyBtn"),
       backBtn: document.getElementById("backBtn"),
-      loginLoad: document.getElementById("loginLoad"),
-      verifyLoad: document.getElementById("verifyLoad"),
       loginStatus: document.getElementById("loginStatus"),
       verifyStatus: document.getElementById("verifyStatus"),
       codeInfo: document.getElementById("codeInfo"),
+      loginLoad: document.getElementById("loginLoad"),
+      verifyLoad: document.getElementById("verifyLoad"),
       userBadge: document.getElementById("userBadge"),
-      stUser: document.getElementById("stUser"),
       stTotal: document.getElementById("stTotal"),
       stCritical: document.getElementById("stCritical"),
       stReport: document.getElementById("stReport"),
-      sidebarDomain: document.getElementById("sidebarDomain"),
-      sidebarCount: document.getElementById("sidebarCount"),
-      sidebarReports: document.getElementById("sidebarReports"),
-      clockBox: document.getElementById("clockBox"),
-      footerClock: document.getElementById("footerClock"),
+      stUser: document.getElementById("stUser"),
       domainList: document.getElementById("domainList"),
       domainToolbar: document.getElementById("domainToolbar"),
+      activeDomainTitle: document.getElementById("activeDomainTitle"),
+      activeDomainDesc: document.getElementById("activeDomainDesc"),
       analysisTitle: document.getElementById("analysisTitle"),
-      analysisSubtitle: document.getElementById("analysisSubtitle"),
+      analysisDesc: document.getElementById("analysisDesc"),
       sitInput: document.getElementById("sitInput"),
       wordCount: document.getElementById("wordCount"),
-      runBtn: document.getElementById("runBtn"),
-      clearBtn: document.getElementById("clearBtn"),
-      downloadBtn: document.getElementById("downloadBtn"),
-      analysisLoad: document.getElementById("analysisLoad"),
       analysisStatus: document.getElementById("analysisStatus"),
+      analysisLoad: document.getElementById("analysisLoad"),
+      runBtn: document.getElementById("runBtn"),
+      injectBtn: document.getElementById("injectBtn"),
+      clearBtn: document.getElementById("clearBtn"),
       resultArea: document.getElementById("resultArea"),
       resultHeading: document.getElementById("resultHeading"),
       resultMeta: document.getElementById("resultMeta"),
-      threatBadge: document.getElementById("threatBadge"),
       summaryText: document.getElementById("summaryText"),
       threatText: document.getElementById("threatText"),
+      riskText: document.getElementById("riskText"),
       timelineText: document.getElementById("timelineText"),
-      impactList: document.getElementById("impactList"),
       scenarioList: document.getElementById("scenarioList"),
       priorityList: document.getElementById("priorityList"),
       institutionList: document.getElementById("institutionList"),
-      criticalLinkText: document.getElementById("criticalLinkText"),
       historyTableBody: document.getElementById("historyTableBody"),
-      historyEmpty: document.getElementById("historyEmpty"),
-      historyTableWrap: document.getElementById("historyTableWrap"),
-      lastSummary: document.getElementById("lastSummary"),
-      logoutBtn: document.getElementById("logoutBtn"),
       loadHistoryBtn: document.getElementById("loadHistoryBtn"),
-      refreshHistoryBtn: document.getElementById("refreshHistoryBtn"),
       centerOverlay: document.getElementById("centerOverlay"),
+      centerNote: document.getElementById("centerNote"),
+      centerStatus: document.getElementById("centerStatus"),
+      centerLoad: document.getElementById("centerLoad"),
+      contactCenterBtn: document.getElementById("contactCenterBtn"),
       closeCenterBtn: document.getElementById("closeCenterBtn"),
       centerBtnLogin: document.getElementById("centerBtnLogin"),
-      centerBtnInline: document.getElementById("centerBtnInline"),
       centerBtnApp: document.getElementById("centerBtnApp"),
-      centerBtnSide: document.getElementById("centerBtnSide"),
       centerBtnDash: document.getElementById("centerBtnDash"),
       centerBtnAnalysis: document.getElementById("centerBtnAnalysis"),
+      logoutBtn: document.getElementById("logoutBtn"),
     };
 
-    function updateClocks() {
-      const now = new Date();
-      const text = now.toLocaleTimeString("tr-TR", { hour12: false });
-      refs.clockBox.textContent = text;
-      refs.footerClock.textContent = text;
+    const state = {
+      domain: "savunma",
+      pendingUsername: "",
+      sessionToken: "",
+      sessionUser: "",
+      currentResult: null,
+      historyList: [],
+      reportCount: 0,
+    };
+
+    const SESSION_KEY = "anatolia_q_session";
+    const API_BASE = location.origin.includes("localhost") ? "https://anatolia-q.onrender.com" : location.origin;
+
+    function setStatus(node, kind, message) {
+      node.textContent = message || "";
+      if (kind) node.dataset.kind = kind;
+      else node.removeAttribute("data-kind");
     }
 
-    function setStatus(target, kind, message) {
-      target.className = "status-box";
-      if (!message) {
-        target.textContent = "";
-        target.removeAttribute("data-kind");
-        return;
-      }
-      target.dataset.kind = kind;
-      target.textContent = message;
-    }
-
-    function setLoading(target, active) {
-      target.classList.toggle("active", active);
+    function setLoading(node, active) {
+      node.classList.toggle("active", !!active);
     }
 
     function safeArray(value) {
       return Array.isArray(value) ? value : [];
     }
 
-    function escapeHtml(text) {
-      return String(text ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    function updateWordCount() {
-      refs.wordCount.textContent = `${refs.sitInput.value.trim().length} karakter`;
-    }
-
-    function normalizeThreat(value) {
-      const raw = String(value || "BILINMEYEN")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^A-Za-z]/g, "")
-        .toUpperCase();
-
-      if (raw.includes("KRITIK")) return "KRITIK";
-      if (raw.includes("YUKSEK")) return "YUKSEK";
-      if (raw.includes("ORTA")) return "ORTA";
-      if (raw.includes("DUSUK")) return "DUSUK";
-      return "BILINMEYEN";
+    function apiHeaders() {
+      const headers = { "Content-Type": "application/json" };
+      if (state.sessionToken) {
+        headers.Authorization = "Bearer " + state.sessionToken;
+        headers["X-Auth-Token"] = state.sessionToken;
+      }
+      return headers;
     }
 
     async function apiFetch(path, options = {}) {
-      const headers = new Headers(options.headers || {});
-      headers.set("Content-Type", "application/json");
-
-      if (state.sessionToken) {
-        headers.set("Authorization", `Bearer ${state.sessionToken}`);
-        headers.set("X-Auth-Token", state.sessionToken);
-      }
-
-      const response = await fetch(`${API_BASE}${path}`, {
+      const response = await fetch(API_BASE + path, {
         ...options,
-        headers,
+        headers: { ...apiHeaders(), ...(options.headers || {}) },
       });
-
       let data = null;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
+      try { data = await response.json(); } catch (_) { data = null; }
       if (!response.ok) {
-        const detail = data && typeof data === "object" ? data.detail || data.message : null;
-        throw new Error(typeof detail === "string" ? detail : `Istek basarisiz (${response.status})`);
+        throw new Error((data && (data.detail || data.message)) || ("Istek basarisiz (" + response.status + ")"));
       }
-
       return data;
     }
 
@@ -1746,219 +855,160 @@
       refs.domainToolbar.replaceChildren();
 
       Object.entries(DOMAINS).forEach(([key, item]) => {
-        const sideButton = document.createElement("button");
-        sideButton.type = "button";
-        sideButton.className = "domain-button";
-        sideButton.dataset.domain = key;
-        sideButton.innerHTML = `<strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.description)}</span>`;
-        sideButton.addEventListener("click", () => setDomain(key, true));
-        refs.domainList.appendChild(sideButton);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "domain-btn";
+        btn.dataset.domain = key;
+        btn.innerHTML = "<strong>" + item.title + "</strong><span>" + item.desc + "</span>";
+        btn.addEventListener("click", () => setDomain(key));
+        refs.domainList.appendChild(btn);
 
-        const toolbarButton = document.createElement("button");
-        toolbarButton.type = "button";
-        toolbarButton.className = "preset-button";
-        toolbarButton.dataset.domain = key;
-        toolbarButton.textContent = item.title;
-        toolbarButton.addEventListener("click", () => setDomain(key, false));
-        refs.domainToolbar.appendChild(toolbarButton);
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = "tab-btn";
+        tab.dataset.domain = key;
+        tab.textContent = item.title;
+        tab.addEventListener("click", () => setDomain(key));
+        refs.domainToolbar.appendChild(tab);
       });
     }
 
-    function setDomain(domain, jumpToAnalysis = false) {
+    function setDomain(domain) {
       if (!DOMAINS[domain]) return;
       state.domain = domain;
-      const selected = DOMAINS[domain];
-
       document.querySelectorAll("[data-domain]").forEach((node) => {
         node.classList.toggle("active", node.dataset.domain === domain);
       });
-
-      refs.sidebarDomain.textContent = selected.title;
-      refs.analysisTitle.textContent = selected.short;
-      refs.analysisSubtitle.textContent = selected.description;
-      refs.sitInput.placeholder = selected.placeholder;
+      refs.activeDomainTitle.textContent = DOMAINS[domain].title;
+      refs.activeDomainDesc.textContent = DOMAINS[domain].desc;
+      refs.analysisTitle.textContent = DOMAINS[domain].title + " Analizi";
+      refs.analysisDesc.textContent = DOMAINS[domain].desc;
+      refs.sitInput.placeholder = DOMAINS[domain].placeholder;
       saveSession();
-
-      if (jumpToAnalysis) switchPage("analysis");
     }
 
     function switchPage(page) {
-      state.currentPage = page;
-      document.querySelectorAll(".page").forEach((panel) => {
-        panel.classList.toggle("active", panel.id === `page-${page}`);
+      document.querySelectorAll(".page").forEach((node) => {
+        node.classList.toggle("active", node.id === "page-" + page);
       });
-      document.querySelectorAll(".nav-button").forEach((button) => {
-        button.classList.toggle("active", button.dataset.page === page);
+      document.querySelectorAll("[data-page]").forEach((node) => {
+        node.classList.toggle("active", node.dataset.page === page);
       });
     }
 
-    function createListItem(className, text) {
-      const item = document.createElement("div");
-      item.className = className;
-      item.textContent = text;
-      return item;
+    function updateWordCount() {
+      refs.wordCount.textContent = refs.sitInput.value.trim().length + " karakter";
+    }
+
+    function updateStats() {
+      refs.stTotal.textContent = String(state.historyList.length);
+      refs.stCritical.textContent = String(state.historyList.filter((item) => {
+        const level = String(item.level || item.tehdit_seviyesi || item.genel_tehdit_seviyesi || "").toUpperCase();
+        return level.includes("KRITIK");
+      }).length);
+      refs.stReport.textContent = String(state.reportCount);
+      refs.stUser.textContent = state.sessionUser || "--";
+      refs.userBadge.textContent = "Kullanici kodu: " + (state.sessionUser || "--");
     }
 
     function renderHistory() {
       refs.historyTableBody.replaceChildren();
-
-      if (!state.historyList.length) {
-        refs.historyEmpty.classList.remove("hidden");
-        refs.historyTableWrap.classList.add("hidden");
-        return;
-      }
-
-      refs.historyEmpty.classList.add("hidden");
-      refs.historyTableWrap.classList.remove("hidden");
-
-      state.historyList.forEach((entry) => {
+      state.historyList.forEach((item) => {
         const row = document.createElement("tr");
-        const result = entry.result || {};
-        const summary = String(result.ozet || entry.summary || "").slice(0, 130) || "Ozet bulunmuyor.";
-        const levelRaw = result.tehdit_seviyesi || result.genel_tehdit_seviyesi || entry.level || "--";
-        const level = normalizeThreat(levelRaw);
-        const time = entry.time || entry.created_at || "--";
-        const domainKey = entry.dom || entry.domain || "savunma";
-        const domainTitle = DOMAINS[domainKey]?.title || domainKey;
-
         const values = [
-          entry.id || result.analysis_id || "--",
-          domainTitle,
-          levelRaw || "--",
-          summary,
-          time,
+          item.id || item.analysis_id || "--",
+          DOMAINS[item.domain || item.dom]?.title || item.domain || item.dom || "--",
+          item.fallback_mode ? "Yedek" : "Canli",
+          item.ozet || item.summary || "Ozet yok",
+          item.timestamp || item.time || item.created_at || "--",
         ];
-
-        values.forEach((value, index) => {
-          const cell = document.createElement("td");
-          cell.textContent = value;
-          if (index === 2 && level === "KRITIK") {
-            cell.style.color = "var(--danger)";
-            cell.style.fontWeight = "700";
-          }
-          row.appendChild(cell);
+        values.forEach((value) => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          row.appendChild(td);
         });
-
         refs.historyTableBody.appendChild(row);
       });
     }
 
-    function updateStats() {
-      const total = state.historyList.length;
-      const critical = state.historyList.filter((item) => {
-        const level = item.result?.tehdit_seviyesi || item.result?.genel_tehdit_seviyesi || item.level;
-        return normalizeThreat(level) === "KRITIK";
-      }).length;
-
-      refs.stTotal.textContent = String(total);
-      refs.stCritical.textContent = String(critical);
-      refs.stReport.textContent = String(state.reportCount);
-      refs.sidebarCount.textContent = String(total);
-      refs.sidebarReports.textContent = String(state.reportCount);
-      refs.stUser.textContent = state.sessionUser || "--";
-      refs.userBadge.textContent = `Kullanici: ${state.sessionUser || "--"}`;
-    }
-
-    function appendHistoryEntry(result) {
-      state.historyList.unshift({
-        id: result.analysis_id || `LOKAL-${Date.now()}`,
-        dom: state.domain,
-        result,
-        time: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
-      });
-      renderHistory();
-      updateStats();
-      saveSession();
-    }
-
-    function clearResult() {
-      refs.resultArea.classList.add("hidden");
-      refs.summaryText.textContent = "";
-      refs.threatText.textContent = "";
-      refs.timelineText.textContent = "";
-      refs.resultHeading.textContent = "Analiz sonucu hazir";
-      refs.resultMeta.textContent = "Analiz ID ve alan bilgisi burada gosterilir.";
-      refs.threatBadge.dataset.level = "BILINMEYEN";
-      refs.threatBadge.textContent = "Tehdit seviyesi: --";
-      refs.impactList.replaceChildren();
-      refs.scenarioList.replaceChildren();
-      refs.priorityList.replaceChildren();
-      refs.institutionList.replaceChildren();
-      refs.criticalLinkText.textContent = "Bu analiz icin kritik baglanti bilgisi bulunmuyor.";
-      refs.downloadBtn.disabled = true;
-    }
-
     function renderResult(result) {
       state.currentResult = result;
-      const domainTitle = DOMAINS[state.domain]?.title || state.domain;
-      const threatRaw = result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "BILINMEYEN";
-      const threat = normalizeThreat(threatRaw);
-
       refs.resultArea.classList.remove("hidden");
-      refs.resultHeading.textContent = `${domainTitle} analizi hazir`;
-      refs.resultMeta.textContent = `ID: ${result.analysis_id || "--"} | Alan: ${domainTitle}${result.fallback_mode ? " | Mod: Yedek analiz" : ""}`;
-      refs.threatBadge.dataset.level = threat;
-      refs.threatBadge.textContent = `Tehdit seviyesi: ${threatRaw}`;
+      refs.resultHeading.textContent = DOMAINS[state.domain].title + " sonucu";
+      refs.resultMeta.textContent = "ID: " + (result.analysis_id || "--") + (result.fallback_mode ? " | Mod: Yedek analiz" : "");
       refs.summaryText.textContent = result.ozet || "Ozet bulunmuyor.";
-      refs.threatText.textContent = result.risk_analizi || "Risk analizi bulunmuyor.";
-      refs.timelineText.textContent = result.zaman_cercevesi || "Zaman cercevesi bulunmuyor.";
-      refs.criticalLinkText.textContent = result.kritik_baglanti || "Bu analiz icin kritik baglanti bilgisi bulunmuyor.";
-
-      refs.impactList.replaceChildren();
-      safeArray(result.etki_alanlari).forEach((item) => {
-        refs.impactList.appendChild(createListItem("impact-item", item));
-      });
+      refs.threatText.textContent = result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "Bilinmiyor";
+      refs.riskText.textContent = result.tehdit_analizi || result.risk_analizi || "Analiz bulunmuyor.";
+      refs.timelineText.textContent = result.zaman_cercevesi || "Zaman cercevesi yok.";
 
       refs.scenarioList.replaceChildren();
-      safeArray(result.senaryo_analizi).forEach((item) => {
-        refs.scenarioList.appendChild(createListItem("scenario-item", item));
+      safeArray(result.senaryolar || result.senaryo_analizi).forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "result-item";
+        if (typeof item === "string") block.textContent = item;
+        else {
+          const pieces = [item.baslik || "", item.olasilik ? ("Olasilik: " + item.olasilik) : "", item.aciklama || "", item.aksiyon ? ("Aksiyon: " + item.aksiyon) : ""];
+          block.textContent = pieces.filter(Boolean).join(" | ");
+        }
+        refs.scenarioList.appendChild(block);
       });
 
       refs.priorityList.replaceChildren();
-      safeArray(result.onerilen_aksiyonlar).forEach((item) => {
-        refs.priorityList.appendChild(createListItem("scenario-item", item));
-      });
+      const priority = document.createElement("div");
+      priority.className = "result-item";
+      priority.textContent = result.oncelikli_oneri || "Oncelikli oneri bulunmuyor.";
+      refs.priorityList.appendChild(priority);
 
       refs.institutionList.replaceChildren();
       safeArray(result.etkilenen_kurumlar).forEach((item) => {
-        refs.institutionList.appendChild(createListItem("institution-item", item));
+        const block = document.createElement("div");
+        block.className = "result-item";
+        block.textContent = item;
+        refs.institutionList.appendChild(block);
       });
+    }
 
-      refs.lastSummary.textContent = result.ozet || "Son sonuc ozeti mevcut degil.";
-      refs.downloadBtn.disabled = false;
+    async function loadHistory(silent = false) {
+      if (!state.sessionToken) return;
+      if (!silent) setStatus(refs.analysisStatus, "info", "Gecmis yenileniyor...");
+      try {
+        const data = await apiFetch("/api/history", { method: "GET" });
+        state.historyList = Array.isArray(data) ? data : [];
+        renderHistory();
+        updateStats();
+        saveSession();
+        if (!silent) setStatus(refs.analysisStatus, "success", "Gecmis guncellendi.");
+      } catch (error) {
+        if (!silent) setStatus(refs.analysisStatus, "warn", error.message || "Gecmis yuklenemedi.");
+      }
     }
 
     function saveSession() {
-      const payload = {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
         token: state.sessionToken,
         user: state.sessionUser,
         domain: state.domain,
         reportCount: state.reportCount,
-      };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    }
-
-    function clearSessionStorage() {
-      localStorage.removeItem(SESSION_KEY);
+      }));
     }
 
     function restoreSession() {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) return false;
-        const payload = JSON.parse(raw);
-        if (!payload || !payload.token) return false;
-        state.sessionToken = payload.token || "";
-        state.sessionUser = payload.user || "";
-        state.domain = payload.domain || "savunma";
-        state.reportCount = Number(payload.reportCount || 0);
+        const data = JSON.parse(raw);
+        if (!data || !data.token) return false;
+        state.sessionToken = data.token || "";
+        state.sessionUser = data.user || "";
+        state.domain = data.domain || "savunma";
+        state.reportCount = Number(data.reportCount || 0);
         refs.loginScreen.classList.add("hidden");
         refs.mainSystem.classList.remove("hidden");
         setDomain(state.domain);
         updateStats();
         return true;
-      } catch {
-        clearSessionStorage();
+      } catch (_) {
+        localStorage.removeItem(SESSION_KEY);
         return false;
       }
     }
@@ -1973,33 +1023,32 @@
       setStatus(refs.codeInfo, "", "");
       setLoading(refs.loginLoad, false);
       setLoading(refs.verifyLoad, false);
-      refs.loginBtn.disabled = false;
-      refs.verifyBtn.disabled = false;
     }
 
     async function doLogin() {
-      const username = refs.loginUser.value.trim();
+      const username = refs.loginUser.value.trim().replace(/\D/g, "").slice(0, 6);
+      refs.loginUser.value = username;
       const password = refs.loginPass.value;
-
       if (!username || !password) {
-        setStatus(refs.loginStatus, "error", "Kullanici adi ve sifre zorunludur.");
+        setStatus(refs.loginStatus, "error", "Kullanici kodu ve sifre zorunludur.");
         return;
       }
-
+      if (username.length !== 6) {
+        setStatus(refs.loginStatus, "error", "Kullanici kodu 6 haneli olmalidir.");
+        return;
+      }
       refs.loginBtn.disabled = true;
       setLoading(refs.loginLoad, true);
       setStatus(refs.loginStatus, "", "");
-
       try {
         const data = await apiFetch("/api/login", {
           method: "POST",
           body: JSON.stringify({ username, password }),
         });
-
         state.pendingUsername = username;
         refs.step1.classList.add("hidden");
         refs.step2.classList.remove("hidden");
-        setStatus(refs.codeInfo, "info", data.message || `Dogrulama kodu ${data.email || "kayitli e-posta adresine"} gonderildi.`);
+        setStatus(refs.codeInfo, "info", data.message || "Dogrulama kodu gonderildi.");
         refs.loginCode.focus();
       } catch (error) {
         setStatus(refs.loginStatus, "error", error.message || "Giris basarisiz.");
@@ -2012,33 +1061,27 @@
     async function doVerify() {
       const code = refs.loginCode.value.trim().replace(/\D/g, "");
       refs.loginCode.value = code;
-
       if (code.length !== 6) {
         setStatus(refs.verifyStatus, "error", "6 haneli dogrulama kodunu girin.");
         return;
       }
-
       refs.verifyBtn.disabled = true;
       setLoading(refs.verifyLoad, true);
       setStatus(refs.verifyStatus, "", "");
-
       try {
         const data = await apiFetch("/api/verify", {
           method: "POST",
           body: JSON.stringify({ username: state.pendingUsername, code }),
         });
-
         state.sessionToken = data.token || "";
         state.sessionUser = data.username || data.user || state.pendingUsername;
         saveSession();
-
         refs.loginScreen.classList.add("hidden");
         refs.mainSystem.classList.remove("hidden");
-        refs.stUser.textContent = state.sessionUser;
-        refs.userBadge.textContent = `Kullanici: ${state.sessionUser}`;
+        setDomain(state.domain);
+        updateStats();
         switchPage("dashboard");
         await loadHistory(true);
-        updateStats();
       } catch (error) {
         setStatus(refs.verifyStatus, "error", error.message || "Dogrulama basarisiz.");
       } finally {
@@ -2047,60 +1090,34 @@
       }
     }
 
-    async function loadHistory(silent = false) {
-      if (!state.sessionToken) return;
-
-      if (!silent) setStatus(refs.analysisStatus, "info", "Sunucu gecmisi yenileniyor...");
-
-      try {
-        const data = await apiFetch("/api/history", { method: "GET" });
-        const history = Array.isArray(data) ? data : safeArray(data.history);
-        state.historyList = history.map((item) => ({
-          id: item.id || item.analysis_id || "--",
-          dom: item.domain || item.dom || item.module || "savunma",
-          level: item.level,
-          summary: item.summary,
-          time: item.time || item.created_at || "--",
-          result: item.result || item,
-          created_at: item.created_at,
-        }));
-        renderHistory();
-        updateStats();
-        saveSession();
-        if (!silent) setStatus(refs.analysisStatus, "success", "Sunucu gecmisi guncellendi.");
-      } catch (error) {
-        if (!silent) setStatus(refs.analysisStatus, "warn", error.message || "Gecmis yuklenemedi.");
-      }
-    }
-
     async function runAnalysis() {
       const situation = refs.sitInput.value.trim();
-
       if (!situation) {
         setStatus(refs.analysisStatus, "error", "Durum bildirimi bos birakilamaz.");
         return;
       }
-
-      state.currentSituation = situation;
       refs.runBtn.disabled = true;
       setLoading(refs.analysisLoad, true);
       setStatus(refs.analysisStatus, "", "");
-
       try {
         const result = await apiFetch("/api/analyze", {
           method: "POST",
-          body: JSON.stringify({
-            domain: state.domain,
-            situation,
-          }),
+          body: JSON.stringify({ domain: state.domain, situation }),
         });
-
         renderResult(result);
-        appendHistoryEntry(result);
+        state.historyList.unshift({
+          id: result.analysis_id,
+          domain: state.domain,
+          ozet: result.ozet || "",
+          timestamp: result.timestamp || "--",
+          fallback_mode: !!result.fallback_mode,
+          level: result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "",
+        });
+        renderHistory();
+        updateStats();
+        saveSession();
         switchPage("analysis");
-        setStatus(refs.analysisStatus, result.fallback_mode ? "warn" : "success", result.fallback_mode
-          ? "AI servis sinirinda yedek analiz kullanildi."
-          : "Analiz basariyla uretildi.");
+        setStatus(refs.analysisStatus, result.fallback_mode ? "warn" : "success", result.fallback_mode ? "Yedek analiz uretildi." : "Analiz basariyla uretildi.");
       } catch (error) {
         setStatus(refs.analysisStatus, "error", error.message || "Analiz uretilemedi.");
       } finally {
@@ -2109,73 +1126,27 @@
       }
     }
 
-    function clearAnalysisInput() {
-      refs.sitInput.value = "";
-      updateWordCount();
-      setStatus(refs.analysisStatus, "", "");
-    }
-
-    function generateReportDocument(result) {
-      const domainTitle = DOMAINS[state.domain]?.title || state.domain;
-      const sections = [
-        ["Analiz ID", result.analysis_id || "--"],
-        ["Alan", domainTitle],
-        ["Tehdit Seviyesi", result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "--"],
-        ["Yedek Mod", result.fallback_mode ? "Evet" : "Hayir"],
-        ["Ozet", result.ozet || ""],
-        ["Risk Analizi", result.risk_analizi || ""],
-        ["Zaman Cercevesi", result.zaman_cercevesi || ""],
-        ["Kritik Baglanti", result.kritik_baglanti || ""],
-      ];
-
-      const listBlock = (title, values) => `
-        <h3>${escapeHtml(title)}</h3>
-        <ul>${safeArray(values).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      `;
-
-      return `
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>T.C. ANATOLIA-Q Raporu</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 28px; color: #111827; }
-              h1 { margin-bottom: 12px; }
-              h2 { margin-top: 24px; }
-              h3 { margin-top: 20px; }
-              p, li { line-height: 1.6; }
-              .meta { margin-bottom: 18px; padding: 16px; background: #f3f6fb; border-radius: 12px; }
-            </style>
-          </head>
-          <body>
-            <h1>T.C. ANATOLIA-Q Analiz Raporu</h1>
-            <div class="meta">
-              ${sections.map(([title, value]) => `<p><strong>${escapeHtml(title)}:</strong> ${escapeHtml(value)}</p>`).join("")}
-            </div>
-            ${listBlock("Etki Alanlari", result.etki_alanlari)}
-            ${listBlock("Senaryo Analizi", result.senaryo_analizi)}
-            ${listBlock("Onerilen Aksiyonlar", result.onerilen_aksiyonlar)}
-            ${listBlock("Etkilenen Kurumlar", result.etkilenen_kurumlar)}
-          </body>
-        </html>
-      `;
-    }
-
-    function downloadReport() {
-      if (!state.currentResult) return;
-      const content = generateReportDocument(state.currentResult);
-      const blob = new Blob([content], { type: "application/msword;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `TC_ANATOLIA_Q_${state.currentResult.analysis_id || "rapor"}_${state.domain}_${new Date().toISOString().slice(0, 10)}.doc`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
-      state.reportCount += 1;
-      updateStats();
-      saveSession();
+    async function contactCenter() {
+      if (!state.sessionToken) {
+        setStatus(refs.centerStatus, "error", "Once giris yapmaniz gerekiyor.");
+        return;
+      }
+      refs.contactCenterBtn.disabled = true;
+      setLoading(refs.centerLoad, true);
+      setStatus(refs.centerStatus, "", "");
+      try {
+        const data = await apiFetch("/api/contact-center", {
+          method: "POST",
+          body: JSON.stringify({ token: state.sessionToken, note: refs.centerNote.value.trim() }),
+        });
+        setStatus(refs.centerStatus, "success", data.message || "Merkez iletisim talebi gonderildi.");
+        refs.centerNote.value = "";
+      } catch (error) {
+        setStatus(refs.centerStatus, "error", error.message || "Merkez bildirimi gonderilemedi.");
+      } finally {
+        refs.contactCenterBtn.disabled = false;
+        setLoading(refs.centerLoad, false);
+      }
     }
 
     function logout() {
@@ -2185,44 +1156,27 @@
       state.historyList = [];
       state.currentResult = null;
       state.reportCount = 0;
-      clearSessionStorage();
-      clearResult();
-      renderHistory();
-      updateStats();
+      localStorage.removeItem(SESSION_KEY);
       refs.loginUser.value = "";
       refs.loginPass.value = "";
       refs.loginCode.value = "";
+      refs.resultArea.classList.add("hidden");
       refs.mainSystem.classList.add("hidden");
       refs.loginScreen.classList.remove("hidden");
+      renderHistory();
+      updateStats();
       resetLoginFlow();
     }
 
-    function openCenterPanel() {
+    function openCenter() {
       refs.centerOverlay.classList.add("open");
       refs.centerOverlay.setAttribute("aria-hidden", "false");
+      setStatus(refs.centerStatus, "", "");
     }
 
-    function closeCenterPanel() {
+    function closeCenter() {
       refs.centerOverlay.classList.remove("open");
       refs.centerOverlay.setAttribute("aria-hidden", "true");
-    }
-
-    function bindCenterButtons() {
-      [
-        refs.centerBtnLogin,
-        refs.centerBtnInline,
-        refs.centerBtnApp,
-        refs.centerBtnSide,
-        refs.centerBtnDash,
-        refs.centerBtnAnalysis,
-      ].forEach((button) => {
-        button.addEventListener("click", openCenterPanel);
-      });
-
-      refs.closeCenterBtn.addEventListener("click", closeCenterPanel);
-      refs.centerOverlay.addEventListener("click", (event) => {
-        if (event.target === refs.centerOverlay) closeCenterPanel();
-      });
     }
 
     function bindEvents() {
@@ -2230,56 +1184,47 @@
       refs.verifyBtn.addEventListener("click", doVerify);
       refs.backBtn.addEventListener("click", resetLoginFlow);
       refs.runBtn.addEventListener("click", runAnalysis);
-      refs.clearBtn.addEventListener("click", clearAnalysisInput);
-      refs.downloadBtn.addEventListener("click", downloadReport);
-      refs.logoutBtn.addEventListener("click", logout);
-      refs.loadHistoryBtn.addEventListener("click", () => loadHistory());
-      refs.refreshHistoryBtn.addEventListener("click", () => loadHistory());
-      refs.sitInput.addEventListener("input", updateWordCount);
-
-      refs.loginUser.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") doLogin();
+      refs.injectBtn.addEventListener("click", () => {
+        refs.sitInput.value = PRESETS[state.domain] || PRESETS.cross;
+        updateWordCount();
       });
-      refs.loginPass.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") doLogin();
+      refs.clearBtn.addEventListener("click", () => {
+        refs.sitInput.value = "";
+        updateWordCount();
+        setStatus(refs.analysisStatus, "", "");
+      });
+      refs.loadHistoryBtn.addEventListener("click", () => loadHistory());
+      refs.contactCenterBtn.addEventListener("click", contactCenter);
+      refs.closeCenterBtn.addEventListener("click", closeCenter);
+      refs.centerOverlay.addEventListener("click", (event) => {
+        if (event.target === refs.centerOverlay) closeCenter();
+      });
+      refs.centerBtnLogin.addEventListener("click", openCenter);
+      refs.centerBtnApp.addEventListener("click", openCenter);
+      refs.centerBtnDash.addEventListener("click", openCenter);
+      refs.centerBtnAnalysis.addEventListener("click", openCenter);
+      refs.logoutBtn.addEventListener("click", logout);
+      refs.loginUser.addEventListener("input", () => {
+        refs.loginUser.value = refs.loginUser.value.replace(/\D/g, "").slice(0, 6);
       });
       refs.loginCode.addEventListener("input", () => {
-        refs.loginCode.value = refs.loginCode.value.replace(/\D/g, "");
+        refs.loginCode.value = refs.loginCode.value.replace(/\D/g, "").slice(0, 6);
       });
-      refs.loginCode.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") doVerify();
-      });
-
-      document.querySelectorAll("[data-page]").forEach((button) => {
-        button.addEventListener("click", () => switchPage(button.dataset.page));
-      });
-
-      document.querySelectorAll("[data-jump]").forEach((button) => {
-        button.addEventListener("click", () => switchPage(button.dataset.jump));
-      });
-
-      document.querySelectorAll("[data-preset]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const preset = PRESETS[button.dataset.preset];
-          if (!preset) return;
-          refs.sitInput.value = preset;
-          updateWordCount();
-        });
-      });
+      refs.sitInput.addEventListener("input", updateWordCount);
+      refs.loginUser.addEventListener("keydown", (event) => { if (event.key === "Enter") doLogin(); });
+      refs.loginPass.addEventListener("keydown", (event) => { if (event.key === "Enter") doLogin(); });
+      refs.loginCode.addEventListener("keydown", (event) => { if (event.key === "Enter") doVerify(); });
+      document.querySelectorAll("[data-page]").forEach((btn) => btn.addEventListener("click", () => switchPage(btn.dataset.page)));
+      document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => switchPage(btn.dataset.jump)));
     }
 
     function boot() {
       buildDomainControls();
-      setDomain(state.domain);
       bindEvents();
-      bindCenterButtons();
-      updateClocks();
+      setDomain(state.domain);
       updateWordCount();
-      clearResult();
       renderHistory();
       updateStats();
-      setInterval(updateClocks, 1000);
-
       if (restoreSession()) {
         loadHistory(true);
       }
