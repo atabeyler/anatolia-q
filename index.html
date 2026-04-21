@@ -1,780 +1,1979 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ANATOLIA-Q | Ulusal Karar Destek Sistemi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:#080c14; --bg2:#0b1120; --bg3:#0f1829;
-  --border:#162a45; --border2:#1e3d63;
-  --accent:#00b4d8; --accent2:#0077b6;
-  --gold:#e9c46a; --green:#2a9d8f;
-  --red:#e63946; --orange:#f4a261;
-  --text:#dde8f0; --text2:#8aa5c0; --text3:#3d5a78;
-  --grid:rgba(0,180,216,0.03);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;display:flex;flex-direction:column;height:100vh;}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANATOLIA-Q | Ulusal Karar Destek Sistemi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06111d;
+      --bg-soft: rgba(8, 18, 31, 0.84);
+      --panel: rgba(10, 24, 38, 0.9);
+      --panel-2: rgba(9, 20, 34, 0.86);
+      --line: rgba(103, 152, 202, 0.22);
+      --line-strong: rgba(110, 200, 255, 0.34);
+      --text: #eef6ff;
+      --text-soft: #a1b9cf;
+      --text-dim: #6d859c;
+      --accent: #6ec8ff;
+      --accent-2: #2d98f0;
+      --gold: #f1cf7a;
+      --green: #66cb8e;
+      --orange: #f0a95b;
+      --red: #f07182;
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+      --content: 1320px;
+    }
 
-/* ── LOGIN EKRANI ── */
-#loginScreen {
-  position:fixed;inset:0;z-index:1000;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--bg);
-}
-.login-box {
-  width:400px;
-  background:var(--bg2);
-  border:1px solid var(--border2);
-  padding:40px;
-  position:relative;
-}
-.login-box::before {
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--accent2),var(--accent));
-}
-.login-logo {
-  font-family:'Orbitron',monospace;
-  font-size:24px;font-weight:900;
-  letter-spacing:6px;color:var(--accent);
-  text-shadow:0 0 30px rgba(0,180,216,0.4);
-  text-align:center;margin-bottom:4px;
-}
-.login-sub {
-  font-family:'Share Tech Mono';
-  font-size:9px;letter-spacing:2px;
-  color:var(--text3);text-align:center;
-  margin-bottom:32px;
-}
-.login-step-title {
-  font-family:'Share Tech Mono';
-  font-size:10px;letter-spacing:3px;
-  color:var(--accent);margin-bottom:20px;
-  display:flex;align-items:center;gap:8px;
-}
-.login-step-title::before{content:'';width:3px;height:10px;background:var(--accent);}
-.login-field {margin-bottom:14px;}
-.login-label {
-  font-family:'Share Tech Mono';font-size:10px;
-  letter-spacing:2px;color:var(--text3);
-  display:block;margin-bottom:6px;
-}
-.login-input {
-  width:100%;background:var(--bg3);
-  border:1px solid var(--border);
-  color:var(--text);font-family:'Rajdhani',sans-serif;
-  font-size:15px;padding:10px 14px;
-  outline:none;transition:border-color 0.2s;
-  letter-spacing:1px;
-}
-.login-input:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(0,180,216,0.1);}
-.login-input::placeholder{color:var(--text3);}
-.login-btn {
-  width:100%;padding:12px;
-  background:var(--accent);border:none;
-  color:var(--bg);font-family:'Rajdhani',sans-serif;
-  font-size:14px;font-weight:700;
-  letter-spacing:3px;cursor:pointer;
-  margin-top:8px;transition:all 0.2s;
-  text-transform:uppercase;
-}
-.login-btn:hover{background:#00d4ff;}
-.login-btn:disabled{opacity:0.5;cursor:not-allowed;}
-.login-err {
-  background:rgba(230,57,70,0.08);
-  border:1px solid var(--red);
-  padding:10px 14px;color:var(--red);
-  font-family:'Share Tech Mono';font-size:11px;
-  margin-top:12px;display:none;
-}
-.login-info {
-  background:rgba(0,180,216,0.06);
-  border:1px solid var(--border);
-  padding:10px 14px;color:var(--text2);
-  font-family:'Share Tech Mono';font-size:11px;
-  margin-top:12px;display:none;
-  line-height:1.5;
-}
-.code-hint{
-  font-size:12px;color:var(--text3);
-  text-align:center;margin-top:10px;
-  font-family:'Share Tech Mono';
-}
-.back-btn{
-  background:none;border:none;
-  color:var(--text3);font-family:'Share Tech Mono';
-  font-size:10px;letter-spacing:1px;
-  cursor:pointer;margin-top:14px;
-  width:100%;text-align:center;
-  padding:6px;
-}
-.back-btn:hover{color:var(--accent);}
+    * {
+      box-sizing: border-box;
+    }
 
-/* ── LOGIN LOADING ── */
-.login-load{
-  height:2px;background:var(--border);
-  overflow:hidden;display:none;margin-top:12px;
-}
-.login-load.on{display:block;}
-.login-load-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--accent2),var(--accent),var(--accent2));
-  background-size:200%;
-  animation:lmove 1.4s linear infinite;
-  width:100%;
-}
-@keyframes lmove{0%{background-position:0%}100%{background-position:200%}}
+    html {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(45, 152, 240, 0.18), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(241, 207, 122, 0.1), transparent 24%),
+        linear-gradient(180deg, #07111e 0%, #040a13 100%);
+    }
 
-/* ── ANA SİSTEM ── */
-#mainSystem{display:none;flex-direction:column;height:100vh;}
-header{position:relative;z-index:10;background:rgba(8,12,20,0.97);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.logo{display:flex;align-items:center;gap:14px;}
-.logo-mark{width:38px;height:38px;position:relative;display:flex;align-items:center;justify-content:center;}
-.logo-mark::before{content:'';position:absolute;inset:0;border:2px solid var(--accent);transform:rotate(45deg);animation:lp 4s ease-in-out infinite;}
-.logo-mark::after{content:'';position:absolute;width:16px;height:16px;background:var(--accent);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);animation:lp 4s ease-in-out infinite reverse;}
-@keyframes lp{0%,100%{opacity:1}50%{opacity:0.5}}
-.logo-name{font-family:'Orbitron',monospace;font-size:17px;font-weight:900;letter-spacing:6px;color:var(--accent);text-shadow:0 0 30px rgba(0,180,216,0.4);}
-.logo-tag{font-family:'Share Tech Mono';font-size:9px;letter-spacing:2px;color:var(--text3);}
-.header-nav{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);padding:3px;}
-.nav-btn{padding:6px 20px;background:transparent;border:none;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
-.nav-btn:hover{color:var(--text);}
-.nav-btn.active{background:var(--accent);color:var(--bg);}
-.header-right{display:flex;align-items:center;gap:14px;}
-.user-badge{display:flex;align-items:center;gap:8px;padding:4px 12px;border:1px solid var(--border);background:rgba(0,180,216,0.04);}
-.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
-.user-name{font-family:'Share Tech Mono';font-size:11px;color:var(--accent);}
-.logout-btn{background:none;border:1px solid var(--border);color:var(--text3);font-family:'Share Tech Mono';font-size:10px;padding:5px 12px;cursor:pointer;letter-spacing:1px;}
-.logout-btn:hover{border-color:var(--red);color:var(--red);}
-.sys-clock{font-family:'Share Tech Mono';font-size:12px;color:var(--accent);letter-spacing:1px;}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Chakra Petch", sans-serif;
+      background:
+        linear-gradient(rgba(82, 125, 170, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(82, 125, 170, 0.05) 1px, transparent 1px);
+      background-size: 44px 44px;
+      overflow-x: hidden;
+    }
 
-main{display:flex;flex:1;overflow:hidden;}
-.sidebar{width:200px;min-width:200px;background:rgba(11,17,32,0.98);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px 0;gap:2px;}
-.sidebar-sec{padding:10px 16px 4px;font-family:'Share Tech Mono';font-size:9px;letter-spacing:3px;color:var(--text3);margin-top:4px;}
-.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;font-weight:600;font-size:13px;color:var(--text2);}
-.sidebar-item:hover{background:rgba(0,180,216,0.04);color:var(--text);}
-.sidebar-item.active{border-left-color:var(--accent);color:var(--accent);background:rgba(0,180,216,0.06);}
-.si-icon{font-size:15px;width:18px;text-align:center;}
-.sidebar-div{height:1px;background:var(--border);margin:8px 16px;}
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(110, 200, 255, 0.08), transparent 24%),
+        radial-gradient(circle at 80% 14%, rgba(241, 207, 122, 0.07), transparent 22%),
+        radial-gradient(circle at 50% 100%, rgba(45, 152, 240, 0.16), transparent 42%);
+      z-index: 0;
+    }
 
-.content{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:20px;}
-.card{background:rgba(11,17,32,0.95);border:1px solid var(--border);padding:18px 22px;}
-.card-title{font-family:'Share Tech Mono';font-size:10px;letter-spacing:3px;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
-.card-title::before{content:'';width:3px;height:11px;background:var(--accent);box-shadow:0 0 8px var(--accent);}
-.page{display:none;flex-direction:column;gap:20px;}
-.page.active{display:flex;}
-.page-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;letter-spacing:3px;color:var(--text);}
-.page-sub{font-size:13px;color:var(--text2);margin-top:3px;}
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
 
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.stat-card{background:var(--bg2);border:1px solid var(--border);padding:14px 16px;}
-.stat-lbl{font-family:'Share Tech Mono';font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:6px;}
-.stat-val{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;color:var(--accent);}
-.stat-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+    button {
+      cursor: pointer;
+    }
 
-.quick-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
-.quick-btn{padding:16px 8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;}
-.quick-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,180,216,0.06);}
-.quick-btn .qi{font-size:20px;display:block;margin-bottom:6px;}
+    .login-shell,
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: min(calc(100% - 28px), var(--content));
+      margin: 14px auto;
+    }
 
-.domain-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
-.domain-btn{padding:12px 6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;}
-.domain-btn:hover{border-color:var(--accent);color:var(--text);}
-.domain-btn.active{border-color:var(--accent);background:rgba(0,180,216,0.1);color:var(--accent);}
-.domain-btn.cross.active{border-color:var(--gold);background:rgba(233,196,106,0.08);color:var(--gold);}
-.di{font-size:18px;display:block;margin-bottom:4px;}
+    .login-shell {
+      min-height: calc(100vh - 28px);
+      display: grid;
+      grid-template-columns: minmax(280px, 1.05fr) minmax(320px, 0.95fr);
+      gap: 18px;
+      align-items: stretch;
+    }
 
-textarea.sit-input{width:100%;min-height:110px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;line-height:1.6;padding:12px 14px;outline:none;resize:vertical;transition:border-color 0.2s;}
-textarea.sit-input:focus{border-color:var(--accent);}
-textarea.sit-input::placeholder{color:var(--text3);}
+    .hero-panel,
+    .auth-panel,
+    .app-frame {
+      border: 1px solid var(--line);
+      background: rgba(7, 18, 31, 0.84);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
 
-.btn-row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;}
-.btn{padding:10px 24px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.2s;border:1px solid;text-transform:uppercase;}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--bg);}
-.btn-primary:hover{background:#00d4ff;}
-.btn-primary:disabled{opacity:0.45;cursor:not-allowed;}
-.btn-ghost{background:transparent;border-color:var(--border);color:var(--text2);}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
-.btn-gold{background:transparent;border-color:var(--gold);color:var(--gold);}
-.btn-gold:hover{background:rgba(233,196,106,0.08);}
-.btn-sm{padding:6px 14px;font-size:11px;}
-.domain-lbl{font-family:'Share Tech Mono';font-size:10px;color:var(--text3);letter-spacing:1px;}
+    .hero-panel {
+      border-radius: 34px;
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
 
-.load-bar{width:100%;height:2px;background:var(--border);overflow:hidden;display:none;margin:4px 0;}
-.load-bar.on{display:block;}
-.load-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent),var(--accent2));background-size:200%;animation:lmove 1.4s linear infinite;width:100%;}
-.err-box{background:rgba(230,57,70,0.07);border:1px solid var(--red);padding:10px 14px;color:var(--red);font-family:'Share Tech Mono';font-size:11px;display:none;}
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      bottom: -90px;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(45, 152, 240, 0.22), transparent 66%);
+    }
 
-#resultArea{display:none;flex-direction:column;gap:18px;}
-.threat-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:3px;border:2px solid;}
-.t-KRİTİK{border-color:var(--red);color:var(--red);background:rgba(230,57,70,0.08);}
-.t-YÜKSEK{border-color:var(--orange);color:var(--orange);background:rgba(244,162,97,0.08);}
-.t-ORTA{border-color:var(--gold);color:var(--gold);background:rgba(233,196,106,0.08);}
-.t-DÜŞÜK{border-color:var(--green);color:var(--green);background:rgba(42,157,143,0.08);}
-.ozet-block{font-size:15px;line-height:1.7;color:var(--text);padding:14px 16px;background:var(--bg3);border-left:3px solid var(--accent);margin-top:10px;}
-.threat-body{font-size:14px;line-height:1.7;color:var(--text2);}
+    .auth-panel {
+      border-radius: 34px;
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
-.scenarios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
-.scen-card{background:var(--bg3);border:1px solid var(--border);padding:14px 16px;position:relative;overflow:hidden;}
-.scen-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;}
-.scen-card.high::before{background:var(--red);}
-.scen-card.medium::before{background:var(--orange);}
-.scen-card.low::before{background:var(--green);}
-.scen-num{font-family:'Share Tech Mono';font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:4px;}
-.scen-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.ol-tag{display:inline-block;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:1px;font-family:'Share Tech Mono';margin-bottom:8px;}
-.ol-tag.high{background:rgba(230,57,70,0.12);color:var(--red);}
-.ol-tag.medium{background:rgba(244,162,97,0.12);color:var(--orange);}
-.ol-tag.low{background:rgba(42,157,143,0.12);color:var(--green);}
-.scen-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px;}
-.scen-aksiyon{font-size:12px;color:var(--accent);font-weight:600;line-height:1.5;padding-top:8px;border-top:1px solid var(--border);}
-.scen-aksiyon::before{content:'→ ';}
+    .mono,
+    .section-kicker,
+    .metric-label,
+    .pill,
+    .soft-label,
+    .status-chip {
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
 
-.alan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px;}
-.alan-card{background:var(--bg3);border:1px solid var(--border);padding:10px 14px;}
-.alan-name{font-family:'Share Tech Mono';font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:3px;}
-.alan-etki{font-size:13px;font-weight:700;margin-bottom:3px;}
-.alan-etki.yüksek{color:var(--red);}
-.alan-etki.orta{color:var(--orange);}
-.alan-etki.düşük{color:var(--green);}
-.alan-desc{font-size:12px;color:var(--text2);line-height:1.4;}
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent);
+      font-size: 11px;
+      margin-bottom: 16px;
+    }
 
-.oneri-box{background:linear-gradient(135deg,rgba(0,180,216,0.04),rgba(0,119,182,0.04));border:1px solid var(--accent2);padding:14px 18px;}
-.oneri-text{font-size:15px;font-weight:600;color:var(--text);line-height:1.6;}
-.kurum-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-.kurum-tag{padding:3px 12px;border:1px solid var(--border);font-size:11px;color:var(--text2);font-family:'Share Tech Mono';letter-spacing:1px;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .section-kicker::before {
+      content: "";
+      width: 34px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
 
-.hist-table{width:100%;border-collapse:collapse;}
-.hist-table th{font-family:'Share Tech Mono';font-size:9px;letter-spacing:2px;color:var(--text3);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg3);}
-.hist-table td{padding:9px 12px;border-bottom:1px solid rgba(22,42,69,0.5);font-size:12px;color:var(--text2);}
-.hist-table tr:hover td{background:rgba(0,180,216,0.03);color:var(--text);}
+    .hero-title {
+      margin: 0 0 14px;
+      max-width: 14ch;
+      font-size: clamp(34px, 6vw, 72px);
+      line-height: 0.94;
+      font-weight: 700;
+    }
 
-::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);}
+    .hero-copy,
+    .copy,
+    .muted {
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
 
-footer{position:relative;z-index:10;height:28px;background:rgba(8,12,20,0.97);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:28px;flex-shrink:0;}
-.f-item{font-family:'Share Tech Mono';font-size:9px;color:var(--text3);letter-spacing:1px;}
-.f-item span{color:var(--accent);}
-</style>
+    .hero-copy {
+      margin: 0;
+      max-width: 58ch;
+      font-size: 17px;
+    }
+
+    .hero-grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .hero-card,
+    .metric,
+    .panel,
+    .sidebar-card,
+    .result-card,
+    .scenario-card,
+    .impact-card,
+    .history-card,
+    .institution-tag {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .hero-card {
+      padding: 16px;
+      border-radius: var(--radius-md);
+    }
+
+    .hero-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      border: 1px solid var(--line-strong);
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(110, 200, 255, 0.22), rgba(45, 152, 240, 0.06)),
+        rgba(7, 18, 31, 0.82);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      transform: rotate(45deg);
+      border: 1px solid rgba(110, 200, 255, 0.42);
+    }
+
+    .brand-mark::after {
+      inset: 16px;
+      border-color: rgba(241, 207, 122, 0.46);
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+    }
+
+    .brand-sub {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      color: var(--text-dim);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(6, 14, 24, 0.82);
+      color: var(--text);
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--line-strong);
+      box-shadow: 0 0 0 4px rgba(45, 152, 240, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .field textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .button-row,
+    .inline-row,
+    .toolbar,
+    .page-actions,
+    .nav-row,
+    .capsule-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn,
+    .btn-ghost,
+    .btn-soft,
+    .nav-btn,
+    .domain-btn,
+    .menu-btn,
+    .pill {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .btn:hover,
+    .btn-ghost:hover,
+    .btn-soft:hover,
+    .nav-btn:hover,
+    .domain-btn:hover,
+    .menu-btn:hover,
+    .pill:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #03111d;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .btn-ghost,
+    .nav-btn,
+    .menu-btn,
+    .pill {
+      padding: 11px 16px;
+      background: transparent;
+      border-color: var(--line);
+      color: var(--text-soft);
+    }
+
+    .btn-soft {
+      padding: 11px 16px;
+      background: rgba(110, 200, 255, 0.08);
+      border-color: rgba(110, 200, 255, 0.2);
+      color: var(--accent);
+    }
+
+    .btn:disabled,
+    .btn-ghost:disabled,
+    .btn-soft:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-box {
+      display: none;
+      border-radius: 16px;
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .status-box[data-kind="info"] {
+      display: block;
+      background: rgba(45, 152, 240, 0.08);
+      border: 1px solid rgba(45, 152, 240, 0.2);
+      color: var(--text-soft);
+    }
+
+    .status-box[data-kind="error"] {
+      display: block;
+      background: rgba(240, 113, 130, 0.1);
+      border: 1px solid rgba(240, 113, 130, 0.24);
+      color: #ffd5db;
+    }
+
+    .load-bar {
+      display: none;
+      height: 4px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .load-bar.active {
+      display: block;
+    }
+
+    .load-bar::after {
+      content: "";
+      display: block;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: barMove 1.3s linear infinite;
+    }
+
+    @keyframes barMove {
+      0% { transform: translateX(-130%); }
+      100% { transform: translateX(340%); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .app-frame {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(6, 13, 24, 0.9);
+    }
+
+    .topbar-left,
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand-mini {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mini h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.18em;
+    }
+
+    .brand-mini p {
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .status-chip,
+    .clock-box,
+    .user-box {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .status-chip {
+      border-color: rgba(102, 203, 142, 0.28);
+      background: rgba(102, 203, 142, 0.08);
+      color: #c8f3d8;
+    }
+
+    .status-chip::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(102, 203, 142, 0.6);
+      vertical-align: middle;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: calc(100vh - 130px);
+    }
+
+    .sidebar {
+      padding: 22px 18px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      border-right: 1px solid var(--line);
+      background: var(--bg-soft);
+    }
+
+    .sidebar-card,
+    .panel,
+    .metric,
+    .result-card,
+    .scenario-card,
+    .impact-card,
+    .history-card,
+    .institution-tag {
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .sidebar-copy,
+    .metric-copy,
+    .panel-copy,
+    .result-card p,
+    .history-card p,
+    .scenario-card p,
+    .impact-card p {
+      color: var(--text-soft);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .domain-list,
+    .mini-stats,
+    .result-stack,
+    .scenario-list,
+    .impact-list,
+    .institution-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .domain-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      background: rgba(6, 14, 24, 0.82);
+      border-color: rgba(110, 200, 255, 0.16);
+      color: var(--text-soft);
+      border-radius: 16px;
+    }
+
+    .domain-btn.active {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: linear-gradient(135deg, rgba(45, 152, 240, 0.12), rgba(45, 152, 240, 0.03)), rgba(6, 14, 24, 0.94);
+    }
+
+    .domain-btn strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .domain-btn span {
+      display: block;
+      font-size: 13px;
+      line-height: 1.5;
+      opacity: 0.86;
+    }
+
+    .mini-stat {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(110, 200, 255, 0.12);
+    }
+
+    .mini-stat:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .workspace {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      background: linear-gradient(180deg, rgba(8, 18, 31, 0.52), rgba(6, 13, 23, 0.16));
+    }
+
+    .page {
+      display: none;
+      gap: 18px;
+    }
+
+    .page.active {
+      display: grid;
+    }
+
+    .hero-strip {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .hero-strip h2 {
+      margin: 8px 0 8px;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 0.98;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric-label,
+    .soft-label {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-bottom: 10px;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card-btn {
+      width: fit-content;
+      align-self: end;
+    }
+
+    .analysis-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+      gap: 16px;
+    }
+
+    .summary-banner {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(45, 152, 240, 0.08), rgba(255, 255, 255, 0.02)), rgba(255, 255, 255, 0.03);
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .summary-banner strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 18px;
+    }
+
+    .threat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      padding: 10px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .level-critical { color: #ffb2bc; background: rgba(240, 113, 130, 0.1); }
+    .level-high { color: #ffd099; background: rgba(240, 169, 91, 0.1); }
+    .level-medium { color: #f8e5ad; background: rgba(241, 207, 122, 0.1); }
+    .level-low { color: #ccf0d9; background: rgba(102, 203, 142, 0.1); }
+    .level-unknown { color: var(--text-soft); background: rgba(255, 255, 255, 0.06); }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .result-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .scenario-card,
+    .impact-card,
+    .history-card {
+      background: rgba(6, 14, 24, 0.72);
+    }
+
+    .scenario-head,
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .scenario-head h3,
+    .result-card h3,
+    .history-card h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .probability {
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      padding: 7px 11px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .prob-high { color: #ffb9c2; background: rgba(240, 113, 130, 0.1); }
+    .prob-medium { color: #ffd59f; background: rgba(240, 169, 91, 0.1); }
+    .prob-low { color: #d1f4de; background: rgba(102, 203, 142, 0.1); }
+
+    .institution-list {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(110, 200, 255, 0.14);
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    .history-table th {
+      color: var(--text-dim);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+    }
+
+    .history-table td {
+      color: var(--text-soft);
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--text-soft);
+      border: 1px dashed rgba(110, 200, 255, 0.18);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 28px;
+      line-height: 1.7;
+    }
+
+    .footer {
+      padding: 18px 24px 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--text-dim);
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(6, 13, 24, 0.66);
+    }
+
+    .mobile-menu {
+      display: none;
+    }
+
+    @media (max-width: 1100px) {
+      .login-shell,
+      .main,
+      .metrics,
+      .quick-grid,
+      .analysis-layout,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 780px) {
+      .login-shell,
+      .app-shell {
+        width: min(calc(100% - 16px), var(--content));
+        margin: 8px auto;
+      }
+
+      .hero-panel,
+      .auth-panel,
+      .panel,
+      .sidebar-card,
+      .metric,
+      .result-card,
+      .scenario-card,
+      .impact-card,
+      .history-card,
+      .institution-tag {
+        padding: 16px;
+      }
+
+      .topbar {
+        padding: 16px;
+      }
+
+      .nav-row {
+        display: none;
+      }
+
+      .mobile-menu {
+        display: inline-flex;
+      }
+
+      .clock-box {
+        display: none;
+      }
+
+      .workspace {
+        padding: 16px;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<!-- ── GİRİŞ EKRANI ── -->
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="login-logo">ANATOLIA-Q</div>
-    <div class="login-sub">ULUSAL KARAR DESTEK SİSTEMİ — GİZLİ</div>
-
-    <!-- ADIM 1: Kullanıcı adı + şifre -->
-    <div id="step1">
-      <div class="login-step-title">KİMLİK DOĞRULAMA — ADIM 1/2</div>
-      <div class="login-field">
-        <label class="login-label">KULLANICI ADI</label>
-        <input class="login-input" id="loginUser" type="text" placeholder="Kullanıcı adınızı girin" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
-      </div>
-      <div class="login-field">
-        <label class="login-label">ŞİFRE</label>
-        <input class="login-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
-      </div>
-      <button class="login-btn" id="loginBtn" onclick="doLogin()">GİRİŞ YAP</button>
-      <div class="login-load" id="loginLoad"><div class="login-load-fill"></div></div>
-      <div class="login-err" id="loginErr"></div>
-    </div>
-
-    <!-- ADIM 2: 2FA kodu -->
-    <div id="step2" style="display:none">
-      <div class="login-step-title">E-POSTA DOĞRULAMA — ADIM 2/2</div>
-      <div class="login-info" id="emailHint" style="display:block">
-        📧 Doğrulama kodu e-posta adresinize gönderildi.<br>
-        Kod 10 dakika geçerlidir.
-      </div>
-      <div class="login-field" style="margin-top:16px">
-        <label class="login-label">DOĞRULAMA KODU</label>
-        <input class="login-input" id="loginCode" type="text" placeholder="6 haneli kodu girin"
-          maxlength="6" style="letter-spacing:8px;font-size:22px;text-align:center;font-family:'Share Tech Mono'"
-          onkeydown="if(event.key==='Enter')doVerify()" oninput="this.value=this.value.replace(/\D/g,'')"/>
-      </div>
-      <button class="login-btn" id="verifyBtn" onclick="doVerify()">DOĞRULA VE GİRİŞ YAP</button>
-      <div class="login-load" id="verifyLoad"><div class="login-load-fill"></div></div>
-      <div class="login-err" id="verifyErr"></div>
-      <button class="back-btn" onclick="backToStep1()">← Geri dön</button>
-    </div>
-
-  </div>
-</div>
-
-<!-- ── ANA SİSTEM ── -->
-<div id="mainSystem">
-
-<header>
-  <div class="logo">
-    <div class="logo-mark"></div>
-    <div>
-      <div class="logo-name">ANATOLIA-Q</div>
-      <div class="logo-tag">ULUSAL KARAR DESTEK SİSTEMİ — QTR-202412</div>
-    </div>
-  </div>
-  <div class="header-nav">
-    <button class="nav-btn active" onclick="goPage('dashboard',this)">PANEL</button>
-    <button class="nav-btn" onclick="goPage('analysis',this)">ANALİZ</button>
-    <button class="nav-btn" onclick="goPage('history',this)">GEÇMİŞ</button>
-  </div>
-  <div class="header-right">
-    <div class="user-badge">
-      <div class="user-dot"></div>
-      <span class="user-name" id="userName">—</span>
-    </div>
-    <button class="logout-btn" onclick="doLogout()">ÇIKIŞ</button>
-    <div class="sys-clock" id="clock"></div>
-  </div>
-</header>
-
-<main>
-  <nav class="sidebar">
-    <div class="sidebar-sec">MODÜLLER</div>
-    <div class="sidebar-item active" id="si-savunma" onclick="pickDomain('savunma')"><span class="si-icon">🛡️</span>Savunma</div>
-    <div class="sidebar-item" id="si-ekonomi" onclick="pickDomain('ekonomi')"><span class="si-icon">📊</span>Ekonomi</div>
-    <div class="sidebar-item" id="si-enerji" onclick="pickDomain('enerji')"><span class="si-icon">⚡</span>Enerji</div>
-    <div class="sidebar-item" id="si-dis_politika" onclick="pickDomain('dis_politika')"><span class="si-icon">🌍</span>Dış Politika</div>
-    <div class="sidebar-item" id="si-cross" onclick="pickDomain('cross')"><span class="si-icon">🔀</span>Çapraz Sentez</div>
-    <div class="sidebar-div"></div>
-    <div class="sidebar-sec">SİSTEM</div>
-    <div class="sidebar-item" onclick="goPage('history',null)"><span class="si-icon">📋</span>Geçmiş</div>
-  </nav>
-
-  <div class="content">
-
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="page-title">KOMUTA PANELİ</div>
-        <div class="page-sub">ANATOLIA-Q — Savunma · Ekonomi · Enerji · Dış Politika</div></div>
-      </div>
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-lbl">TOPLAM ANALİZ</div><div class="stat-val" id="st-total">0</div><div class="stat-sub">Bu oturumda</div></div>
-        <div class="stat-card"><div class="stat-lbl">KRİTİK TESPİT</div><div class="stat-val" style="color:var(--red)" id="st-critical">0</div><div class="stat-sub">Acil müdahale</div></div>
-        <div class="stat-card"><div class="stat-lbl">İNDİRİLEN RAPOR</div><div class="stat-val" style="color:var(--green)" id="st-report">0</div><div class="stat-sub">DOCX çıktısı</div></div>
-        <div class="stat-card"><div class="stat-lbl">OTURUM</div><div class="stat-val" style="font-size:15px;padding-top:4px;color:var(--green)">AKTİF</div><div class="stat-sub" id="st-user">—</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">HIZLI ANALİZ BAŞLAT</div>
-        <div class="quick-grid">
-          <div class="quick-btn" onclick="pickDomain('savunma');goPage('analysis',null)"><span class="qi">🛡️</span>SAVUNMA</div>
-          <div class="quick-btn" onclick="pickDomain('ekonomi');goPage('analysis',null)"><span class="qi">📊</span>EKONOMİ</div>
-          <div class="quick-btn" onclick="pickDomain('enerji');goPage('analysis',null)"><span class="qi">⚡</span>ENERJİ</div>
-          <div class="quick-btn" onclick="pickDomain('dis_politika');goPage('analysis',null)"><span class="qi">🌍</span>DIŞ POLİTİKA</div>
-          <div class="quick-btn" onclick="pickDomain('cross');goPage('analysis',null)"><span class="qi">🔀</span>ÇAPRAZ SENTEZ</div>
+  <section class="login-shell" id="loginScreen">
+    <div class="hero-panel">
+      <div>
+        <div class="section-kicker">Ulusal karar destek katmanı</div>
+        <h1 class="hero-title">ANATOLIA-Q yeniden tasarlandı.</h1>
+        <p class="hero-copy">
+          Mevcut sistem fikrini koruyup arayüzü daha temiz, daha okunur ve mobilde daha rahat kullanılabilir hale getirdik.
+          Özellikle analiz akışı, sonuç sunumu ve oturum davranışı baştan toparlandı.
+        </p>
+        <div class="hero-grid">
+          <div class="hero-card"><strong>Net akış</strong><span>Giriş, doğrulama, analiz ve rapor indirme akışı daha anlaşılır ilerler.</span></div>
+          <div class="hero-card"><strong>Daha güçlü görünüm</strong><span>Panel yapısı, tipografi ve kart düzeni profesyonel bir karar destek ekranı hissi verir.</span></div>
+          <div class="hero-card"><strong>Mobil uyum</strong><span>Eski tam ekran kilit hissi kaldırıldı. Sayfa küçük ekranlarda da çalışır.</span></div>
+          <div class="hero-card"><strong>Kritik düzeltme</strong><span>Analiz ve geçmiş istekleri artık oturum tokenı ile gönderilir.</span></div>
         </div>
       </div>
-      <div class="card" id="lastCard" style="display:none">
-        <div class="card-title">SON ANALİZ</div>
-        <div id="lastContent"></div>
+      <div class="capsule-row">
+        <div class="status-chip">Sistem aktif</div>
+        <div class="clock-box" id="loginClock">--:--:--</div>
       </div>
     </div>
 
-    <!-- ANALİZ -->
-    <div class="page" id="page-analysis">
-      <div><div class="page-title">ANALİZ MODÜLÜ</div>
-      <div class="page-sub">Durum bildir → AI analiz etsin → Senaryo ve öneri üretsin</div></div>
-      <div class="card">
-        <div class="card-title">ANALİZ ALANI</div>
-        <div class="domain-grid">
-          <div class="domain-btn active" id="db-savunma" onclick="setDomain('savunma')"><span class="di">🛡️</span>SAVUNMA</div>
-          <div class="domain-btn" id="db-ekonomi" onclick="setDomain('ekonomi')"><span class="di">📊</span>EKONOMİ</div>
-          <div class="domain-btn" id="db-enerji" onclick="setDomain('enerji')"><span class="di">⚡</span>ENERJİ</div>
-          <div class="domain-btn" id="db-dis_politika" onclick="setDomain('dis_politika')"><span class="di">🌍</span>DIŞ POLİTİKA</div>
-          <div class="domain-btn cross" id="db-cross" onclick="setDomain('cross')"><span class="di">🔀</span>ÇAPRAZ SENTEZ</div>
+    <div class="auth-panel">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1 class="brand-title">ANATOLIA-Q</h1>
+          <p class="brand-sub">Savunma, ekonomi, enerji, dış politika ve çapraz sentez için ulusal karar destek sistemi.</p>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">DURUM BİLDİRİMİ</div>
-        <textarea class="sit-input" id="sitInput" placeholder="Analiz edilecek durumu buraya yazın..."></textarea>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="runBtn" onclick="runAnalysis()">ANALİZ BAŞLAT</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearAll()">TEMİZLE</button>
-          <span class="domain-lbl" id="domLbl">Alan: SAVUNMA</span>
+
+      <div id="step1">
+        <div class="section-kicker">Kimlik doğrulama · adım 1/2</div>
+        <div class="field">
+          <label for="loginUser">Kullanıcı adı</label>
+          <input id="loginUser" type="text" autocomplete="username" placeholder="Kullanıcı adınızı girin">
+        </div>
+        <div class="field">
+          <label for="loginPass">Şifre</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Şifrenizi girin">
+        </div>
+        <p class="muted">Devam ettiğinizde doğrulama kodu kayıtlı e-posta adresinize gönderilmelidir.</p>
+        <div class="load-bar" id="loginLoad"></div>
+        <div class="status-box" id="loginStatus" aria-live="polite"></div>
+        <div class="button-row">
+          <button class="btn" id="loginBtn" type="button">Giriş yap</button>
         </div>
       </div>
-      <div class="load-bar" id="loadBar"><div class="load-fill"></div></div>
-      <div class="err-box" id="errBox"></div>
-      <div id="resultArea">
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between">
-            <span>ÖZET DEĞERLENDİRME</span>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span id="anIdBadge" style="font-family:'Share Tech Mono';font-size:10px;color:var(--text3)"></span>
-              <button class="btn btn-gold btn-sm" onclick="downloadDocx()">⬇ RAPOR İNDİR</button>
+
+      <div id="step2" class="hidden">
+        <div class="section-kicker">İkinci doğrulama · adım 2/2</div>
+        <div class="status-box" id="verifyInfo" data-kind="info"></div>
+        <div class="field">
+          <label for="loginCode">Doğrulama kodu</label>
+          <input id="loginCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 haneli kod">
+        </div>
+        <div class="load-bar" id="verifyLoad"></div>
+        <div class="status-box" id="verifyStatus" aria-live="polite"></div>
+        <div class="button-row">
+          <button class="btn" id="verifyBtn" type="button">Doğrula ve giriş yap</button>
+          <button class="btn-ghost" id="backBtn" type="button">Geri dön</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-shell hidden" id="mainSystem">
+    <div class="app-frame">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-mini">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <div>
+              <h1>ANATOLIA-Q</h1>
+              <p>Ulusal karar destek sistemi</p>
             </div>
           </div>
-          <div id="threatBadge" style="margin-bottom:10px"></div>
-          <div class="ozet-block" id="ozetBlock"></div>
+          <div class="status-chip">Oturum aktif</div>
         </div>
-        <div class="card"><div class="card-title">TEHDİT / RİSK ANALİZİ</div><div class="threat-body" id="threatBody"></div></div>
-        <div class="card" id="alanCard" style="display:none">
-          <div class="card-title">ALAN BAZLI ETKİ</div>
-          <div class="alan-grid" id="alanGrid"></div>
-          <div style="margin-top:14px;padding:10px 14px;background:var(--bg3);border-left:3px solid var(--gold)">
-            <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:4px">KRİTİK BAĞLANTI</div>
-            <div style="font-size:13px;color:var(--text)" id="kritikBag"></div>
+        <div class="topbar-right">
+          <div class="nav-row">
+            <button class="nav-btn active" type="button" data-page="dashboard">Panel</button>
+            <button class="nav-btn" type="button" data-page="analysis">Analiz</button>
+            <button class="nav-btn" type="button" data-page="history">Geçmiş</button>
           </div>
+          <button class="menu-btn mobile-menu" id="mobileMenuBtn" type="button">Menü</button>
+          <div class="clock-box" id="mainClock">--:--:--</div>
+          <div class="user-box" id="userBadge">Kullanıcı: --</div>
+          <button class="btn-ghost" type="button" id="logoutBtn">Çıkış</button>
         </div>
-        <div class="card"><div class="card-title">SENARYO ANALİZİ</div><div class="scenarios-grid" id="scenGrid"></div></div>
-        <div class="card"><div class="card-title">ÖNCELİKLİ ÖNERİ</div><div class="oneri-box"><div class="oneri-text" id="oneriText"></div></div></div>
-        <div class="two-col">
-          <div class="card"><div class="card-title">ETKİLENEN KURUMLAR</div><div class="kurum-list" id="kurumList"></div></div>
-          <div class="card"><div class="card-title">ZAMAN ÇERÇEVESİ</div><div style="font-size:15px;font-weight:700;color:var(--gold);padding-top:4px" id="zamanDiv"></div></div>
-        </div>
+      </header>
+
+      <div class="main">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-card">
+            <div class="section-kicker">Modüller</div>
+            <div class="domain-list" id="domainList"></div>
+          </div>
+
+          <div class="sidebar-card">
+            <h3 style="margin-top:0;">Operasyon notu</h3>
+            <p class="sidebar-copy">Durum girişinde aktör, zaman, konum, eş zamanlı olay ve beklenen sonuç birlikte verilirse senaryo kalitesi belirgin biçimde yükselir.</p>
+          </div>
+
+          <div class="sidebar-card">
+            <h3 style="margin-top:0;">Oturum özeti</h3>
+            <div class="mini-stats">
+              <div class="mini-stat"><span class="muted">Seçili alan</span><strong id="sidebarDomain">Savunma</strong></div>
+              <div class="mini-stat"><span class="muted">Analiz sayısı</span><strong id="sidebarCount">0</strong></div>
+              <div class="mini-stat"><span class="muted">İndirilen rapor</span><strong id="sidebarReports">0</strong></div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="workspace">
+          <section class="page active" id="page-dashboard">
+            <div class="panel">
+              <div class="hero-strip">
+                <div>
+                  <div class="section-kicker">Komuta paneli</div>
+                  <h2>Durumu oku, alanı seç, analizi üret.</h2>
+                  <p class="panel-copy">Bu sürüm ilk ekranı sadeleştirir. Son analiz, kritik tespitler ve hızlı başlangıç aksiyonları doğrudan görünür.</p>
+                </div>
+                <div class="page-actions">
+                  <button class="btn" type="button" data-jump="analysis">Yeni analiz başlat</button>
+                  <button class="btn-ghost" type="button" id="refreshFromDashboardBtn">Geçmişi yenile</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="metric-label">Toplam analiz</div>
+                <p class="metric-value" id="statTotal">0</p>
+                <p class="metric-copy">Bu oturumda oluşturulan analizler.</p>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Kritik tespit</div>
+                <p class="metric-value" id="statCritical" style="color: var(--red);">0</p>
+                <p class="metric-copy">Tehdit seviyesi kritik olan kayıtlar.</p>
+              </div>
+              <div class="metric">
+                <div class="metric-label">İndirilen rapor</div>
+                <p class="metric-value" id="statReport" style="color: var(--green);">0</p>
+                <p class="metric-copy">Belge çıktısı alınan analizler.</p>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Aktif kullanıcı</div>
+                <p class="metric-value" id="statUser" style="font-size:22px;">--</p>
+                <p class="metric-copy">Doğrulaması tamamlanan kullanıcı.</p>
+              </div>
+            </div>
+
+            <div class="quick-grid">
+              <div class="panel">
+                <h3 style="margin-top:0;">Alan odaklı başlangıç</h3>
+                <p class="panel-copy">Seçili alanı değiştirip analiz ekranına tek adımda geç.</p>
+                <div class="button-row" style="margin-top:14px;">
+                  <button class="btn-soft card-btn" type="button" data-jump="analysis">Analiz modülünü aç</button>
+                </div>
+              </div>
+              <div class="panel">
+                <h3 style="margin-top:0;">Son sonuç özeti</h3>
+                <p class="panel-copy" id="lastSummary">Henüz analiz yapılmadı. İlk analiz üretildiğinde kısa özet burada görünecek.</p>
+                <div class="button-row" style="margin-top:14px;">
+                  <button class="btn-ghost card-btn" type="button" data-jump="history">Geçmişe git</button>
+                </div>
+              </div>
+              <div class="panel">
+                <h3 style="margin-top:0;">Hazır şablon</h3>
+                <p class="panel-copy">Çapraz alanlı örnek bir giriş ile hızlı başlangıç yap.</p>
+                <div class="button-row" style="margin-top:14px;">
+                  <button class="btn-ghost card-btn" type="button" id="injectTemplateBtn">Şablonu ekle</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-analysis">
+            <div class="analysis-layout">
+              <div class="panel">
+                <div class="hero-strip">
+                  <div>
+                    <div class="section-kicker">Analiz modülü</div>
+                    <h2 id="analysisTitle">Savunma odaklı değerlendirme</h2>
+                    <p class="panel-copy" id="analysisSubtitle">Durumu mümkün olduğunca açık yazın. Sistem seçilen alana göre senaryo ve öneri üretir.</p>
+                  </div>
+                </div>
+
+                <div class="toolbar" id="domainToolbar"></div>
+
+                <div class="field" style="margin-top:18px;">
+                  <label for="situationInput">Durum bildirimi</label>
+                  <textarea id="situationInput" placeholder="Örnek: Sınır hattında İHA hareketliliği, eş zamanlı elektronik karıştırma ve enerji altyapısına yönelik siber deneme belirtileri tespit edildi..."></textarea>
+                </div>
+
+                <div class="inline-row" style="margin-bottom:14px;">
+                  <span class="muted" id="charCount">0 karakter</span>
+                </div>
+
+                <div class="toolbar">
+                  <button class="pill" type="button" data-preset="border">Sınır hattı</button>
+                  <button class="pill" type="button" data-preset="energy">Enerji baskısı</button>
+                  <button class="pill" type="button" data-preset="economy">Piyasa baskısı</button>
+                  <button class="pill" type="button" data-preset="cross">Çapraz kriz</button>
+                </div>
+
+                <div class="button-row" style="margin-top:18px;">
+                  <button class="btn" type="button" id="runBtn">Analiz başlat</button>
+                  <button class="btn-ghost" type="button" id="clearBtn">Temizle</button>
+                  <button class="btn-soft" type="button" id="downloadBtn" disabled>Rapor indir</button>
+                </div>
+
+                <div class="load-bar" id="analysisLoad" style="margin-top:18px;"></div>
+                <div class="status-box" id="analysisStatus" aria-live="polite" style="margin-top:18px;"></div>
+              </div>
+
+              <div class="panel">
+                <div class="section-kicker">Hazır kontrol listesi</div>
+                <div class="mini-stats">
+                  <div class="mini-stat"><span class="muted">Aktör bilgisi</span><strong>Net olsun</strong></div>
+                  <div class="mini-stat"><span class="muted">Zaman bilgisi</span><strong>Eklenmeli</strong></div>
+                  <div class="mini-stat"><span class="muted">Eş zamanlı olay</span><strong>Önemli</strong></div>
+                  <div class="mini-stat"><span class="muted">Çapraz etki</span><strong>Kontrol et</strong></div>
+                </div>
+                <p class="panel-copy" style="margin-top:14px;">Özellikle çapraz sentez modülünde olaylar arası ilişkiyi tek cümleyle anlatmak büyük fark yaratır.</p>
+              </div>
+            </div>
+
+            <div class="result-stack hidden" id="resultArea">
+              <div class="summary-banner">
+                <div>
+                  <strong id="resultTitle">Analiz sonucu hazır</strong>
+                  <span class="copy" id="resultMeta">Analiz kimliği ve alan bilgisi burada gösterilir.</span>
+                </div>
+                <div class="threat-badge level-unknown" id="threatBadge">Tehdit seviyesi: --</div>
+              </div>
+
+              <div class="result-grid">
+                <article class="result-card full">
+                  <div class="soft-label">Özet değerlendirme</div>
+                  <p id="summaryText"></p>
+                </article>
+
+                <article class="result-card">
+                  <div class="soft-label">Tehdit / risk analizi</div>
+                  <p id="threatText"></p>
+                </article>
+
+                <article class="result-card">
+                  <div class="soft-label">Zaman çerçevesi</div>
+                  <p id="timelineText"></p>
+                </article>
+
+                <article class="result-card full">
+                  <div class="soft-label">Alan bazlı etki</div>
+                  <div class="impact-list" id="impactList"></div>
+                </article>
+
+                <article class="result-card full">
+                  <div class="soft-label">Senaryo analizi</div>
+                  <div class="scenario-list" id="scenarioList"></div>
+                </article>
+
+                <article class="result-card">
+                  <div class="soft-label">Öncelikli öneri</div>
+                  <div class="scenario-list" id="priorityList"></div>
+                </article>
+
+                <article class="result-card">
+                  <div class="soft-label">Etkilenen kurumlar</div>
+                  <div class="institution-list" id="institutionList"></div>
+                </article>
+
+                <article class="result-card full">
+                  <div class="soft-label">Kritik bağlantı</div>
+                  <p id="criticalLinkText">Bu analiz için kritik bağlantı bilgisi bulunmuyor.</p>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-history">
+            <div class="panel">
+              <div class="hero-strip">
+                <div>
+                  <div class="section-kicker">Geçmiş</div>
+                  <h2>Oturum kayıtları ve son çıktılar</h2>
+                  <p class="panel-copy">Yerel oturum kayıtları ve sunucudan alınan geçmiş verileri burada görüntülenir.</p>
+                </div>
+                <div class="page-actions">
+                  <button class="btn-ghost" type="button" id="refreshHistoryBtn">Yenile</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="table-wrap" id="historyTableWrap">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Alan</th>
+                      <th>Tehdit</th>
+                      <th>Özet</th>
+                      <th>Saat</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyBody"></tbody>
+                </table>
+              </div>
+              <div class="empty-state hidden" id="historyEmpty">Henüz kayıt görünmüyor. İlk analiz üretildiğinde geçmiş burada listelenecek.</div>
+            </div>
+          </section>
+        </main>
       </div>
+
+      <footer class="footer">
+        <div>Sistem: ANATOLIA-Q ön yüz revizyonu</div>
+        <div>Kanal: QTR-202412</div>
+        <div id="footerClock">--:--:--</div>
+      </footer>
     </div>
+  </section>
 
-    <!-- GEÇMİŞ -->
-    <div class="page" id="page-history">
-      <div><div class="page-title">ANALİZ GEÇMİŞİ</div><div class="page-sub">Bu oturumda yapılan tüm analizler</div></div>
-      <div class="card">
-        <div class="card-title">KAYITLAR</div>
-        <table class="hist-table">
-          <thead><tr><th>ID</th><th>ALAN</th><th>TEHDİT</th><th>ÖZET</th><th>SAAT</th></tr></thead>
-          <tbody id="histBody"><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Henüz analiz yapılmadı.</td></tr></tbody>
-        </table>
-      </div>
-    </div>
+  <script>
+    const API_BASE = "https://anatolia-q.onrender.com";
 
-  </div>
-</main>
+    const DOMAINS = {
+      savunma: {
+        title: "Savunma",
+        short: "Savunma odaklı değerlendirme",
+        description: "Askeri hareketlilik, sınır güvenliği, caydırıcılık ve taktik sonuçlar."
+      },
+      ekonomi: {
+        title: "Ekonomi",
+        short: "Ekonomi odaklı değerlendirme",
+        description: "Kur, piyasa güveni, finansal kırılganlık ve üretim zinciri etkileri."
+      },
+      enerji: {
+        title: "Enerji",
+        short: "Enerji odaklı değerlendirme",
+        description: "Altyapı güvenliği, arz sürekliliği ve kritik tesis etkileri."
+      },
+      dis_politika: {
+        title: "Dış politika",
+        short: "Dış politika odaklı değerlendirme",
+        description: "Diplomatik yansımalar, bölgesel denge ve uluslararası tepki hattı."
+      },
+      cross: {
+        title: "Çapraz sentez",
+        short: "Çapraz alan değerlendirmesi",
+        description: "Savunma, ekonomi, enerji ve dış politika etkilerini tek çerçevede birleştirir."
+      }
+    };
 
-<footer>
-  <div class="f-item">SİSTEM: <span>ANATOLIA-Q v1.0</span></div>
-  <div class="f-item">KOD: <span>QTR-202412</span></div>
-  <div class="f-item">SINIF: <span style="color:var(--red)">GİZLİ</span></div>
-  <div style="flex:1"></div>
-  <div class="f-item">BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş.</div>
-  <div class="f-item" id="fTime"></div>
-</footer>
+    const PRESETS = {
+      border: "Sınır hattında artan insansız hava aracı hareketliliği, eş zamanlı elektronik karıştırma sinyalleri ve ileri üs bölgelerine yakın lojistik akışta düzensizlik tespit edildi. Olası amaç, keşif ile baskı kurmak ve kısa süreli caydırıcılık testi yapmak olabilir.",
+      energy: "Stratejik enerji iletim hatlarında teknik arıza görüntüsü veren ancak senkron zamanlamaya sahip kesintiler yaşanıyor. Aynı anda sosyal medyada dezenformasyon içerikleri ve tedarik güvenliğine dair panik üretmeye çalışan kampanyalar gözleniyor.",
+      economy: "Kur oynaklığı yükselirken bankacılık hisseleri üzerinde baskı oluştu. Eş zamanlı olarak dış basında ülke risk primi ve rezerv yeterliliği hakkında olumsuz anlatılar yoğunlaştı. Kısa vadeli finansal güven etkisi ve siyasi yansıma değerlendirilmelidir.",
+      cross: "Sınır bölgesindeki güvenlik hareketliliği, enerji altyapısına dönük siber baskı belirtileri ve döviz piyasasında eş zamanlı spekülatif dalga birlikte değerlendirildiğinde çok alanlı bir baskı mimarisi ihtimali oluşuyor. Olası bağlantılar, zamanlama uyumu ve öncelikli kurum koordinasyonu analiz edilmelidir."
+    };
 
-</div><!-- /mainSystem -->
+    const state = {
+      domain: "savunma",
+      page: "dashboard",
+      sessionToken: "",
+      sessionUser: "",
+      pendingUsername: "",
+      currentResult: null,
+      currentSituation: "",
+      reportCount: 0,
+      historyList: [],
+      mobileMenuOpen: false
+    };
 
-<script>
-// ─── CONFIG ───
-const API = 'https://anatolia-q.onrender.com';
+    const refs = {
+      loginScreen: document.getElementById("loginScreen"),
+      mainSystem: document.getElementById("mainSystem"),
+      step1: document.getElementById("step1"),
+      step2: document.getElementById("step2"),
+      loginUser: document.getElementById("loginUser"),
+      loginPass: document.getElementById("loginPass"),
+      loginCode: document.getElementById("loginCode"),
+      loginBtn: document.getElementById("loginBtn"),
+      verifyBtn: document.getElementById("verifyBtn"),
+      backBtn: document.getElementById("backBtn"),
+      loginLoad: document.getElementById("loginLoad"),
+      verifyLoad: document.getElementById("verifyLoad"),
+      loginStatus: document.getElementById("loginStatus"),
+      verifyInfo: document.getElementById("verifyInfo"),
+      verifyStatus: document.getElementById("verifyStatus"),
+      loginClock: document.getElementById("loginClock"),
+      mainClock: document.getElementById("mainClock"),
+      footerClock: document.getElementById("footerClock"),
+      domainList: document.getElementById("domainList"),
+      domainToolbar: document.getElementById("domainToolbar"),
+      sidebarDomain: document.getElementById("sidebarDomain"),
+      sidebarCount: document.getElementById("sidebarCount"),
+      sidebarReports: document.getElementById("sidebarReports"),
+      userBadge: document.getElementById("userBadge"),
+      statTotal: document.getElementById("statTotal"),
+      statCritical: document.getElementById("statCritical"),
+      statReport: document.getElementById("statReport"),
+      statUser: document.getElementById("statUser"),
+      analysisTitle: document.getElementById("analysisTitle"),
+      analysisSubtitle: document.getElementById("analysisSubtitle"),
+      situationInput: document.getElementById("situationInput"),
+      charCount: document.getElementById("charCount"),
+      runBtn: document.getElementById("runBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+      downloadBtn: document.getElementById("downloadBtn"),
+      analysisLoad: document.getElementById("analysisLoad"),
+      analysisStatus: document.getElementById("analysisStatus"),
+      resultArea: document.getElementById("resultArea"),
+      resultTitle: document.getElementById("resultTitle"),
+      resultMeta: document.getElementById("resultMeta"),
+      threatBadge: document.getElementById("threatBadge"),
+      summaryText: document.getElementById("summaryText"),
+      threatText: document.getElementById("threatText"),
+      timelineText: document.getElementById("timelineText"),
+      impactList: document.getElementById("impactList"),
+      scenarioList: document.getElementById("scenarioList"),
+      priorityList: document.getElementById("priorityList"),
+      institutionList: document.getElementById("institutionList"),
+      criticalLinkText: document.getElementById("criticalLinkText"),
+      historyBody: document.getElementById("historyBody"),
+      historyEmpty: document.getElementById("historyEmpty"),
+      historyTableWrap: document.getElementById("historyTableWrap"),
+      lastSummary: document.getElementById("lastSummary"),
+      refreshHistoryBtn: document.getElementById("refreshHistoryBtn"),
+      refreshFromDashboardBtn: document.getElementById("refreshFromDashboardBtn"),
+      injectTemplateBtn: document.getElementById("injectTemplateBtn"),
+      logoutBtn: document.getElementById("logoutBtn"),
+      mobileMenuBtn: document.getElementById("mobileMenuBtn"),
+      sidebar: document.getElementById("sidebar")
+    };
 
-// ─── STATE ───
-let domain = 'savunma';
-let currentResult = null;
-let currentSituation = '';
-let sessionToken = null;
-let sessionUser = '';
-let historyList = [];
-let reportCount = 0;
-let pendingUsername = '';
-
-const DOMAIN_NAMES = {savunma:'SAVUNMA',ekonomi:'EKONOMİ',enerji:'ENERJİ',dis_politika:'DIŞ POLİTİKA',cross:'ÇAPRAZ SENTEZ'};
-
-// ─── CLOCK ───
-setInterval(() => {
-  const t = new Date().toLocaleTimeString('tr-TR',{hour12:false});
-  const c = document.getElementById('clock');
-  const f = document.getElementById('fTime');
-  if(c) c.textContent = t;
-  if(f) f.textContent = t;
-}, 1000);
-
-// ─── LOGIN ADIM 1 ───
-async function doLogin() {
-  const username = document.getElementById('loginUser').value.trim();
-  const password = document.getElementById('loginPass').value;
-  if(!username || !password) { loginErr('Kullanıcı adı ve şifre gereklidir.'); return; }
-
-  loginLoad(true);
-  document.getElementById('loginBtn').disabled = true;
-  document.getElementById('loginErr').style.display = 'none';
-
-  try {
-    const resp = await fetch(API + '/api/login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    const data = await resp.json();
-    if(!resp.ok) { loginErr(data.detail || 'Giriş başarısız.'); return; }
-
-    pendingUsername = username;
-    // Adım 2'ye geç
-    document.getElementById('step1').style.display = 'none';
-    document.getElementById('step2').style.display = 'block';
-    document.getElementById('emailHint').innerHTML =
-      `📧 Doğrulama kodu <b>${data.email_hint}</b> adresine gönderildi.<br>Kod 10 dakika geçerlidir.`;
-    setTimeout(() => document.getElementById('loginCode').focus(), 100);
-
-  } catch(e) {
-    loginErr('Sunucu bağlantısı kurulamadı.');
-  } finally {
-    loginLoad(false);
-    document.getElementById('loginBtn').disabled = false;
-  }
-}
-
-// ─── LOGIN ADIM 2 ───
-async function doVerify() {
-  const code = document.getElementById('loginCode').value.trim();
-  if(code.length !== 6) { verifyErr('6 haneli kodu eksiksiz girin.'); return; }
-
-  verifyLoad(true);
-  document.getElementById('verifyBtn').disabled = true;
-  document.getElementById('verifyErr').style.display = 'none';
-
-  try {
-    const resp = await fetch(API + '/api/verify', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username: pendingUsername, code})
-    });
-    const data = await resp.json();
-    if(!resp.ok) { verifyErr(data.detail || 'Doğrulama başarısız.'); return; }
-
-    // Giriş başarılı
-    sessionToken = data.token;
-    sessionUser = data.name;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainSystem').style.display = 'flex';
-    document.getElementById('userName').textContent = sessionUser;
-    document.getElementById('st-user').textContent = sessionUser;
-
-  } catch(e) {
-    verifyErr('Sunucu bağlantısı kurulamadı.');
-  } finally {
-    verifyLoad(false);
-    document.getElementById('verifyBtn').disabled = false;
-  }
-}
-
-function backToStep1() {
-  document.getElementById('step2').style.display = 'none';
-  document.getElementById('step1').style.display = 'block';
-  document.getElementById('loginCode').value = '';
-  document.getElementById('verifyErr').style.display = 'none';
-  pendingUsername = '';
-}
-
-function doLogout() {
-  sessionToken = null;
-  sessionUser = '';
-  pendingUsername = '';
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginCode').value = '';
-  document.getElementById('step1').style.display = 'block';
-  document.getElementById('step2').style.display = 'none';
-  document.getElementById('mainSystem').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-}
-
-function loginErr(msg) {
-  const e = document.getElementById('loginErr');
-  e.textContent = '⚠ ' + msg;
-  e.style.display = 'block';
-}
-function verifyErr(msg) {
-  const e = document.getElementById('verifyErr');
-  e.textContent = '⚠ ' + msg;
-  e.style.display = 'block';
-}
-function loginLoad(on) { document.getElementById('loginLoad').classList.toggle('on', on); }
-function verifyLoad(on) { document.getElementById('verifyLoad').classList.toggle('on', on); }
-
-// ─── NAVİGASYON ───
-function goPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else {
-    const map = {dashboard:0,analysis:1,history:2};
-    document.querySelectorAll('.nav-btn')[map[name]]?.classList.add('active');
-  }
-}
-
-function pickDomain(d) {
-  setDomain(d);
-  goPage('analysis', document.querySelectorAll('.nav-btn')[1]);
-}
-
-function setDomain(d) {
-  domain = d;
-  document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('db-'+d)?.classList.add('active');
-  document.querySelectorAll('.sidebar-item[id^="si-"]').forEach(b => b.classList.remove('active'));
-  document.getElementById('si-'+d)?.classList.add('active');
-  document.getElementById('domLbl').textContent = 'Alan: ' + DOMAIN_NAMES[d];
-}
-
-// ─── ANALİZ ───
-async function runAnalysis() {
-  const sit = document.getElementById('sitInput').value.trim();
-  if(!sit) { showErr('Durum bildirimi boş bırakılamaz.'); return; }
-
-  currentSituation = sit;
-  hideErr();
-  hideResult();
-  loading(true);
-  document.getElementById('runBtn').disabled = true;
-
-  try {
-    const resp = await fetch(API + '/api/analyze', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({domain, situation: sit})
-    });
-    const data = await resp.json();
-    if(!resp.ok) { showErr(data.detail || 'Analiz başarısız.'); return; }
-    currentResult = data;
-    renderResult(data);
-    addToHistory(data.analysis_id, domain, sit, data);
-    updateStats(data);
-  } catch(e) {
-    showErr('Sunucu bağlantısı kurulamadı: ' + e.message);
-  } finally {
-    loading(false);
-    document.getElementById('runBtn').disabled = false;
-  }
-}
-
-function renderResult(data) {
-  const tehdit = data.tehdit_seviyesi || data.genel_tehdit_seviyesi || '—';
-  document.getElementById('anIdBadge').textContent = 'ID: ' + (data.analysis_id||'');
-  document.getElementById('threatBadge').innerHTML = `<div class="threat-badge t-${tehdit}">● TEHDİT SEVİYESİ: ${tehdit}</div>`;
-  document.getElementById('ozetBlock').textContent = data.ozet || '';
-  document.getElementById('threatBody').textContent = data.tehdit_analizi || '';
-
-  if(data.alan_etkileri) {
-    document.getElementById('alanCard').style.display = '';
-    let html = '';
-    for(const [alan,info] of Object.entries(data.alan_etkileri)) {
-      html += `<div class="alan-card"><div class="alan-name">${alan.toUpperCase()}</div><div class="alan-etki ${(info.etki||'').toLowerCase()}">${(info.etki||'').toUpperCase()}</div><div class="alan-desc">${info.aciklama||''}</div></div>`;
+    function setStatus(el, kind, message) {
+      el.className = "status-box";
+      if (!message) {
+        el.removeAttribute("data-kind");
+        el.textContent = "";
+        return;
+      }
+      el.dataset.kind = kind;
+      el.textContent = message;
     }
-    document.getElementById('alanGrid').innerHTML = html;
-    document.getElementById('kritikBag').textContent = data.kritik_baglanti || '';
-  } else {
-    document.getElementById('alanCard').style.display = 'none';
-  }
 
-  const olMap = {Yüksek:'high',Orta:'medium',Düşük:'low'};
-  document.getElementById('scenGrid').innerHTML = (data.senaryolar||[]).map((s,i)=>`
-    <div class="scen-card ${olMap[s.olasilik]||'medium'}">
-      <div class="scen-num">SENARYO ${i+1}</div>
-      <div class="scen-title">${s.baslik}</div>
-      <div class="ol-tag ${olMap[s.olasilik]||'medium'}">${(s.olasilik||'').toUpperCase()}</div>
-      <div class="scen-desc">${s.aciklama}</div>
-      <div class="scen-aksiyon">${s.aksiyon}</div>
-    </div>`).join('');
+    function setLoading(el, active) {
+      el.classList.toggle("active", active);
+    }
 
-  const on = data.oncelikli_oneri || data.oncelik_sirasi;
-  document.getElementById('oneriText').innerHTML = Array.isArray(on) ? on.map(x=>`• ${x}`).join('<br>') : on||'';
-  document.getElementById('kurumList').innerHTML = (data.etkilenen_kurumlar||[]).map(k=>`<div class="kurum-tag">${k}</div>`).join('');
-  document.getElementById('zamanDiv').textContent = data.zaman_cercevesi || '';
+    function updateClocks() {
+      const time = new Date().toLocaleTimeString("tr-TR", { hour12: false });
+      refs.loginClock.textContent = time;
+      refs.mainClock.textContent = time;
+      refs.footerClock.textContent = time;
+    }
 
-  document.getElementById('resultArea').style.display = 'flex';
-  document.getElementById('resultArea').style.flexDirection = 'column';
-  document.getElementById('resultArea').style.gap = '18px';
-}
+    function updateCharCount() {
+      refs.charCount.textContent = `${refs.situationInput.value.trim().length} karakter`;
+    }
 
-function updateStats(r) {
-  const t = document.getElementById('st-total');
-  t.textContent = parseInt(t.textContent||0)+1;
-  const tehdit = r.tehdit_seviyesi || r.genel_tehdit_seviyesi || '';
-  if(tehdit==='KRİTİK') {
-    const c = document.getElementById('st-critical');
-    c.textContent = parseInt(c.textContent||0)+1;
-  }
-  const lc = document.getElementById('lastCard');
-  const lct = document.getElementById('lastContent');
-  lc.style.display='';
-  lct.innerHTML = `<div class="threat-badge t-${tehdit}" style="margin-bottom:8px">● ${tehdit}</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.5">${(r.ozet||'').slice(0,180)}...</div>`;
-}
+    async function apiFetch(path, options = {}) {
+      const headers = new Headers(options.headers || {});
+      headers.set("Content-Type", "application/json");
+      if (state.sessionToken) {
+        headers.set("Authorization", `Bearer ${state.sessionToken}`);
+        headers.set("X-Auth-Token", state.sessionToken);
+      }
 
-function addToHistory(id, dom, sit, result) {
-  historyList.unshift({id, dom, sit, result, time: new Date().toLocaleTimeString('tr-TR',{hour12:false})});
-  const tbody = document.getElementById('histBody');
-  tbody.innerHTML = historyList.map(h=>{
-    const t = h.result.tehdit_seviyesi || h.result.genel_tehdit_seviyesi || '—';
-    return `<tr>
-      <td style="font-family:'Share Tech Mono';color:var(--accent)">${h.id}</td>
-      <td>${DOMAIN_NAMES[h.dom]||h.dom}</td>
-      <td style="color:${t==='KRİTİK'?'var(--red)':t==='YÜKSEK'?'var(--orange)':'var(--text2)'};font-weight:700">${t}</td>
-      <td>${(h.result.ozet||'').slice(0,60)}...</td>
-      <td style="font-family:'Share Tech Mono';font-size:10px">${h.time}</td>
-    </tr>`;
-  }).join('');
-}
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers
+      });
 
-// ─── RAPOR ───
-function downloadDocx() {
-  if(!currentResult) return;
-  const r = currentResult;
-  const tehdit = r.tehdit_seviyesi || r.genel_tehdit_seviyesi || '—';
-  const id = r.analysis_id || '—';
-  const now = new Date().toLocaleDateString('tr-TR') + ' ' + new Date().toLocaleTimeString('tr-TR',{hour12:false});
-  const domainAd = DOMAIN_NAMES[domain] || domain;
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = null;
+      }
 
-  let scenHtml = (r.senaryolar||[]).map((s,i)=>`
-    <h3 style="color:#1F3864">Senaryo ${i+1}: ${s.baslik}</h3>
-    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:12px">
-      <tr><td style="background:#E9EFF7;font-weight:bold;width:140px">Olasılık</td><td>${s.olasilik}</td></tr>
-      <tr><td style="background:#E9EFF7;font-weight:bold">Açıklama</td><td>${s.aciklama}</td></tr>
-      <tr><td style="background:#E9EFF7;font-weight:bold">Önerilen Aksiyon</td><td><b>${s.aksiyon}</b></td></tr>
-    </table>`).join('');
+      if (!response.ok) {
+        const detail = data && typeof data === "object" ? (data.detail || data.message) : null;
+        throw new Error(typeof detail === "string" ? detail : `İstek başarısız (${response.status})`);
+      }
 
-  const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8">
-<style>body{font-family:Calibri,sans-serif;font-size:11pt;margin:2cm}h1{font-size:18pt;color:#1F3864;text-align:center}h2{font-size:13pt;color:#1F3864;border-bottom:2px solid #1F3864;padding-bottom:4px;margin-top:18pt}h3{font-size:11pt;color:#2E74B5;margin-top:12pt}p{margin:6pt 0;line-height:1.4}.ozet-box{background:#EBF3FB;border-left:4pt solid #2E74B5;padding:10pt;margin:10pt 0}td,th{border:1pt solid #CCC;padding:5pt 7pt;font-size:10pt}.footer{color:#808080;font-size:9pt;text-align:center;margin-top:24pt;font-style:italic}</style></head>
-<body>
-<h1>ANATOLIA-Q</h1>
-<p style="text-align:center;color:#666;font-size:10pt">ULUSAL KARAR DESTEK SİSTEMİ</p>
-<h2 style="text-align:center;font-size:14pt;border:none">${domainAd} RAPORU</h2>
-<table cellpadding="6" border="1" style="width:100%;border-collapse:collapse;margin-bottom:18pt">
-<tr><td style="background:#E9EFF7;font-weight:bold;width:140px">Analiz No</td><td>${id}</td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Tarih / Saat</td><td>${now}</td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Hazırlayan</td><td>${sessionUser}</td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Alan</td><td>${domainAd}</td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Tehdit Seviyesi</td><td><b style="color:${tehdit==='KRİTİK'?'#C00000':tehdit==='YÜKSEK'?'#FF6B00':'#1F3864'}">${tehdit}</b></td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Gizlilik</td><td><b style="color:#C00000">GİZLİ</b></td></tr>
-<tr><td style="background:#E9EFF7;font-weight:bold">Zaman Çerçevesi</td><td>${r.zaman_cercevesi||'—'}</td></tr>
-</table>
-<h2>1. Durum Bildirimi</h2><p>${currentSituation}</p>
-<h2>2. Özet Değerlendirme</h2><div class="ozet-box"><p>${r.ozet||''}</p></div>
-<h2>3. Tehdit / Risk Analizi</h2><p>${r.tehdit_analizi||''}</p>
-<h2>4. Senaryo Analizi</h2>${scenHtml}
-<h2>5. Öncelikli Öneri</h2><div class="ozet-box"><p><b>${Array.isArray(r.oncelikli_oneri)?r.oncelikli_oneri.join('<br>'):r.oncelikli_oneri||''}</b></p></div>
-<h2>6. Etkilenen Kurumlar</h2><p>${(r.etkilenen_kurumlar||[]).join(' | ')}</p>
-<p class="footer">BOLD Askeri Teknoloji ve Savunma Sanayi A.Ş. | ANATOLIA-Q v1.0 | GİZLİ</p>
-</body></html>`;
+      return data;
+    }
 
-  const blob = new Blob([docHtml], {type:'application/msword'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ANATOLIA-Q_${id}_${domain.toUpperCase()}_${new Date().toISOString().slice(0,10)}.doc`;
-  a.click();
-  URL.revokeObjectURL(url);
-  reportCount++;
-  document.getElementById('st-report').textContent = reportCount;
-}
+    function buildDomainControls() {
+      refs.domainList.replaceChildren();
+      refs.domainToolbar.replaceChildren();
 
-// ─── YARDIMCILAR ───
-function loading(on) { document.getElementById('loadBar').classList.toggle('on',on); }
-function showErr(m) { const e=document.getElementById('errBox'); e.textContent='[HATA] '+m; e.style.display='block'; }
-function hideErr() { document.getElementById('errBox').style.display='none'; }
-function hideResult() { document.getElementById('resultArea').style.display='none'; }
-function clearAll() { document.getElementById('sitInput').value=''; hideResult(); hideErr(); currentResult=null; }
+      Object.entries(DOMAINS).forEach(([key, item]) => {
+        const sidebarButton = document.createElement("button");
+        sidebarButton.type = "button";
+        sidebarButton.className = "domain-btn";
+        sidebarButton.dataset.domain = key;
+        sidebarButton.innerHTML = `<strong>${item.title}</strong><span>${item.description}</span>`;
+        sidebarButton.addEventListener("click", () => setDomain(key, true));
+        refs.domainList.appendChild(sidebarButton);
 
-// ─── INIT ───
-setDomain('savunma');
-</script>
+        const toolbarButton = document.createElement("button");
+        toolbarButton.type = "button";
+        toolbarButton.className = "pill";
+        toolbarButton.dataset.domain = key;
+        toolbarButton.textContent = item.title;
+        toolbarButton.addEventListener("click", () => setDomain(key, false));
+        refs.domainToolbar.appendChild(toolbarButton);
+      });
+    }
+
+    function setDomain(domain, jumpToAnalysis = false) {
+      state.domain = domain;
+      const selected = DOMAINS[domain];
+      refs.sidebarDomain.textContent = selected.title;
+      refs.analysisTitle.textContent = selected.short;
+      refs.analysisSubtitle.textContent = selected.description;
+
+      document.querySelectorAll("[data-domain]").forEach((node) => {
+        const active = node.dataset.domain === domain;
+        if (node.classList.contains("domain-btn")) {
+          node.classList.toggle("active", active);
+        } else {
+          node.style.borderColor = active ? "rgba(110, 200, 255, 0.34)" : "";
+          node.style.background = active ? "rgba(45, 152, 240, 0.1)" : "";
+          node.style.color = active ? "var(--text)" : "";
+        }
+      });
+
+      if (jumpToAnalysis) {
+        switchPage("analysis");
+      }
+    }
+
+    function switchPage(page) {
+      state.page = page;
+      document.querySelectorAll(".page").forEach((panel) => {
+        panel.classList.toggle("active", panel.id === `page-${page}`);
+      });
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === page);
+      });
+
+      if (window.innerWidth <= 1100 && state.mobileMenuOpen) {
+        state.mobileMenuOpen = false;
+        refs.sidebar.classList.remove("hidden");
+      }
+    }
+
+    function updateStats() {
+      const total = state.historyList.length;
+      const critical = state.historyList.filter((item) => {
+        const level = item.result?.tehdit_seviyesi || item.result?.genel_tehdit_seviyesi || item.level;
+        return level === "KRİTİK";
+      }).length;
+
+      refs.statTotal.textContent = String(total);
+      refs.statCritical.textContent = String(critical);
+      refs.statReport.textContent = String(state.reportCount);
+      refs.sidebarCount.textContent = String(total);
+      refs.sidebarReports.textContent = String(state.reportCount);
+    }
+
+    function renderHistory() {
+      refs.historyBody.replaceChildren();
+
+      if (!state.historyList.length) {
+        refs.historyEmpty.classList.remove("hidden");
+        refs.historyTableWrap.classList.add("hidden");
+        return;
+      }
+
+      refs.historyEmpty.classList.add("hidden");
+      refs.historyTableWrap.classList.remove("hidden");
+
+      state.historyList.forEach((entry) => {
+        const row = document.createElement("tr");
+        const level = entry.result?.tehdit_seviyesi || entry.result?.genel_tehdit_seviyesi || entry.level || "--";
+        const summary = String(entry.result?.ozet || entry.summary || "").slice(0, 130);
+        const time = entry.time || entry.created_at || "--";
+        const domainTitle = DOMAINS[entry.dom]?.title || entry.domain || entry.dom || "--";
+
+        [entry.id || "--", domainTitle, level, summary || "Özet bulunmuyor.", time].forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          if (index === 2 && value === "KRİTİK") {
+            cell.style.color = "var(--red)";
+            cell.style.fontWeight = "700";
+          }
+          row.appendChild(cell);
+        });
+
+        refs.historyBody.appendChild(row);
+      });
+    }
+
+    function createTextCard(text, className) {
+      const card = document.createElement("div");
+      card.className = className;
+      const copy = document.createElement("p");
+      copy.textContent = text;
+      card.appendChild(copy);
+      return card;
+    }
+
+    function renderImpacts(impacts) {
+      refs.impactList.replaceChildren();
+      const entries = impacts && typeof impacts === "object" ? Object.entries(impacts) : [];
+
+      if (!entries.length) {
+        refs.impactList.appendChild(createTextCard("Bu analiz için alan bazlı etki detayı dönmedi.", "impact-card"));
+        return;
+      }
+
+      entries.forEach(([name, info]) => {
+        const card = document.createElement("div");
+        card.className = "impact-card";
+
+        const label = document.createElement("div");
+        label.className = "soft-label";
+        label.textContent = name;
+
+        const title = document.createElement("h3");
+        title.textContent = String(info?.etki || "Belirsiz");
+        title.style.margin = "0 0 8px";
+
+        const copy = document.createElement("p");
+        copy.textContent = String(info?.aciklama || "Açıklama bulunmuyor.");
+
+        card.append(label, title, copy);
+        refs.impactList.appendChild(card);
+      });
+    }
+
+    function probabilityKind(value) {
+      const normalized = String(value || "").toLocaleLowerCase("tr-TR");
+      if (normalized.includes("yüksek")) return "prob-high";
+      if (normalized.includes("düşük")) return "prob-low";
+      return "prob-medium";
+    }
+
+    function renderScenarios(scenarios) {
+      refs.scenarioList.replaceChildren();
+      const list = Array.isArray(scenarios) ? scenarios : [];
+
+      if (!list.length) {
+        refs.scenarioList.appendChild(createTextCard("Senaryo verisi dönmedi.", "scenario-card"));
+        return;
+      }
+
+      list.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "scenario-card";
+
+        const head = document.createElement("div");
+        head.className = "scenario-head";
+
+        const title = document.createElement("h3");
+        title.textContent = `Senaryo ${index + 1}: ${item.baslik || "Başlıksız senaryo"}`;
+
+        const probability = document.createElement("div");
+        probability.className = `probability ${probabilityKind(item.olasilik)}`;
+        probability.textContent = item.olasilik || "Belirsiz";
+
+        head.append(title, probability);
+
+        const desc = document.createElement("p");
+        desc.textContent = item.aciklama || "Açıklama bulunmuyor.";
+
+        const action = document.createElement("p");
+        action.style.marginTop = "8px";
+        action.textContent = `Önerilen aksiyon: ${item.aksiyon || "Belirtilmedi."}`;
+
+        card.append(head, desc, action);
+        refs.scenarioList.appendChild(card);
+      });
+    }
+
+    function renderPriority(priority) {
+      refs.priorityList.replaceChildren();
+      const list = Array.isArray(priority) ? priority : priority ? [priority] : [];
+
+      if (!list.length) {
+        refs.priorityList.appendChild(createTextCard("Öncelikli öneri bilgisi dönmedi.", "scenario-card"));
+        return;
+      }
+
+      list.forEach((item) => {
+        refs.priorityList.appendChild(createTextCard(item, "scenario-card"));
+      });
+    }
+
+    function renderInstitutions(institutions) {
+      refs.institutionList.replaceChildren();
+      const list = Array.isArray(institutions) ? institutions : [];
+
+      if (!list.length) {
+        refs.institutionList.appendChild(createTextCard("Kurum listesi bulunmuyor.", "institution-tag"));
+        return;
+      }
+
+      list.forEach((item) => {
+        const tag = document.createElement("div");
+        tag.className = "institution-tag";
+        tag.textContent = item;
+        refs.institutionList.appendChild(tag);
+      });
+    }
+
+    function badgeClass(level) {
+      switch (level) {
+        case "KRİTİK": return "level-critical";
+        case "YÜKSEK": return "level-high";
+        case "ORTA": return "level-medium";
+        case "DÜŞÜK": return "level-low";
+        default: return "level-unknown";
+      }
+    }
+
+    function renderResult(result) {
+      const level = result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "BİLİNMEYEN";
+      const domainTitle = DOMAINS[state.domain].title;
+
+      state.currentResult = result;
+      refs.resultArea.classList.remove("hidden");
+      refs.downloadBtn.disabled = false;
+      refs.resultTitle.textContent = `${domainTitle} analizi hazır`;
+      refs.resultMeta.textContent = `ID: ${result.analysis_id || "--"} · Alan: ${domainTitle}`;
+      refs.threatBadge.className = `threat-badge ${badgeClass(level)}`;
+      refs.threatBadge.textContent = `Tehdit seviyesi: ${level}`;
+      refs.summaryText.textContent = result.ozet || "Özet bulunmuyor.";
+      refs.threatText.textContent = result.tehdit_analizi || "Tehdit değerlendirmesi bulunmuyor.";
+      refs.timelineText.textContent = result.zaman_cercevesi || "Zaman çerçevesi belirtilmedi.";
+      refs.criticalLinkText.textContent = result.kritik_baglanti || "Bu analiz için kritik bağlantı bilgisi bulunmuyor.";
+      refs.lastSummary.textContent = result.ozet || "Son analiz özeti bulunamadı.";
+
+      renderImpacts(result.alan_etkileri);
+      renderScenarios(result.senaryolar);
+      renderPriority(result.oncelikli_oneri || result.oncelik_sirasi);
+      renderInstitutions(result.etkilenen_kurumlar);
+    }
+
+    function clearAnalysis(keepStatus = false) {
+      refs.situationInput.value = "";
+      refs.resultArea.classList.add("hidden");
+      refs.downloadBtn.disabled = true;
+      state.currentResult = null;
+      state.currentSituation = "";
+      refs.summaryText.textContent = "";
+      refs.threatText.textContent = "";
+      refs.timelineText.textContent = "";
+      refs.criticalLinkText.textContent = "";
+      refs.impactList.replaceChildren();
+      refs.scenarioList.replaceChildren();
+      refs.priorityList.replaceChildren();
+      refs.institutionList.replaceChildren();
+      updateCharCount();
+      if (!keepStatus) setStatus(refs.analysisStatus, "", "");
+    }
+
+    function appendHistory(result) {
+      state.historyList.unshift({
+        id: result.analysis_id || `LOCAL-${Date.now()}`,
+        dom: state.domain,
+        result,
+        time: new Date().toLocaleTimeString("tr-TR", { hour12: false })
+      });
+      renderHistory();
+      updateStats();
+    }
+
+    async function doLogin() {
+      const username = refs.loginUser.value.trim();
+      const password = refs.loginPass.value;
+
+      if (!username || !password) {
+        setStatus(refs.loginStatus, "error", "Kullanıcı adı ve şifre zorunludur.");
+        return;
+      }
+
+      refs.loginBtn.disabled = true;
+      setLoading(refs.loginLoad, true);
+      setStatus(refs.loginStatus, "", "");
+
+      try {
+        const data = await apiFetch("/api/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password })
+        });
+        state.pendingUsername = username;
+        refs.step1.classList.add("hidden");
+        refs.step2.classList.remove("hidden");
+        refs.verifyInfo.textContent = `Doğrulama kodu ${data.email_hint || "kayıtlı e-posta adresinize"} gönderildi. Kod 10 dakika geçerlidir.`;
+        refs.loginCode.focus();
+      } catch (error) {
+        setStatus(refs.loginStatus, "error", error.message || "Giriş başarısız.");
+      } finally {
+        refs.loginBtn.disabled = false;
+        setLoading(refs.loginLoad, false);
+      }
+    }
+
+    async function doVerify() {
+      const code = refs.loginCode.value.trim().replace(/\D/g, "");
+      refs.loginCode.value = code;
+
+      if (code.length !== 6) {
+        setStatus(refs.verifyStatus, "error", "6 haneli doğrulama kodunu eksiksiz girin.");
+        return;
+      }
+
+      refs.verifyBtn.disabled = true;
+      setLoading(refs.verifyLoad, true);
+      setStatus(refs.verifyStatus, "", "");
+
+      try {
+        const data = await apiFetch("/api/verify", {
+          method: "POST",
+          body: JSON.stringify({ username: state.pendingUsername, code })
+        });
+
+        state.sessionToken = data.token || "";
+        state.sessionUser = data.name || state.pendingUsername;
+        sessionStorage.setItem("anatolia_session_token", state.sessionToken);
+        sessionStorage.setItem("anatolia_session_user", state.sessionUser);
+
+        refs.userBadge.textContent = `Kullanıcı: ${state.sessionUser}`;
+        refs.statUser.textContent = state.sessionUser;
+
+        refs.loginScreen.classList.add("hidden");
+        refs.mainSystem.classList.remove("hidden");
+        setStatus(refs.analysisStatus, "info", "Oturum doğrulandı. Analiz başlatmaya hazırsınız.");
+        await loadHistory(true);
+      } catch (error) {
+        setStatus(refs.verifyStatus, "error", error.message || "Doğrulama başarısız.");
+      } finally {
+        refs.verifyBtn.disabled = false;
+        setLoading(refs.verifyLoad, false);
+      }
+    }
+
+    async function runAnalysis() {
+      const situation = refs.situationInput.value.trim();
+
+      if (!state.sessionToken) {
+        setStatus(refs.analysisStatus, "error", "Analiz için önce oturum açmanız gerekiyor.");
+        return;
+      }
+
+      if (!situation) {
+        setStatus(refs.analysisStatus, "error", "Durum bildirimi boş bırakılamaz.");
+        return;
+      }
+
+      state.currentSituation = situation;
+      refs.runBtn.disabled = true;
+      refs.downloadBtn.disabled = true;
+      setLoading(refs.analysisLoad, true);
+      setStatus(refs.analysisStatus, "info", "Analiz talebi işleniyor...");
+
+      try {
+        const result = await apiFetch("/api/analyze", {
+          method: "POST",
+          body: JSON.stringify({
+            domain: state.domain,
+            situation
+          })
+        });
+
+        renderResult(result);
+        appendHistory(result);
+        setStatus(refs.analysisStatus, "info", "Analiz tamamlandı.");
+        switchPage("analysis");
+      } catch (error) {
+        setStatus(refs.analysisStatus, "error", error.message || "Analiz başarısız.");
+      } finally {
+        refs.runBtn.disabled = false;
+        setLoading(refs.analysisLoad, false);
+      }
+    }
+
+    async function loadHistory(silent = false) {
+      if (!state.sessionToken) return;
+      if (!silent) setStatus(refs.analysisStatus, "info", "Sunucu geçmişi yenileniyor...");
+
+      try {
+        const data = await apiFetch("/api/history", { method: "GET" });
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.history)
+            ? data.history
+            : Array.isArray(data?.items)
+              ? data.items
+              : [];
+
+        state.historyList = items.map((item) => ({
+          id: item.analysis_id || item.id || "--",
+          dom: item.domain || item.dom || "savunma",
+          result: item.result || item,
+          summary: item.ozet || item.summary || "",
+          level: item.tehdit_seviyesi || item.genel_tehdit_seviyesi || "",
+          time: item.created_at || item.time || "--",
+          created_at: item.created_at || item.time || "--"
+        }));
+
+        renderHistory();
+        updateStats();
+        if (!silent) setStatus(refs.analysisStatus, "info", "Sunucu geçmişi güncellendi.");
+      } catch (error) {
+        if (!silent) setStatus(refs.analysisStatus, "error", `Geçmiş alınamadı: ${error.message}`);
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function downloadReport() {
+      if (!state.currentResult) return;
+
+      const result = state.currentResult;
+      const level = result.tehdit_seviyesi || result.genel_tehdit_seviyesi || "--";
+      const domainTitle = DOMAINS[state.domain].title;
+      const now = `${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTimeString("tr-TR", { hour12: false })}`;
+      const scenarios = Array.isArray(result.senaryolar) ? result.senaryolar : [];
+      const priorities = Array.isArray(result.oncelikli_oneri || result.oncelik_sirasi)
+        ? (result.oncelikli_oneri || result.oncelik_sirasi)
+        : (result.oncelikli_oneri || result.oncelik_sirasi ? [result.oncelikli_oneri || result.oncelik_sirasi] : []);
+
+      const scenarioHtml = scenarios.map((scenario, index) => `
+        <h3>Senaryo ${index + 1}: ${escapeHtml(scenario.baslik || "Başlıksız senaryo")}</h3>
+        <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:12px">
+          <tr><td style="background:#eef5ff;font-weight:bold;width:140px">Olasılık</td><td>${escapeHtml(scenario.olasilik || "Belirsiz")}</td></tr>
+          <tr><td style="background:#eef5ff;font-weight:bold">Açıklama</td><td>${escapeHtml(scenario.aciklama || "")}</td></tr>
+          <tr><td style="background:#eef5ff;font-weight:bold">Önerilen aksiyon</td><td>${escapeHtml(scenario.aksiyon || "")}</td></tr>
+        </table>
+      `).join("");
+
+      const docHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: Calibri, sans-serif; font-size: 11pt; margin: 2cm; }
+              h1 { font-size: 18pt; color: #143e69; text-align: center; }
+              h2 { font-size: 13pt; color: #143e69; border-bottom: 2px solid #143e69; padding-bottom: 4px; margin-top: 18pt; }
+              h3 { font-size: 11pt; color: #225e99; margin-top: 12pt; }
+              p, li { margin: 6pt 0; line-height: 1.45; }
+              .box { background: #eef5ff; border-left: 4pt solid #225e99; padding: 10pt; margin: 10pt 0; }
+              td, th { border: 1pt solid #c8d6e5; padding: 5pt 7pt; font-size: 10pt; }
+              .footer { color: #808080; font-size: 9pt; text-align: center; margin-top: 24pt; }
+            </style>
+          </head>
+          <body>
+            <h1>ANATOLIA-Q</h1>
+            <p style="text-align:center;color:#666;font-size:10pt">Ulusal karar destek sistemi</p>
+            <h2 style="text-align:center;border:none">${escapeHtml(domainTitle)} raporu</h2>
+            <table cellpadding="6" border="1" style="width:100%;border-collapse:collapse;margin-bottom:18pt">
+              <tr><td style="background:#eef5ff;font-weight:bold;width:160px">Analiz no</td><td>${escapeHtml(result.analysis_id || "--")}</td></tr>
+              <tr><td style="background:#eef5ff;font-weight:bold">Tarih / saat</td><td>${escapeHtml(now)}</td></tr>
+              <tr><td style="background:#eef5ff;font-weight:bold">Hazırlayan</td><td>${escapeHtml(state.sessionUser || "--")}</td></tr>
+              <tr><td style="background:#eef5ff;font-weight:bold">Alan</td><td>${escapeHtml(domainTitle)}</td></tr>
+              <tr><td style="background:#eef5ff;font-weight:bold">Tehdit seviyesi</td><td>${escapeHtml(level)}</td></tr>
+              <tr><td style="background:#eef5ff;font-weight:bold">Zaman çerçevesi</td><td>${escapeHtml(result.zaman_cercevesi || "--")}</td></tr>
+            </table>
+            <h2>1. Durum bildirimi</h2>
+            <p>${escapeHtml(state.currentSituation)}</p>
+            <h2>2. Özet değerlendirme</h2>
+            <div class="box"><p>${escapeHtml(result.ozet || "")}</p></div>
+            <h2>3. Tehdit / risk analizi</h2>
+            <p>${escapeHtml(result.tehdit_analizi || "")}</p>
+            <h2>4. Senaryo analizi</h2>
+            ${scenarioHtml}
+            <h2>5. Öncelikli öneri</h2>
+            <div class="box"><ul>${priorities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>
+            <h2>6. Etkilenen kurumlar</h2>
+            <p>${(Array.isArray(result.etkilenen_kurumlar) ? result.etkilenen_kurumlar : []).map((item) => escapeHtml(item)).join(" | ") || "--"}</p>
+            <p class="footer">ANATOLIA-Q ön yüz revizyonu</p>
+          </body>
+        </html>
+      `;
+
+      const blob = new Blob([docHtml], { type: "application/msword" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `ANATOLIA-Q_${result.analysis_id || "rapor"}_${state.domain}_${new Date().toISOString().slice(0, 10)}.doc`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      state.reportCount += 1;
+      updateStats();
+    }
+
+    function logout() {
+      state.sessionToken = "";
+      state.sessionUser = "";
+      state.pendingUsername = "";
+      state.currentResult = null;
+      state.currentSituation = "";
+      state.reportCount = 0;
+      state.historyList = [];
+      sessionStorage.removeItem("anatolia_session_token");
+      sessionStorage.removeItem("anatolia_session_user");
+
+      refs.loginUser.value = "";
+      refs.loginPass.value = "";
+      refs.loginCode.value = "";
+      refs.userBadge.textContent = "Kullanıcı: --";
+      refs.statUser.textContent = "--";
+      refs.step2.classList.add("hidden");
+      refs.step1.classList.remove("hidden");
+      refs.loginScreen.classList.remove("hidden");
+      refs.mainSystem.classList.add("hidden");
+      refs.verifyInfo.textContent = "";
+      clearAnalysis();
+      renderHistory();
+      updateStats();
+    }
+
+    function injectTemplate() {
+      refs.situationInput.value = PRESETS.cross;
+      updateCharCount();
+      switchPage("analysis");
+      refs.situationInput.focus();
+    }
+
+    function restoreSession() {
+      const token = sessionStorage.getItem("anatolia_session_token");
+      const user = sessionStorage.getItem("anatolia_session_user");
+      if (!token || !user) {
+        renderHistory();
+        updateStats();
+        return;
+      }
+
+      state.sessionToken = token;
+      state.sessionUser = user;
+      refs.userBadge.textContent = `Kullanıcı: ${user}`;
+      refs.statUser.textContent = user;
+      refs.loginScreen.classList.add("hidden");
+      refs.mainSystem.classList.remove("hidden");
+      loadHistory(true);
+    }
+
+    function toggleMobileMenu() {
+      if (window.innerWidth > 1100) return;
+      state.mobileMenuOpen = !state.mobileMenuOpen;
+      refs.sidebar.classList.toggle("hidden", !state.mobileMenuOpen);
+    }
+
+    function bindEvents() {
+      refs.loginBtn.addEventListener("click", doLogin);
+      refs.verifyBtn.addEventListener("click", doVerify);
+      refs.backBtn.addEventListener("click", () => {
+        refs.step2.classList.add("hidden");
+        refs.step1.classList.remove("hidden");
+        refs.loginCode.value = "";
+        state.pendingUsername = "";
+        setStatus(refs.verifyStatus, "", "");
+      });
+      refs.logoutBtn.addEventListener("click", logout);
+      refs.runBtn.addEventListener("click", runAnalysis);
+      refs.clearBtn.addEventListener("click", () => clearAnalysis());
+      refs.downloadBtn.addEventListener("click", downloadReport);
+      refs.refreshHistoryBtn.addEventListener("click", () => loadHistory());
+      refs.refreshFromDashboardBtn.addEventListener("click", () => loadHistory());
+      refs.injectTemplateBtn.addEventListener("click", injectTemplate);
+      refs.mobileMenuBtn.addEventListener("click", toggleMobileMenu);
+
+      refs.loginUser.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doLogin();
+      });
+      refs.loginPass.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doLogin();
+      });
+      refs.loginCode.addEventListener("input", () => {
+        refs.loginCode.value = refs.loginCode.value.replace(/\D/g, "");
+      });
+      refs.loginCode.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doVerify();
+      });
+      refs.situationInput.addEventListener("input", updateCharCount);
+
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.addEventListener("click", () => switchPage(button.dataset.page));
+      });
+
+      document.querySelectorAll("[data-jump]").forEach((button) => {
+        button.addEventListener("click", () => switchPage(button.dataset.jump));
+      });
+
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = PRESETS[button.dataset.preset];
+          if (!value) return;
+          refs.situationInput.value = value;
+          updateCharCount();
+          refs.situationInput.focus();
+        });
+      });
+    }
+
+    buildDomainControls();
+    bindEvents();
+    setDomain(state.domain);
+    switchPage("dashboard");
+    renderHistory();
+    updateStats();
+    updateCharCount();
+    restoreSession();
+    updateClocks();
+    setInterval(updateClocks, 1000);
+  </script>
 </body>
 </html>
