@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 import json
 import os
 import random
@@ -17,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from openai import OpenAI
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.4")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.5")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -250,30 +249,24 @@ def detect_level(situation: str) -> str:
     return "ORTA"
 
 
-def get_output_schema(domain: str) -> dict[str, object]:
-    if domain == "cross":
-        return {"name": "anatolia_q_cross_analysis", "schema": CROSS_SCHEMA}
-    return {"name": "anatolia_q_standard_analysis", "schema": STANDARD_SCHEMA}
-
-
 def normalize_result(domain: str, payload: dict[str, object]) -> dict[str, object]:
     if domain == "cross":
         level = str(payload.get("genel_tehdit_seviyesi", "ORTA")).upper()
         payload["genel_tehdit_seviyesi"] = level if level in {"KRITIK", "YUKSEK", "ORTA", "DUSUK"} else "ORTA"
         impacts = payload.get("alan_etkileri", {})
         if isinstance(impacts, dict):
-            for item in impacts.values():
-                if isinstance(item, dict):
-                    etki = str(item.get("etki", "orta")).lower()
-                    item["etki"] = etki if etki in {"yuksek", "orta", "dusuk"} else "orta"
+            for value in impacts.values():
+                if isinstance(value, dict):
+                    etki = str(value.get("etki", "orta")).lower()
+                    value["etki"] = etki if etki in {"yuksek", "orta", "dusuk"} else "orta"
     else:
         level = str(payload.get("tehdit_seviyesi", "ORTA")).upper()
         payload["tehdit_seviyesi"] = level if level in {"KRITIK", "YUKSEK", "ORTA", "DUSUK"} else "ORTA"
 
-    for scenario in payload.get("senaryolar", []):
-        if isinstance(scenario, dict):
-            olasilik = str(scenario.get("olasilik", "Orta"))
-            scenario["olasilik"] = olasilik if olasilik in {"Yuksek", "Orta", "Dusuk"} else "Orta"
+    for item in payload.get("senaryolar", []):
+        if isinstance(item, dict):
+            olasilik = str(item.get("olasilik", "Orta"))
+            item["olasilik"] = olasilik if olasilik in {"Yuksek", "Orta", "Dusuk"} else "Orta"
     return payload
 
 
@@ -402,151 +395,350 @@ def patch_frontend(html: str) -> str:
     injected = """
 <script>
 (() => {
-  function hotfixCenterPanel() {
-    const overlay = document.getElementById("centerOverlay");
-    const panel = overlay ? overlay.querySelector(".center-panel") : null;
-    const note = document.getElementById("centerNote");
-    const statusBox = document.getElementById("centerStatus");
-    const loadTrack = document.getElementById("centerLoad");
-    const actionButton = document.getElementById("contactCenterBtn");
-    const closeButton = document.getElementById("closeCenterBtn");
-    if (!overlay || !panel) return;
+  const sessionKeys = ["anatolia_q_session_v4", "anatolia_q_session_v3", "anatolia_q_session_v2", "anatolia_q_session"];
+  const state = {
+    pendingUsername: "",
+    sessionToken: "",
+    sessionUser: "",
+    reportCount: 0,
+  };
 
-    const refreshLayout = () => {
-      overlay.style.overflowY = "auto";
-      overlay.style.alignItems = window.innerWidth <= 900 ? "flex-start" : "center";
-      overlay.style.padding = window.innerWidth <= 560 ? "12px" : "24px";
+  const refs = {
+    loginScreen: document.getElementById("loginScreen"),
+    mainSystem: document.getElementById("mainSystem"),
+    step1: document.getElementById("step1"),
+    step2: document.getElementById("step2"),
+    loginUser: document.getElementById("loginUser"),
+    loginPass: document.getElementById("loginPass"),
+    loginCode: document.getElementById("loginCode"),
+    loginBtn: document.getElementById("loginBtn"),
+    verifyBtn: document.getElementById("verifyBtn"),
+    backBtn: document.getElementById("backBtn"),
+    loginStatus: document.getElementById("loginStatus"),
+    verifyStatus: document.getElementById("verifyStatus"),
+    codeInfo: document.getElementById("codeInfo"),
+    loginLoad: document.getElementById("loginLoad"),
+    verifyLoad: document.getElementById("verifyLoad"),
+    userBadge: document.getElementById("userBadge"),
+    stUser: document.getElementById("stUser"),
+    centerOverlay: document.getElementById("centerOverlay"),
+    centerNote: document.getElementById("centerNote"),
+    centerStatus: document.getElementById("centerStatus"),
+    centerLoad: document.getElementById("centerLoad"),
+    contactCenterBtn: document.getElementById("contactCenterBtn"),
+    closeCenterBtn: document.getElementById("closeCenterBtn"),
+  };
+
+  function setStatus(node, kind, message) {
+    if (!node) return;
+    if (!kind) {
+      node.textContent = "";
+      node.removeAttribute("data-kind");
+      return;
+    }
+    node.setAttribute("data-kind", kind);
+    node.textContent = message;
+  }
+
+  function setLoading(node, active) {
+    if (!node) return;
+    node.classList.toggle("active", Boolean(active));
+  }
+
+  function saveSession(token, username, name, role) {
+    state.sessionToken = token || "";
+    state.sessionUser = username || "";
+    const payload = {
+      token: state.sessionToken,
+      sessionToken: state.sessionToken,
+      username: username || "",
+      user: username || "",
+      name: name || username || "",
+      role: role || "",
+      domain: "savunma",
+      reportCount: state.reportCount || 0,
+    };
+    sessionKeys.forEach((key) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(payload));
+      } catch (_) {}
+    });
+  }
+
+  function restoreSession() {
+    for (const key of sessionKeys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        const token = parsed.token || parsed.sessionToken || "";
+        const username = parsed.username || parsed.user || "";
+        if (!token) continue;
+        state.sessionToken = token;
+        state.sessionUser = username;
+        state.reportCount = Number(parsed.reportCount || 0);
+        return true;
+      } catch (_) {}
+    }
+    return false;
+  }
+
+  function resetLoginFlow() {
+    state.pendingUsername = "";
+    if (refs.step1) refs.step1.classList.remove("hidden");
+    if (refs.step2) refs.step2.classList.add("hidden");
+    if (refs.loginCode) refs.loginCode.value = "";
+    setStatus(refs.loginStatus, "", "");
+    setStatus(refs.verifyStatus, "", "");
+    setStatus(refs.codeInfo, "", "");
+    setLoading(refs.loginLoad, false);
+    setLoading(refs.verifyLoad, false);
+    if (refs.loginBtn) refs.loginBtn.disabled = false;
+    if (refs.verifyBtn) refs.verifyBtn.disabled = false;
+  }
+
+  function showApp() {
+    if (refs.loginScreen) refs.loginScreen.classList.add("hidden");
+    if (refs.mainSystem) refs.mainSystem.classList.remove("hidden");
+    if (refs.userBadge) refs.userBadge.textContent = `Kullanici kodu: ${state.sessionUser || "--"}`;
+    if (refs.stUser) refs.stUser.textContent = state.sessionUser || "--";
+    document.querySelectorAll(".page").forEach((panel) => {
+      panel.classList.toggle("active", panel.id === "page-dashboard");
+    });
+    document.querySelectorAll("[data-page]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.page === "dashboard");
+    });
+  }
+
+  function openCenter() {
+    if (!refs.centerOverlay) return;
+    const panel = refs.centerOverlay.querySelector(".center-panel");
+    refs.centerOverlay.style.overflowY = "auto";
+    refs.centerOverlay.style.alignItems = window.innerWidth <= 900 ? "flex-start" : "center";
+    refs.centerOverlay.style.padding = window.innerWidth <= 560 ? "12px" : "24px";
+    if (panel) {
       panel.style.maxHeight = window.innerWidth <= 560 ? "calc(100vh - 24px)" : "min(calc(100vh - 48px), 900px)";
       panel.style.overflowY = "auto";
       panel.style.overscrollBehavior = "contain";
-    };
+    }
+    refs.centerOverlay.classList.add("open");
+    refs.centerOverlay.setAttribute("aria-hidden", "false");
+    setStatus(refs.centerStatus, "", "");
+    requestAnimationFrame(() => {
+      if (refs.centerNote) refs.centerNote.focus();
+    });
+  }
 
-    const clearStatus = () => {
-      if (!statusBox) return;
-      statusBox.textContent = "";
-      statusBox.removeAttribute("data-kind");
-    };
+  function closeCenter() {
+    if (!refs.centerOverlay) return;
+    refs.centerOverlay.classList.remove("open");
+    refs.centerOverlay.setAttribute("aria-hidden", "true");
+  }
 
-    const setStatus = (kind, message) => {
-      if (!statusBox) return;
-      statusBox.setAttribute("data-kind", kind);
-      statusBox.textContent = message;
-    };
+  async function doLogin(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    const username = (refs.loginUser?.value || "").trim().replace(/\D/g, "").slice(0, 6);
+    const password = refs.loginPass?.value || "";
+    if (refs.loginUser) refs.loginUser.value = username;
 
-    const openCenter = () => {
-      refreshLayout();
-      overlay.classList.add("open");
-      overlay.setAttribute("aria-hidden", "false");
-      clearStatus();
-      requestAnimationFrame(() => {
-        if (note) note.focus();
+    if (!username || !password) {
+      setStatus(refs.loginStatus, "error", "Kullanici kodu ve sifre zorunludur.");
+      return;
+    }
+    if (username.length !== 6) {
+      setStatus(refs.loginStatus, "error", "Kullanici kodu 6 haneli olmalidir.");
+      return;
+    }
+
+    if (refs.loginBtn) refs.loginBtn.disabled = true;
+    setLoading(refs.loginLoad, true);
+    setStatus(refs.loginStatus, "", "");
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-    };
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || `Giris basarisiz (${response.status})`);
+      }
+      state.pendingUsername = username;
+      if (refs.step1) refs.step1.classList.add("hidden");
+      if (refs.step2) refs.step2.classList.remove("hidden");
+      setStatus(refs.codeInfo, "info", data.message || "Dogrulama kodu gonderildi.");
+      setStatus(refs.loginStatus, "success", "Kod gonderildi. Ikinci adima geciliyor.");
+      requestAnimationFrame(() => {
+        if (refs.loginCode) refs.loginCode.focus();
+      });
+    } catch (error) {
+      setStatus(refs.loginStatus, "error", error.message || "Giris basarisiz.");
+    } finally {
+      if (refs.loginBtn) refs.loginBtn.disabled = false;
+      setLoading(refs.loginLoad, false);
+    }
+  }
 
-    const closeCenter = () => {
-      overlay.classList.remove("open");
-      overlay.setAttribute("aria-hidden", "true");
-    };
+  async function doVerify(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    const code = (refs.loginCode?.value || "").trim().replace(/\D/g, "").slice(0, 6);
+    if (refs.loginCode) refs.loginCode.value = code;
 
-    [
-      "centerBtnLogin",
-      "centerBtnInline",
-      "centerBtnApp",
-      "centerBtnSide",
-      "centerBtnDash",
-      "centerBtnAnalysis"
-    ].forEach((id) => {
+    if (code.length !== 6) {
+      setStatus(refs.verifyStatus, "error", "6 haneli dogrulama kodunu girin.");
+      return;
+    }
+    if (!state.pendingUsername) {
+      setStatus(refs.verifyStatus, "error", "Oturum adimi bulunamadi. Tekrar giris yapin.");
+      resetLoginFlow();
+      return;
+    }
+
+    if (refs.verifyBtn) refs.verifyBtn.disabled = true;
+    setLoading(refs.verifyLoad, true);
+    setStatus(refs.verifyStatus, "", "");
+
+    try {
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: state.pendingUsername, code }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || `Dogrulama basarisiz (${response.status})`);
+      }
+      saveSession(data.token || "", data.username || data.user || state.pendingUsername, data.name || "", data.role || "");
+      setStatus(refs.verifyStatus, "success", "Oturum acildi.");
+      showApp();
+    } catch (error) {
+      setStatus(refs.verifyStatus, "error", error.message || "Dogrulama basarisiz.");
+    } finally {
+      if (refs.verifyBtn) refs.verifyBtn.disabled = false;
+      setLoading(refs.verifyLoad, false);
+    }
+  }
+
+  async function contactCenter(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    const token = state.sessionToken || "";
+    if (!token) {
+      setStatus(refs.centerStatus, "error", "Once giris yapmaniz gerekiyor.");
+      return;
+    }
+    if (refs.contactCenterBtn) refs.contactCenterBtn.disabled = true;
+    setLoading(refs.centerLoad, true);
+    setStatus(refs.centerStatus, "info", "Merkeze bildirim hazirlaniyor...");
+
+    try {
+      const response = await fetch("/api/contact-center", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "X-Auth-Token": token,
+        },
+        body: JSON.stringify({ token, note: refs.centerNote ? refs.centerNote.value.trim() : "" }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || `Istek basarisiz (${response.status})`);
+      }
+      setStatus(refs.centerStatus, "success", data.message || "Merkez iletisim talebiniz gonderildi.");
+      if (refs.centerNote) refs.centerNote.value = "";
+    } catch (error) {
+      setStatus(refs.centerStatus, "error", error.message || "Merkez bildirimi gonderilemedi.");
+    } finally {
+      if (refs.contactCenterBtn) refs.contactCenterBtn.disabled = false;
+      setLoading(refs.centerLoad, false);
+    }
+  }
+
+  function bindCenter() {
+    ["centerBtnLogin", "centerBtnInline", "centerBtnApp", "centerBtnSide", "centerBtnDash", "centerBtnAnalysis"].forEach((id) => {
       const button = document.getElementById(id);
       if (!button || button.dataset.centerHotfix === "1") return;
       button.dataset.centerHotfix = "1";
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        openCenter();
-      }, true);
+      button.addEventListener("click", openCenter, true);
     });
 
-    if (closeButton && closeButton.dataset.centerHotfix !== "1") {
-      closeButton.dataset.centerHotfix = "1";
-      closeButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        closeCenter();
-      }, true);
+    if (refs.closeCenterBtn && refs.closeCenterBtn.dataset.centerHotfix !== "1") {
+      refs.closeCenterBtn.dataset.centerHotfix = "1";
+      refs.closeCenterBtn.addEventListener("click", closeCenter, true);
     }
-
-    if (overlay.dataset.centerOverlayHotfix !== "1") {
-      overlay.dataset.centerOverlayHotfix = "1";
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) closeCenter();
+    if (refs.contactCenterBtn && refs.contactCenterBtn.dataset.centerHotfix !== "1") {
+      refs.contactCenterBtn.dataset.centerHotfix = "1";
+      refs.contactCenterBtn.addEventListener("click", contactCenter, true);
+    }
+    if (refs.centerOverlay && refs.centerOverlay.dataset.centerHotfix !== "1") {
+      refs.centerOverlay.dataset.centerHotfix = "1";
+      refs.centerOverlay.addEventListener("click", (event) => {
+        if (event.target === refs.centerOverlay) closeCenter();
       });
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && overlay.classList.contains("open")) closeCenter();
+        if (event.key === "Escape" && refs.centerOverlay.classList.contains("open")) closeCenter();
       });
-      window.addEventListener("resize", refreshLayout);
     }
-
-    if (actionButton && actionButton.dataset.centerActionHotfix !== "1") {
-      actionButton.dataset.centerActionHotfix = "1";
-      actionButton.addEventListener("click", async (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        const sessionKeys = ["anatolia_q_session_v4", "anatolia_q_session_v3", "anatolia_q_session_v2", "anatolia_q_session"];
-        let token = "";
-        for (const key of sessionKeys) {
-          try {
-            const raw = localStorage.getItem(key);
-            if (!raw) continue;
-            const parsed = JSON.parse(raw);
-            token = parsed.token || parsed.sessionToken || "";
-            if (token) break;
-          } catch (_) {}
-        }
-
-        if (!token && window.state && typeof window.state === "object") {
-          token = window.state.sessionToken || "";
-        }
-
-        if (!token) {
-          setStatus("error", "Once giris yapmaniz gerekiyor.");
-          return;
-        }
-
-        actionButton.disabled = true;
-        if (loadTrack) loadTrack.classList.add("active");
-        setStatus("info", "Merkeze bildirim hazirlaniyor...");
-
-        try {
-          const response = await fetch("/api/contact-center", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-              "X-Auth-Token": token,
-            },
-            body: JSON.stringify({ token, note: note ? note.value.trim() : "" }),
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(data.detail || data.message || `Istek basarisiz (${response.status})`);
-          }
-          setStatus("success", data.message || "Merkez iletisim talebiniz gonderildi.");
-          if (note) note.value = "";
-        } catch (error) {
-          setStatus("error", error.message || "Merkez bildirimi gonderilemedi.");
-        } finally {
-          if (loadTrack) loadTrack.classList.remove("active");
-          actionButton.disabled = false;
-        }
-      }, true);
-    }
-
-    refreshLayout();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", hotfixCenterPanel);
-  } else {
-    hotfixCenterPanel();
+  function bindLogin() {
+    if (refs.loginBtn && refs.loginBtn.dataset.loginHotfix !== "1") {
+      refs.loginBtn.dataset.loginHotfix = "1";
+      refs.loginBtn.addEventListener("click", doLogin, true);
+    }
+    if (refs.verifyBtn && refs.verifyBtn.dataset.loginHotfix !== "1") {
+      refs.verifyBtn.dataset.loginHotfix = "1";
+      refs.verifyBtn.addEventListener("click", doVerify, true);
+    }
+    if (refs.backBtn && refs.backBtn.dataset.loginHotfix !== "1") {
+      refs.backBtn.dataset.loginHotfix = "1";
+      refs.backBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        resetLoginFlow();
+      }, true);
+    }
+    if (refs.loginUser && refs.loginUser.dataset.loginHotfix !== "1") {
+      refs.loginUser.dataset.loginHotfix = "1";
+      refs.loginUser.addEventListener("input", () => {
+        refs.loginUser.value = refs.loginUser.value.replace(/\D/g, "").slice(0, 6);
+      }, true);
+      refs.loginUser.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doLogin(event);
+      }, true);
+    }
+    if (refs.loginPass && refs.loginPass.dataset.loginHotfix !== "1") {
+      refs.loginPass.dataset.loginHotfix = "1";
+      refs.loginPass.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doLogin(event);
+      }, true);
+    }
+    if (refs.loginCode && refs.loginCode.dataset.loginHotfix !== "1") {
+      refs.loginCode.dataset.loginHotfix = "1";
+      refs.loginCode.addEventListener("input", () => {
+        refs.loginCode.value = refs.loginCode.value.replace(/\D/g, "").slice(0, 6);
+      }, true);
+      refs.loginCode.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") doVerify(event);
+      }, true);
+    }
+  }
+
+  bindLogin();
+  bindCenter();
+  resetLoginFlow();
+  if (restoreSession()) {
+    showApp();
   }
 })();
 </script>
@@ -568,7 +760,7 @@ async def health() -> dict[str, str]:
     return {
         "status": "online",
         "system": "T.C. ANATOLIA-Q",
-        "version": "1.4.4",
+        "version": "1.4.5",
         "provider": "openai-with-fallback",
     }
 
@@ -648,7 +840,7 @@ async def contact_center(request: Request, req: dict) -> dict[str, str]:
 
 @app.post("/api/analyze")
 async def analyze(req: dict) -> dict[str, object]:
-    domain = str(req.get("domain", ""))
+    domain = str(req.get("domain", "")).strip()
     situation = str(req.get("situation", "")).strip()
     api_key = os.environ.get("OPENAI_API_KEY", str(req.get("api_key", ""))).strip()
 
@@ -659,9 +851,10 @@ async def analyze(req: dict) -> dict[str, object]:
     if not api_key:
         return save_analysis(domain, situation, build_fallback_result(domain, situation, "OPENAI_API_KEY eksik"), True)
 
-    schema_config = get_output_schema(domain)
+    schema = CROSS_SCHEMA if domain == "cross" else STANDARD_SCHEMA
+    schema_name = "anatolia_q_cross_analysis" if domain == "cross" else "anatolia_q_standard_analysis"
     client = OpenAI(api_key=api_key)
-    user_message = (
+    user_prompt = (
         f"Durum:\n{situation}\n\n"
         f"Tarih: {now_text()}\n\n"
         f"Alan: {DOMAIN_CONFIG[domain]['display']}\n\n"
@@ -673,14 +866,14 @@ async def analyze(req: dict) -> dict[str, object]:
             model=OPENAI_MODEL,
             input=[
                 {"role": "developer", "content": [{"type": "input_text", "text": DOMAIN_CONFIG[domain]["prompt"]}]},
-                {"role": "user", "content": [{"type": "input_text", "text": user_message}]},
+                {"role": "user", "content": [{"type": "input_text", "text": user_prompt}]},
             ],
             text={
                 "format": {
                     "type": "json_schema",
-                    "name": schema_config["name"],
+                    "name": schema_name,
                     "strict": True,
-                    "schema": schema_config["schema"],
+                    "schema": schema,
                 }
             },
             max_output_tokens=1800,
