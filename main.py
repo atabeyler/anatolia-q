@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 
 import json
 import openai
@@ -15,7 +17,7 @@ import string
 import uuid
 from openai import OpenAI
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.2")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.4.3")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -25,11 +27,11 @@ GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD", "")
 COMMON_PASSWORD = "Q7m!R2x#"
 
 USERS = {
-    "158963": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Merkez Yonetici", "role": "admin"},
-    "274851": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Merkez Operasyon", "role": "operator"},
-    "386472": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Strateji Birimi", "role": "analyst"},
-    "491205": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Enerji Masasi", "role": "analyst"},
-    "563184": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Analiz Operatoru", "role": "operator"},
+    "158963": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Sistem Yonetici", "role": "admin"},
+    "274851": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Operasyon Birimi", "role": "operator"},
+    "386472": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Stratejik Analiz", "role": "analyst"},
+    "491205": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Enerji Izleme", "role": "analyst"},
+    "563184": {"password": COMMON_PASSWORD, "email": PRIMARY_EMAIL, "name": "Saha Operatoru", "role": "operator"},
 }
 
 DOMAIN_CONFIG = {
@@ -70,14 +72,14 @@ DOMAIN_CONFIG = {
     },
     "genel_chat": {
         "display": "Genel Chat",
-        "prompt": "You are the strategic general chat module of T.C. ANATOLIA-Q. Produce concise Turkish output in the requested JSON schema.",
+        "prompt": "You are the strategic general chat module of T.C. ANATOLIA-Q. Produce concise Turkish analysis in the requested JSON schema.",
         "kurumlar": ["Cumhurbaskanligi", "Strateji Birimi", "Merkez Koordinasyon"],
         "zaman": "Duruma gore",
         "oneri": "Karar vericilere sunulacak ana mesajlar netlestirilmeli ve belirsizlikler acikca ayrilmalidir.",
     },
     "cross": {
         "display": "Capraz Sentez",
-        "prompt": "You are the cross-domain synthesis module of T.C. ANATOLIA-Q. Produce concise Turkish output in the requested JSON schema.",
+        "prompt": "You are the cross-domain synthesis module of T.C. ANATOLIA-Q. Produce concise Turkish analysis in the requested JSON schema.",
         "kurumlar": ["Cumhurbaskanligi", "MSB", "Disisleri Bakanligi", "Hazine ve Maliye Bakanligi"],
         "zaman": "Acil (0-72 saat)",
         "oneri": "Tek merkezli koordinasyon yapisi kurularak alanlar arasi etkiler es zamanli izlenmelidir.",
@@ -174,21 +176,25 @@ CROSS_SCHEMA = {
 }
 
 LEVEL_KEYWORDS = {
-    "KRITIK": ["saldiri", "kriz", "coklu", "catisma", "patlama", "yaygin"],
+    "KRITIK": ["saldiri", "kriz", "catisma", "patlama", "yaygin", "seferberlik"],
     "YUKSEK": ["baski", "tehdit", "kesinti", "ihlal", "siber", "protesto"],
     "ORTA": ["gerilim", "risk", "hassas", "uyari"],
 }
 
-pending_codes = {}
-active_sessions = {}
-analysis_store = {}
+pending_codes: dict[str, dict[str, object]] = {}
+active_sessions: dict[str, dict[str, str]] = {}
+analysis_store: dict[str, dict[str, object]] = {}
 
 
-def generate_code():
+def now_text() -> str:
+    return datetime.now().strftime("%d.%m.%Y %H:%M")
+
+
+def generate_code() -> str:
     return "".join(random.choices(string.digits, k=6))
 
 
-def build_email(subject, html, to_email):
+def build_email(subject: str, html: str, to_email: str) -> MIMEMultipart:
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = GMAIL_USER
@@ -197,13 +203,13 @@ def build_email(subject, html, to_email):
     return msg
 
 
-def send_email_message(message):
+def send_email_message(message: MIMEMultipart) -> None:
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(GMAIL_USER, GMAIL_PASS)
         server.sendmail(GMAIL_USER, [message["To"]], message.as_string())
 
 
-def send_2fa_email(to_email, code, name):
+def send_2fa_email(to_email: str, code: str, name: str) -> None:
     html = f"""<html><body style='font-family:Arial,sans-serif;background:#07111e;padding:40px'>
     <div style='max-width:520px;margin:0 auto;background:#0c1727;border:1px solid #2b8df0;padding:34px;border-radius:20px'>
       <div style='font-family:monospace;font-size:24px;font-weight:900;letter-spacing:5px;color:#7ed1ff;margin-bottom:4px'>T.C. ANATOLIA-Q</div>
@@ -218,7 +224,7 @@ def send_2fa_email(to_email, code, name):
     send_email_message(build_email(f"T.C. ANATOLIA-Q Dogrulama Kodu: {code}", html, to_email))
 
 
-def send_center_contact_email(user_name, username, role, note=""):
+def send_center_contact_email(user_name: str, username: str, role: str, note: str = "") -> None:
     note_html = f"<p style='color:#cfe2f5;line-height:1.6'><b>Not:</b> {note}</p>" if note else ""
     html = f"""<html><body style='font-family:Arial,sans-serif;background:#06101b;padding:40px'>
     <div style='max-width:560px;margin:0 auto;background:#0d1a2b;border:1px solid #49b7ff;padding:34px;border-radius:22px'>
@@ -228,7 +234,7 @@ def send_center_contact_email(user_name, username, role, note=""):
       <div style='background:#08111d;border:1px solid #25486a;border-radius:16px;padding:18px;margin:20px 0'>
         <p style='margin:0 0 8px;color:#d9ecff'><b>Kullanici kodu:</b> {username}</p>
         <p style='margin:0 0 8px;color:#d9ecff'><b>Rol:</b> {role}</p>
-        <p style='margin:0;color:#d9ecff'><b>Talep zamani:</b> {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}</p>
+        <p style='margin:0;color:#d9ecff'><b>Talep zamani:</b> {now_text()}</p>
       </div>
       {note_html}
       <p style='font-size:12px;color:#6a87a8'>Bildirim merkeze otomatik gonderilmistir.<br><br>Bold Askeri Teknoloji ve Savunma Sanayi A.S.</p>
@@ -236,7 +242,7 @@ def send_center_contact_email(user_name, username, role, note=""):
     send_email_message(build_email("T.C. ANATOLIA-Q Merkez Iletisim Talebi", html, PRIMARY_EMAIL))
 
 
-def detect_level(situation):
+def detect_level(situation: str) -> str:
     lowered = situation.lower()
     for level, words in LEVEL_KEYWORDS.items():
         if any(word in lowered for word in words):
@@ -244,57 +250,66 @@ def detect_level(situation):
     return "ORTA"
 
 
-def normalize_result(domain, result):
-    threat_map = {"KRITIK": "KRITIK", "YUKSEK": "YUKSEK", "ORTA": "ORTA", "DUSUK": "DUSUK"}
-    probability_map = {"Yuksek": "Yuksek", "Orta": "Orta", "Dusuk": "Dusuk"}
-    impact_map = {"yuksek": "yuksek", "orta": "orta", "dusuk": "dusuk"}
-
+def get_output_schema(domain: str) -> dict[str, object]:
     if domain == "cross":
-        result["genel_tehdit_seviyesi"] = threat_map.get(result.get("genel_tehdit_seviyesi", ""), result.get("genel_tehdit_seviyesi", "ORTA"))
-        for info in result.get("alan_etkileri", {}).values():
-            info["etki"] = impact_map.get(info.get("etki", ""), info.get("etki", "orta"))
-    else:
-        result["tehdit_seviyesi"] = threat_map.get(result.get("tehdit_seviyesi", ""), result.get("tehdit_seviyesi", "ORTA"))
-
-    for scenario in result.get("senaryolar", []):
-        scenario["olasilik"] = probability_map.get(scenario.get("olasilik", ""), scenario.get("olasilik", "Orta"))
-    return result
+        return {"name": "anatolia_q_cross_analysis", "schema": CROSS_SCHEMA}
+    return {"name": "anatolia_q_standard_analysis", "schema": STANDARD_SCHEMA}
 
 
-def scenario_to_text(item):
-    if not isinstance(item, dict):
-        return str(item)
-    pieces = [
-        item.get("baslik", ""),
-        f"Olasilik: {item.get('olasilik', 'Orta')}",
-        item.get("aciklama", ""),
-        f"Aksiyon: {item.get('aksiyon', '')}",
-    ]
-    return " | ".join([part for part in pieces if part and not part.endswith(": ")])
-
-
-def add_ui_aliases(domain, result):
-    payload = dict(result)
-    payload["risk_analizi"] = payload.get("tehdit_analizi", "")
-    payload["senaryo_analizi"] = [scenario_to_text(item) for item in payload.get("senaryolar", [])]
-    payload["onerilen_aksiyonlar"] = [payload["oncelikli_oneri"]] if payload.get("oncelikli_oneri") else []
+def normalize_result(domain: str, payload: dict[str, object]) -> dict[str, object]:
     if domain == "cross":
-        payload["etki_alanlari"] = [
-            f"{DOMAIN_CONFIG[key]['display']}: {value.get('etki', 'orta')} | {value.get('aciklama', '')}"
-            for key, value in payload.get("alan_etkileri", {}).items()
-            if key in DOMAIN_CONFIG
-        ]
+        level = str(payload.get("genel_tehdit_seviyesi", "ORTA")).upper()
+        payload["genel_tehdit_seviyesi"] = level if level in {"KRITIK", "YUKSEK", "ORTA", "DUSUK"} else "ORTA"
+        impacts = payload.get("alan_etkileri", {})
+        if isinstance(impacts, dict):
+            for item in impacts.values():
+                if isinstance(item, dict):
+                    etki = str(item.get("etki", "orta")).lower()
+                    item["etki"] = etki if etki in {"yuksek", "orta", "dusuk"} else "orta"
     else:
-        payload["etki_alanlari"] = [payload.get("tehdit_analizi", "")]
+        level = str(payload.get("tehdit_seviyesi", "ORTA")).upper()
+        payload["tehdit_seviyesi"] = level if level in {"KRITIK", "YUKSEK", "ORTA", "DUSUK"} else "ORTA"
+
+    for scenario in payload.get("senaryolar", []):
+        if isinstance(scenario, dict):
+            olasilik = str(scenario.get("olasilik", "Orta"))
+            scenario["olasilik"] = olasilik if olasilik in {"Yuksek", "Orta", "Dusuk"} else "Orta"
     return payload
 
 
-def build_standard_fallback(domain, situation, reason):
+def scenario_to_text(item: object) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+    parts = [
+        str(item.get("baslik", "")).strip(),
+        f"Olasilik: {str(item.get('olasilik', 'Orta')).strip()}",
+        str(item.get("aciklama", "")).strip(),
+        f"Aksiyon: {str(item.get('aksiyon', '')).strip()}",
+    ]
+    return " | ".join([part for part in parts if part and not part.endswith(": ")])
+
+
+def add_ui_aliases(domain: str, payload: dict[str, object]) -> dict[str, object]:
+    result = dict(payload)
+    result["risk_analizi"] = result.get("tehdit_analizi", "")
+    result["senaryo_analizi"] = [scenario_to_text(item) for item in result.get("senaryolar", [])]
+    result["onerilen_aksiyonlar"] = [result["oncelikli_oneri"]] if result.get("oncelikli_oneri") else []
+    if domain == "cross":
+        result["etki_alanlari"] = [
+            f"{DOMAIN_CONFIG[key]['display']}: {value.get('etki', 'orta')} | {value.get('aciklama', '')}"
+            for key, value in result.get("alan_etkileri", {}).items()
+            if key in DOMAIN_CONFIG and isinstance(value, dict)
+        ]
+    else:
+        result["etki_alanlari"] = [str(result.get("tehdit_analizi", ""))]
+    return result
+
+
+def build_standard_fallback(domain: str, situation: str, reason: str) -> dict[str, object]:
     config = DOMAIN_CONFIG[domain]
-    level = detect_level(situation)
     return normalize_result(domain, {
         "ozet": f"{config['display']} icin yedek analiz uretildi. Ana eksen: {situation[:220]}",
-        "tehdit_seviyesi": level,
+        "tehdit_seviyesi": detect_level(situation),
         "tehdit_analizi": f"Bulut model servisi kullanilamadigi icin yedek degerlendirme yapildi. Teknik neden: {reason}.",
         "senaryolar": [
             {"baslik": "Gerilim artar", "olasilik": "Yuksek", "aciklama": "Durum kisa vadede yogunlasabilir.", "aksiyon": "Anlik izleme ve koordinasyon aktif tutulmali."},
@@ -307,7 +322,7 @@ def build_standard_fallback(domain, situation, reason):
     })
 
 
-def build_cross_fallback(situation, reason):
+def build_cross_fallback(situation: str, reason: str) -> dict[str, object]:
     config = DOMAIN_CONFIG["cross"]
     level = detect_level(situation)
     impact = "yuksek" if level in {"KRITIK", "YUKSEK"} else "orta"
@@ -334,196 +349,84 @@ def build_cross_fallback(situation, reason):
     })
 
 
-def build_fallback_result(domain, situation, reason):
+def build_fallback_result(domain: str, situation: str, reason: str) -> dict[str, object]:
     if domain == "cross":
         return build_cross_fallback(situation, reason)
     return build_standard_fallback(domain, situation, reason)
 
 
-def save_analysis(domain, situation, result, fallback_mode=False):
-    data = add_ui_aliases(domain, result)
+def save_analysis(domain: str, situation: str, result: dict[str, object], fallback_mode: bool) -> dict[str, object]:
+    payload = add_ui_aliases(domain, result)
     analysis_id = "AQ-" + uuid.uuid4().hex[:6].upper()
-    stamp = datetime.now().strftime("%d.%m.%Y %H:%M")
-    payload = {
+    stamp = now_text()
+    response_payload = {
         "analysis_id": analysis_id,
         "timestamp": stamp,
         "time": stamp,
         "created_at": stamp,
-        "summary": data.get("ozet", ""),
+        "summary": payload.get("ozet", ""),
         "fallback_mode": fallback_mode,
-        **data,
+        **payload,
     }
     analysis_store[analysis_id] = {
         "id": analysis_id,
         "domain": domain,
         "situation": situation,
-        "result": payload,
         "timestamp": datetime.now().isoformat(),
         "fallback_mode": fallback_mode,
+        "result": response_payload,
     }
-    return payload
+    return response_payload
 
 
-def get_output_schema(domain):
-    if domain == "cross":
-        return {"name": "anatolia_q_cross_analysis", "schema": CROSS_SCHEMA}
-    return {"name": "anatolia_q_standard_analysis", "schema": STANDARD_SCHEMA}
+def extract_token(request: Request, body: dict[str, object] | None = None) -> str:
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        return auth.split(" ", 1)[1].strip()
+    header_token = request.headers.get("x-auth-token", "").strip()
+    if header_token:
+        return header_token
+    if body:
+        return str(body.get("token", "")).strip()
+    return ""
 
 
-def get_session_from_token(token):
+def get_session_from_token(token: str) -> dict[str, str]:
     session = active_sessions.get(token)
     if not session:
         raise HTTPException(401, "Gecersiz oturum.")
     return session
 
 
-def patch_frontend(html):
-    injected = """
-<script>
-(() => {
-  const API_BASE = location.origin.includes("localhost") ? "https://anatolia-q.onrender.com" : location.origin;
-  const SESSION_KEYS = ["anatolia_q_session", "AQ_SESSION", "aq_session"];
-
-  function getSession() {
-    for (const key of SESSION_KEYS) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        if (data && (data.token || data.sessionToken || data.user || data.username)) return data;
-      } catch (_) {}
-    }
-    return {};
-  }
-
-  function setStatus(kind, message) {
-    const box = document.getElementById("centerStatus");
-    if (!box) return;
-    if (kind) box.dataset.kind = kind;
-    else box.removeAttribute("data-kind");
-    box.textContent = message || "";
-  }
-
-  function setLoading(active) {
-    const track = document.getElementById("centerLoad");
-    if (track) track.classList.toggle("active", !!active);
-  }
-
-  function patchVisibleText() {
-    const loginLabel = document.querySelector('label[for="loginUser"]');
-    const passLabel = document.querySelector('label[for="loginPass"]');
-    const loginInput = document.getElementById("loginUser");
-    const userBadge = document.getElementById("userBadge");
-    const contactButton = document.getElementById("contactCenterBtn");
-    const centerCopy = document.querySelector('.center-copy');
-    const note = document.getElementById("centerNote");
-    const companyLines = Array.from(document.querySelectorAll('.company-line, .foot-chip, .contact-line'));
-
-    if (loginLabel) loginLabel.textContent = "Kullanici kodu";
-    if (passLabel) passLabel.textContent = "Sifre";
-    if (loginInput) {
-      loginInput.placeholder = "6 haneli kullanici kodunu girin";
-      loginInput.inputMode = "numeric";
-      loginInput.maxLength = 6;
-      loginInput.addEventListener("input", () => {
-        loginInput.value = loginInput.value.replace(/\D/g, "").slice(0, 6);
-      });
-    }
-    if (contactButton) contactButton.textContent = "Merkeze ulas";
-    if (centerCopy) centerCopy.textContent = "Bu panelden merkeze ulas talebi birakabilir, giris yapan kullanici koduyla otomatik bildirim gonderebilirsiniz.";
-    if (note && !note.placeholder) note.placeholder = "Isterseniz kisa bir not ekleyin";
-    companyLines.forEach((node) => {
-      node.textContent = node.textContent
-        .replace(/sinir hatti/gi, "sinir hatti")
-        .replace(/Kullanici adi/gi, "Kullanici kodu")
-        .replace(/Kullanici:/gi, "Kullanici kodu:");
-    });
-
-    const syncUser = () => {
-      const session = getSession();
-      const code = session.user || session.username || session.sessionUser || "--";
-      if (userBadge) userBadge.textContent = `Kullanici kodu: ${code}`;
-    };
-    syncUser();
-    setInterval(syncUser, 1000);
-  }
-
-  async function contactCenter(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const session = getSession();
-    const token = session.token || session.sessionToken || "";
-    const note = document.getElementById("centerNote");
-    const button = document.getElementById("contactCenterBtn");
-
-    if (!token) {
-      setStatus("error", "Once giris yapmaniz gerekiyor.");
-      return;
-    }
-
-    if (button) button.disabled = true;
-    setLoading(true);
-    setStatus("", "");
-
-    try {
-      const response = await fetch(`${API_BASE}/api/contact-center`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "X-Auth-Token": token,
-        },
-        body: JSON.stringify({ token, note: note ? note.value.trim() : "" }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || data.message || `Istek basarisiz (${response.status})`);
-      setStatus("success", data.message || "Merkez iletisim talebiniz gonderildi.");
-      if (note) note.value = "";
-    } catch (error) {
-      setStatus("error", error.message || "Merkez bildirimi gonderilemedi.");
-    } finally {
-      if (button) button.disabled = false;
-      setLoading(false);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    patchVisibleText();
-    const button = document.getElementById("contactCenterBtn");
-    if (button) {
-      button.removeAttribute("href");
-      button.onclick = null;
-      button.addEventListener("click", contactCenter, true);
-    }
-  });
-})();
-</script>
-"""
-    return html.replace("</body>", injected + "\n</body>")
-
-
 @app.get("/")
-async def root():
+async def root() -> HTMLResponse:
     html_path = os.path.join(os.path.dirname(__file__), "index.html")
-    if os.path.exists(html_path):
-        with open(html_path, "r", encoding="utf-8") as handle:
-            return HTMLResponse(patch_frontend(handle.read()))
-    return HTMLResponse("<h1>T.C. ANATOLIA-Q</h1>")
+    if not os.path.exists(html_path):
+        return HTMLResponse("<h1>T.C. ANATOLIA-Q</h1>")
+    with open(html_path, "r", encoding="utf-8") as handle:
+        return HTMLResponse(handle.read())
 
 
 @app.get("/health")
-async def health():
-    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.4.2", "provider": "openai-with-fallback"}
+async def health() -> dict[str, str]:
+    return {
+        "status": "online",
+        "system": "T.C. ANATOLIA-Q",
+        "version": "1.4.3",
+        "provider": "openai-with-fallback",
+    }
 
 
 @app.post("/api/login")
-async def login(data: dict):
-    username = data.get("username", "").strip()
-    password = data.get("password", "")
+async def login(data: dict) -> dict[str, str]:
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
     user = USERS.get(username)
 
     if not user or user["password"] != password:
         raise HTTPException(401, "Kullanici kodu veya sifre hatali.")
+    if not GMAIL_USER or not GMAIL_PASS:
+        raise HTTPException(500, "Dogrulama e-posta ayarlari eksik.")
 
     code = generate_code()
     pending_codes[username] = {"code": code, "expires": datetime.now() + timedelta(minutes=10)}
@@ -531,16 +434,19 @@ async def login(data: dict):
     try:
         send_2fa_email(user["email"], code, user["name"])
     except Exception as exc:
-        raise HTTPException(500, f"E-posta gonderilemedi: {str(exc)}")
+        raise HTTPException(500, f"E-posta gonderilemedi: {str(exc)}") from exc
 
     email = user["email"]
-    return {"message": "Dogrulama kodu gonderildi.", "email_hint": email[:3] + "***@" + email.split("@")[1]}
+    return {
+        "message": "Dogrulama kodu gonderildi.",
+        "email_hint": email[:3] + "***@" + email.split("@")[-1],
+    }
 
 
 @app.post("/api/verify")
-async def verify(data: dict):
-    username = data.get("username", "").strip()
-    code = data.get("code", "").strip()
+async def verify(data: dict) -> dict[str, str]:
+    username = str(data.get("username", "")).strip()
+    code = str(data.get("code", "")).strip()
     user = USERS.get(username)
 
     if not user:
@@ -549,25 +455,29 @@ async def verify(data: dict):
     pending = pending_codes.get(username)
     if not pending:
         raise HTTPException(401, "Kod bulunamadi. Tekrar giris yapin.")
-
     if datetime.now() > pending["expires"]:
         del pending_codes[username]
         raise HTTPException(401, "Kodun suresi doldu.")
-
     if pending["code"] != code:
         raise HTTPException(401, "Hatali dogrulama kodu.")
 
     del pending_codes[username]
     token = f"aq_{username}_{uuid.uuid4().hex[:16]}"
     active_sessions[token] = {"username": username, "name": user["name"], "role": user["role"]}
-    return {"token": token, "name": user["name"], "role": user["role"], "username": username, "user": username}
+    return {
+        "token": token,
+        "name": user["name"],
+        "role": user["role"],
+        "username": username,
+        "user": username,
+    }
 
 
 @app.post("/api/contact-center")
-async def contact_center(req: dict):
-    token = req.get("token", "").strip()
-    note = req.get("note", "").strip()
+async def contact_center(request: Request, req: dict) -> dict[str, str]:
+    token = extract_token(request, req)
     session = get_session_from_token(token)
+    note = str(req.get("note", "")).strip()
 
     if not GMAIL_USER or not GMAIL_PASS:
         raise HTTPException(500, "Merkez bildirim e-posta ayarlari eksik.")
@@ -575,30 +485,29 @@ async def contact_center(req: dict):
     try:
         send_center_contact_email(session["name"], session["username"], session["role"], note)
     except Exception as exc:
-        raise HTTPException(500, f"Merkez bildirimi gonderilemedi: {str(exc)}")
+        raise HTTPException(500, f"Merkez bildirimi gonderilemedi: {str(exc)}") from exc
 
     return {"message": "Merkez iletisim talebiniz gonderildi."}
 
 
 @app.post("/api/analyze")
-async def analyze(req: dict):
-    domain = req.get("domain", "")
-    situation = req.get("situation", "")
-    api_key = os.environ.get("OPENAI_API_KEY", req.get("api_key", ""))
+async def analyze(req: dict) -> dict[str, object]:
+    domain = str(req.get("domain", ""))
+    situation = str(req.get("situation", "")).strip()
+    api_key = os.environ.get("OPENAI_API_KEY", str(req.get("api_key", ""))).strip()
 
     if domain not in DOMAIN_CONFIG:
         raise HTTPException(400, "Gecersiz alan.")
     if not situation:
         raise HTTPException(400, "Durum bildirimi bos.")
-
     if not api_key:
         return save_analysis(domain, situation, build_fallback_result(domain, situation, "OPENAI_API_KEY eksik"), True)
 
     schema_config = get_output_schema(domain)
     client = OpenAI(api_key=api_key)
-    user_msg = (
+    user_message = (
         f"Durum:\n{situation}\n\n"
-        f"Tarih: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
+        f"Tarih: {now_text()}\n\n"
         f"Alan: {DOMAIN_CONFIG[domain]['display']}\n\n"
         "Kisa, net ve karar destek odakli bir cikti uret."
     )
@@ -608,7 +517,7 @@ async def analyze(req: dict):
             model=OPENAI_MODEL,
             input=[
                 {"role": "developer", "content": [{"type": "input_text", "text": DOMAIN_CONFIG[domain]["prompt"]}]},
-                {"role": "user", "content": [{"type": "input_text", "text": user_msg}]},
+                {"role": "user", "content": [{"type": "input_text", "text": user_message}]},
             ],
             text={
                 "format": {
@@ -640,7 +549,7 @@ async def analyze(req: dict):
 
 
 @app.get("/api/history")
-async def get_history():
+async def get_history() -> list[dict[str, object]]:
     items = sorted(analysis_store.values(), key=lambda item: item["timestamp"], reverse=True)
     return [
         {
@@ -649,8 +558,8 @@ async def get_history():
             "dom": item["domain"],
             "timestamp": item["result"].get("timestamp", ""),
             "time": item["result"].get("time", ""),
-            "summary": item["result"].get("ozet", "")[:130],
-            "ozet": item["result"].get("ozet", "")[:130],
+            "summary": str(item["result"].get("ozet", ""))[:130],
+            "ozet": str(item["result"].get("ozet", ""))[:130],
             "fallback_mode": item.get("fallback_mode", False),
             "result": item["result"],
         }
