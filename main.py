@@ -5,7 +5,7 @@ import os, random, smtplib, string, uuid
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-app = FastAPI(title='T.C. ANATOLIA-Q', version='1.4.7')
+app = FastAPI(title='T.C. ANATOLIA-Q', version='1.4.8')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
 PRIMARY_EMAIL = os.environ.get('ADMIN_EMAIL', 'info@boldkimya.com.tr')
 GMAIL_USER = os.environ.get('GMAIL_USER', '')
@@ -37,14 +37,17 @@ def save_analysis(domain, situation, result):
     analysis_store[aid] = {'id': aid, 'domain': domain, 'timestamp': t, 'result': result}; return result
 def patch_frontend(html):
     js = "<script>(()=>{const k=" + repr(SESSION_KEYS) + ";const c=()=>k.forEach(x=>{try{localStorage.removeItem(x)}catch(_){}});const s=()=>{const l=document.getElementById('loginScreen'),m=document.getElementById('mainSystem');if(m)m.classList.add('hidden');if(l)l.classList.remove('hidden')};const b=()=>{const x=document.getElementById('logoutBtn');if(!x||x.dataset.fixed==='1')return;x.dataset.fixed='1';x.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();c();s()},true)};const i=()=>{c();s();b()};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',i):i()})();</script>"
-    return html.replace('</body>', js + '\n</body>') if '</body>' in html else html + js
+    if '</body>' not in html:
+        return html + js
+    head, tail = html.rsplit('</body>', 1)
+    return head + js + '\n</body>' + tail
 @app.get('/')
 async def root():
     p = os.path.join(os.path.dirname(__file__), 'index.html')
     if not os.path.exists(p): return HTMLResponse('<h1>T.C. ANATOLIA-Q</h1>')
     with open(p, 'r', encoding='utf-8') as f: return HTMLResponse(patch_frontend(f.read()))
 @app.get('/health')
-async def health(): return {'status':'online','system':'T.C. ANATOLIA-Q','version':'1.4.7','provider':'fallback-core'}
+async def health(): return {'status':'online','system':'T.C. ANATOLIA-Q','version':'1.4.8','provider':'fallback-core'}
 @app.post('/api/login')
 async def login(data: dict):
     u = str(data.get('username','')).strip(); p = str(data.get('password',''))
