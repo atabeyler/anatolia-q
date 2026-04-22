@@ -6,6 +6,7 @@ on:
     paths:
       - "package.json"
       - "electron/**"
+      - "scripts/**"
       - ".github/workflows/build-desktop.yml"
 
 jobs:
@@ -19,15 +20,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-fund --no-audit
 
-      - name: Build desktop app
+      - name: Build portable desktop app
         env:
           ANATOLIA_Q_DESKTOP_URL: https://anatolia-q.onrender.com/
-        run: npm run desktop:dist
+        run: npm run desktop:dist:portable
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
