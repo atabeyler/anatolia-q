@@ -8,9 +8,9 @@
   "scripts": {
     "desktop:install": "npm install",
     "desktop:start": "electron .",
-    "desktop:dist": "electron-builder --win portable nsis",
-    "desktop:dist:portable": "electron-builder --win portable",
-    "desktop:dist:nsis": "electron-builder --win nsis"
+    "desktop:dist": "electron-builder --publish never --win portable nsis",
+    "desktop:dist:portable": "electron-builder --publish never --win portable",
+    "desktop:dist:nsis": "electron-builder --publish never --win nsis"
   },
   "build": {
     "appId": "tr.bold.anatoliaq.desktop",
