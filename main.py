@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.6.0")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.6.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -197,7 +197,7 @@ def save_analysis(domain, situation, result):
 
 
 def patch_frontend(html: str) -> str:
-    inject = '<script src="/chat-hotfix.js?v=1.6.0"></script>'
+    inject = '<script src="/chat-hotfix.js?v=1.6.1"></script><script src="/ui-tidy-hotfix.js?v=1.6.1"></script>'
     marker = "</body>"
     index = html.rfind(marker)
     if index == -1:
@@ -223,9 +223,18 @@ async def chat_hotfix():
         return Response(handle.read(), media_type="application/javascript")
 
 
+@app.get("/ui-tidy-hotfix.js")
+async def ui_tidy_hotfix():
+    path = os.path.join(os.path.dirname(__file__), "ui_tidy_hotfix.js")
+    if not os.path.exists(path):
+        return Response("// layout hotfix missing", media_type="application/javascript")
+    with open(path, "r", encoding="utf-8") as handle:
+        return Response(handle.read(), media_type="application/javascript")
+
+
 @app.get("/health")
 async def health():
-    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.6.0", "provider": "fallback-core"}
+    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.6.1", "provider": "fallback-core"}
 
 
 @app.post("/api/login")
@@ -295,7 +304,7 @@ async def alerts():
 async def create_alert(request: Request, req: dict):
     session = require_session(request, req)
     region = str(req.get("region", "")).strip() or "Genel"
-    title = str(req.get("title", "")).strip() or "Bölgesel alarm"
+    title = str(req.get("title", "")).strip() or "Bolgesel alarm"
     detail = str(req.get("detail", "")).strip() or "Merkez inceleme bekliyor."
     priority = str(req.get("priority", "")).strip().upper() or "ORTA"
 
