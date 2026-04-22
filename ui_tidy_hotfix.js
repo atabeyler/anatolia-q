@@ -19,6 +19,9 @@
   }
 
   function trimDashboard() {
+    const legacyRadar = q("#page-dashboard .ops-radar-strip");
+    if (legacyRadar) legacyRadar.classList.add("aq-layout-hidden");
+
     qa("#page-dashboard .quick-actions").forEach((node) => node.classList.add("aq-layout-hidden"));
     qa("#page-dashboard .action-card").forEach((node) => node.classList.add("aq-layout-hidden"));
 
@@ -33,6 +36,20 @@
     const copy = q("#page-dashboard .panel .body-copy");
     if (copy) {
       copy.textContent = "Tek merkez, Türkiye alarm haritası ve görev modülleri aynı akışta tutulur. Gereksiz tekrarlar kaldırıldı.";
+    }
+  }
+
+  function trimSidebar() {
+    const moduleCard = q("#moduleList")?.closest(".sidebar-card");
+    if (moduleCard) moduleCard.classList.add("aq-layout-hidden");
+
+    const centerCard = q("#centerBtnSide")?.closest(".sidebar-card");
+    if (centerCard) centerCard.classList.add("aq-layout-hidden");
+
+    const noteCard = q("#sidebarDomain")?.closest(".sidebar-card");
+    if (noteCard) {
+      const title = q("h3", noteCard);
+      if (title) title.textContent = "Oturum özeti";
     }
   }
 
@@ -62,6 +79,7 @@
   function run() {
     ensureStyle();
     trimDashboard();
+    trimSidebar();
     trimModuleCards();
   }
 
