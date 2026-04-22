@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.6.1")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.6.2")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -197,7 +197,7 @@ def save_analysis(domain, situation, result):
 
 
 def patch_frontend(html: str) -> str:
-    inject = '<script src="/chat-hotfix.js?v=1.6.1"></script><script src="/ui-tidy-hotfix.js?v=1.6.1"></script>'
+    inject = '<script src="/chat-hotfix.js?v=1.6.2"></script><script src="/ui-tidy-hotfix.js?v=1.6.2"></script>'
     marker = "</body>"
     index = html.rfind(marker)
     if index == -1:
@@ -234,7 +234,7 @@ async def ui_tidy_hotfix():
 
 @app.get("/health")
 async def health():
-    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.6.1", "provider": "fallback-core"}
+    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.6.2", "provider": "fallback-core"}
 
 
 @app.post("/api/login")
