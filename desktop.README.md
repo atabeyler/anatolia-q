@@ -28,7 +28,9 @@ Farkli adres acilacaksa:
 
 ## GitHub Actions
 
-Repo icinde `Actions > Build Desktop App` uzerinden Windows artifact uretilebilir.
+Repo icinde `Actions > Build Desktop App` uzerinden Windows portable artifact uretilebilir.
+
+GitHub Actions ilk asamada portable `.exe` uretir. Kurulumlu `nsis` paketini istersen daha sonra ikinci workflow adimi olarak ekleriz.
 
 ## Not
 
