@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 
-app = FastAPI(title="T.C. ANATOLIA-Q", version="1.5.6")
+app = FastAPI(title="T.C. ANATOLIA-Q", version="1.6.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
@@ -40,6 +40,8 @@ DOMAINS = {
 pending_codes = {}
 active_sessions = {}
 analysis_store = {}
+alerts_store = []
+ops_feed_store = []
 
 
 def stamp():
@@ -68,9 +70,21 @@ def token_from(request: Request, body=None):
     return request.headers.get("x-auth-token", "").strip() or str((body or {}).get("token", "")).strip()
 
 
+def require_session(request: Request, body=None):
+    session = active_sessions.get(token_from(request, body))
+    if not session:
+        raise HTTPException(401, "Gecersiz oturum.")
+    return session
+
+
 def clean_name(value):
     raw = "".join(ch for ch in str(value or "").strip() if ch.isalnum() or ch in " .-_")
     return raw[:24].strip() or "dostum"
+
+
+def trim_store(store, limit=60):
+    while len(store) > limit:
+        store.pop(0)
 
 
 def general_chat_reply(situation, chat_name=""):
@@ -183,7 +197,7 @@ def save_analysis(domain, situation, result):
 
 
 def patch_frontend(html: str) -> str:
-    inject = '<script src="/chat-hotfix.js?v=1.5.6"></script>'
+    inject = '<script src="/chat-hotfix.js?v=1.6.0"></script>'
     marker = "</body>"
     index = html.rfind(marker)
     if index == -1:
@@ -211,7 +225,7 @@ async def chat_hotfix():
 
 @app.get("/health")
 async def health():
-    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.5.6", "provider": "fallback-core"}
+    return {"status": "online", "system": "T.C. ANATOLIA-Q", "version": "1.6.0", "provider": "fallback-core"}
 
 
 @app.post("/api/login")
@@ -263,16 +277,101 @@ async def verify(data: dict):
 
 @app.post("/api/contact-center")
 async def contact_center(request: Request, req: dict):
-    session = active_sessions.get(token_from(request, req))
-    if not session:
-        raise HTTPException(401, "Gecersiz oturum.")
-
+    session = require_session(request, req)
     note = str(req.get("note", "")).strip()
     send_mail(
         "T.C. ANATOLIA-Q Merkez Iletisim Talebi",
         f"<p>Kullanici: <b>{session['username']}</b></p><p>Rol: <b>{session['role']}</b></p><p>Not: {note or '-'}</p><p>Saat: {stamp()}</p>",
     )
     return {"message": "Merkez iletisim talebiniz gonderildi."}
+
+
+@app.get("/api/alerts")
+async def alerts():
+    return {"items": list(reversed(alerts_store))}
+
+
+@app.post("/api/alerts")
+async def create_alert(request: Request, req: dict):
+    session = require_session(request, req)
+    region = str(req.get("region", "")).strip() or "Genel"
+    title = str(req.get("title", "")).strip() or "Bölgesel alarm"
+    detail = str(req.get("detail", "")).strip() or "Merkez inceleme bekliyor."
+    priority = str(req.get("priority", "")).strip().upper() or "ORTA"
+
+    item = {
+        "id": "ALM-" + uuid.uuid4().hex[:6].upper(),
+        "region": region[:32],
+        "title": title[:80],
+        "detail": detail[:400],
+        "priority": priority[:16],
+        "user": session["username"],
+        "role": session["role"],
+        "timestamp": stamp(),
+    }
+    alerts_store.append(item)
+    trim_store(alerts_store)
+
+    try:
+        send_mail(
+            f"T.C. ANATOLIA-Q Alarm | {item['region']}",
+            f"<p>Kullanici: <b>{session['username']}</b></p><p>Rol: <b>{session['role']}</b></p><p>Bolge: <b>{item['region']}</b></p><p>Baslik: <b>{item['title']}</b></p><p>Detay: {item['detail']}</p><p>Oncelik: <b>{item['priority']}</b></p><p>Saat: {item['timestamp']}</p>",
+        )
+    except HTTPException:
+        pass
+
+    ops_feed_store.append(
+        {
+            "id": "MSG-" + uuid.uuid4().hex[:6].upper(),
+            "channel": "alarm",
+            "priority": item["priority"],
+            "message": f"{item['region']} bolgesi icin alarm gecti: {item['title']}",
+            "user": session["username"],
+            "role": session["role"],
+            "timestamp": item["timestamp"],
+        }
+    )
+    trim_store(ops_feed_store)
+    return {"message": "Alarm tum kullanicilar icin kaydedildi.", "item": item}
+
+
+@app.get("/api/ops-feed")
+async def ops_feed():
+    return {"items": list(reversed(ops_feed_store))}
+
+
+@app.post("/api/ops-feed")
+async def push_ops_feed(request: Request, req: dict):
+    session = require_session(request, req)
+    message = str(req.get("message", "")).strip()
+    channel = str(req.get("channel", "")).strip() or "ops"
+    priority = str(req.get("priority", "")).strip().upper() or "BILGI"
+
+    if not message:
+        raise HTTPException(400, "Mesaj bos olamaz.")
+
+    item = {
+        "id": "MSG-" + uuid.uuid4().hex[:6].upper(),
+        "channel": channel[:24],
+        "priority": priority[:16],
+        "message": message[:600],
+        "user": session["username"],
+        "role": session["role"],
+        "timestamp": stamp(),
+    }
+    ops_feed_store.append(item)
+    trim_store(ops_feed_store, limit=120)
+
+    if channel == "emergency":
+        try:
+            send_mail(
+                "T.C. ANATOLIA-Q Acil Alarm",
+                f"<p>Kullanici: <b>{session['username']}</b></p><p>Rol: <b>{session['role']}</b></p><p>Mesaj: {item['message']}</p><p>Oncelik: <b>{item['priority']}</b></p><p>Saat: {item['timestamp']}</p>",
+            )
+        except HTTPException:
+            pass
+
+    return {"message": "Operasyon akisi guncellendi.", "item": item}
 
 
 @app.post("/api/analyze")
