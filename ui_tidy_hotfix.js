@@ -8,17 +8,33 @@
     style.id = "aq-layout-hotfix-style";
     style.textContent = `
       .aq-layout-hidden{display:none!important}
-      #aqModuleDeck .aq-module-card{cursor:pointer}
+      .aq-layout-soft{opacity:.94}
+      .app-body{grid-template-columns:290px minmax(0,1fr)!important;align-items:start!important}
+      .app-frame{overflow:hidden}
+      .app-frame::before{animation:aqNebula 12s ease-in-out infinite alternate}
+      .app-topbar{position:relative;overflow:hidden}
+      .app-topbar::after{content:"";position:absolute;inset:auto -10% 0 -10%;height:2px;background:linear-gradient(90deg,transparent,rgba(105,224,255,.62),transparent);box-shadow:0 0 18px rgba(105,224,255,.32);animation:aqSweepLine 7s linear infinite}
+      .sidebar-card,.panel{animation:aqPanelLift 10s ease-in-out infinite}
+      .sidebar-card:nth-child(2),.panel:nth-child(2){animation-delay:1.2s}
+      .sidebar-card:nth-child(3),.panel:nth-child(3){animation-delay:2.4s}
       #page-dashboard{display:grid;gap:16px}
       #page-dashboard .metrics{display:none!important}
-      #aqOpsStrip{display:grid!important;grid-template-columns:minmax(0,1.12fr) minmax(380px,.88fr)!important;gap:16px!important;align-items:start}
-      #aqOpsStrip .aq-ops-card{height:100%}
-      #aqOpsStrip .aq-map-shell{grid-template-columns:minmax(0,1fr) 250px!important;align-items:stretch}
-      #aqModuleDeck{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px!important}
-      #aqModuleDeck .aq-module-card{min-height:0}
-      @media (min-width:1440px){#aqModuleDeck{grid-template-columns:repeat(3,minmax(0,1fr))}}
-      @media (max-width:1180px){#aqOpsStrip{grid-template-columns:1fr!important}#aqOpsStrip .aq-map-shell{grid-template-columns:1fr!important}}
-      @media (max-width:760px){#aqModuleDeck{grid-template-columns:1fr!important}}
+      #page-dashboard .quick-actions{display:none!important}
+      #page-dashboard .action-card{display:none!important}
+      #aqOpsStrip{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;align-items:start!important}
+      #aqOpsStrip .aq-ops-card{height:auto!important}
+      #aqOpsStrip .aq-map-shell{grid-template-columns:minmax(0,1fr) 260px!important;align-items:stretch!important}
+      #aqModuleDeck .aq-module-card{cursor:pointer}
+      #aqModuleDeck{display:grid!important;grid-template-columns:1fr!important;gap:12px!important}
+      .aq-map-stage{min-height:360px!important}
+      .aq-region-dot{animation-duration:2.1s!important}
+      @keyframes aqSweepLine{from{transform:translateX(-35%)}to{transform:translateX(135%)}}
+      @keyframes aqNebula{from{filter:blur(0px) saturate(1)}to{filter:blur(3px) saturate(1.18)}}
+      @keyframes aqPanelLift{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+      @media (max-width:1180px){
+        .app-body{grid-template-columns:1fr!important}
+        #aqOpsStrip .aq-map-shell{grid-template-columns:1fr!important}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -35,8 +51,8 @@
     const brandSub = q(".brand-sub");
     if (brandSub) brandSub.textContent = "Kurumsal doğrulama ekranı.";
 
-    const footerInfo = qa(".auth-footer .company-line")[1];
-    if (footerInfo) footerInfo.textContent = "Doğrulama kurumsal merkez hattı üzerinden yürütülür.";
+    const authFooter = qa(".auth-footer .company-line");
+    if (authFooter[1]) authFooter[1].textContent = "Doğrulama kurumsal merkez hattı üzerinden yürütülür.";
 
     qa(".hero-grid, .hero-console, .capsule-row").forEach((node) => node.classList.add("aq-layout-hidden"));
     qa(".signal-line").forEach((node) => node.classList.add("aq-layout-hidden"));
@@ -46,34 +62,37 @@
     const legacyRadar = q("#page-dashboard .ops-radar-strip");
     if (legacyRadar) legacyRadar.classList.add("aq-layout-hidden");
 
-    qa("#page-dashboard .quick-actions").forEach((node) => node.classList.add("aq-layout-hidden"));
-    qa("#page-dashboard .action-card").forEach((node) => node.classList.add("aq-layout-hidden"));
-
     const duplicateAnalyze = document.getElementById("aqDashboardAnalyze");
     if (duplicateAnalyze) duplicateAnalyze.remove();
 
     const heading = q("#page-dashboard .panel h2");
-    if (heading) {
-      heading.textContent = "Görev alanını seç ve doğrudan ilerle.";
-    }
+    if (heading) heading.textContent = "Görev alanını seç ve doğrudan ilerle.";
 
     const copy = q("#page-dashboard .panel p");
-    if (copy) {
-      copy.textContent = "Operasyon ekranı aktif.";
-    }
+    if (copy) copy.textContent = "Operasyon ekranı aktif.";
   }
 
   function trimSidebar() {
-    qa(".sidebar .sidebar-card").forEach((card) => {
-      if (q("#sidebarDomain", card)) return;
-      card.classList.add("aq-layout-hidden");
-    });
+    const moduleCard = q("#moduleList")?.closest(".sidebar-card");
+    if (moduleCard) {
+      moduleCard.classList.remove("aq-layout-hidden");
+      const kicker = q(".section-kicker", moduleCard);
+      if (kicker) kicker.textContent = "Görev modülleri";
+    }
 
     const summaryCard = q("#sidebarDomain")?.closest(".sidebar-card");
     if (summaryCard) {
       const title = q("h3", summaryCard);
       if (title) title.textContent = "Oturum özeti";
     }
+
+    qa(".sidebar .sidebar-card").forEach((card) => {
+      const hasModules = Boolean(q("#moduleList", card));
+      const hasSummary = Boolean(q("#sidebarDomain", card));
+      if (!hasModules && !hasSummary) {
+        card.classList.add("aq-layout-hidden");
+      }
+    });
 
     const topbarSub = q(".brand-mini p");
     if (topbarSub) topbarSub.textContent = "Yetkili kullanıcı oturumu";
@@ -86,26 +105,20 @@
     });
   }
 
-  function trimModuleCards() {
-    qa("#aqModuleDeck .aq-module-card").forEach((card) => {
-      if (card.dataset.tidyBound === "1") return;
-      card.dataset.tidyBound = "1";
+  function simplifyMissionDeck() {
+    const moduleDeck = q("#aqModuleDeck");
+    const moduleCard = moduleDeck?.closest(".aq-ops-card");
+    if (moduleCard) moduleCard.classList.add("aq-layout-hidden");
 
-      const armButton = q('[data-action="arm"]', card);
-      if (armButton) armButton.remove();
+    const mapCard = q("#aqOpsStrip .aq-ops-card");
+    if (mapCard) mapCard.classList.add("aq-layout-soft");
+  }
 
-      const analyzeButton = q('[data-action="analyze"]', card);
-      if (analyzeButton) analyzeButton.textContent = "Analize geç";
-
-      const copy = q(".aq-module-copy", card);
-      if (copy) {
-        copy.textContent = "Bu alanı etkinleştir ve gerekirse analize geç.";
-      }
-
-      card.addEventListener("click", (event) => {
-        if (event.target.closest("button")) return;
-        activateDomain(card.dataset.domain || "savunma", false);
-      });
+  function bindSidebarModules() {
+    qa("#moduleList .module-button").forEach((button) => {
+      if (button.dataset.tidyBound === "1") return;
+      button.dataset.tidyBound = "1";
+      button.addEventListener("dblclick", () => activateDomain(button.dataset.domain || "savunma", true));
     });
   }
 
@@ -115,7 +128,8 @@
     ensureSingleMissionDeck();
     trimDashboard();
     trimSidebar();
-    trimModuleCards();
+    simplifyMissionDeck();
+    bindSidebarModules();
   }
 
   run();
