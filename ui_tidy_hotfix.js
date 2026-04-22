@@ -9,6 +9,16 @@
     style.textContent = `
       .aq-layout-hidden{display:none!important}
       #aqModuleDeck .aq-module-card{cursor:pointer}
+      #page-dashboard{display:grid;gap:16px}
+      #page-dashboard .metrics{display:none!important}
+      #aqOpsStrip{display:grid!important;grid-template-columns:minmax(0,1.12fr) minmax(380px,.88fr)!important;gap:16px!important;align-items:start}
+      #aqOpsStrip .aq-ops-card{height:100%}
+      #aqOpsStrip .aq-map-shell{grid-template-columns:minmax(0,1fr) 250px!important;align-items:stretch}
+      #aqModuleDeck{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px!important}
+      #aqModuleDeck .aq-module-card{min-height:0}
+      @media (min-width:1440px){#aqModuleDeck{grid-template-columns:repeat(3,minmax(0,1fr))}}
+      @media (max-width:1180px){#aqOpsStrip{grid-template-columns:1fr!important}#aqOpsStrip .aq-map-shell{grid-template-columns:1fr!important}}
+      @media (max-width:760px){#aqModuleDeck{grid-template-columns:1fr!important}}
     `;
     document.head.appendChild(style);
   }
@@ -16,6 +26,20 @@
   function activateDomain(domain, jump) {
     if (typeof window.setDomain === "function") window.setDomain(domain, jump);
     if (typeof window.switchPage === "function") window.switchPage(jump ? "analysis" : "dashboard");
+  }
+
+  function trimLoginCopy() {
+    const heroCopy = q(".hero-copy");
+    if (heroCopy) heroCopy.textContent = "Yetkili personel girişi. İzinsiz erişim yasaktır.";
+
+    const brandSub = q(".brand-sub");
+    if (brandSub) brandSub.textContent = "Kurumsal doğrulama ekranı.";
+
+    const footerInfo = qa(".auth-footer .company-line")[1];
+    if (footerInfo) footerInfo.textContent = "Doğrulama kurumsal merkez hattı üzerinden yürütülür.";
+
+    qa(".hero-grid, .hero-console, .capsule-row").forEach((node) => node.classList.add("aq-layout-hidden"));
+    qa(".signal-line").forEach((node) => node.classList.add("aq-layout-hidden"));
   }
 
   function trimDashboard() {
@@ -30,27 +54,36 @@
 
     const heading = q("#page-dashboard .panel h2");
     if (heading) {
-      heading.textContent = "Operasyon görünümünü sadeleştir, alanı seç ve doğrudan ilerle.";
+      heading.textContent = "Görev alanını seç ve doğrudan ilerle.";
     }
 
-    const copy = q("#page-dashboard .panel .body-copy");
+    const copy = q("#page-dashboard .panel p");
     if (copy) {
-      copy.textContent = "Tek merkez, Türkiye alarm haritası ve görev modülleri aynı akışta tutulur. Gereksiz tekrarlar kaldırıldı.";
+      copy.textContent = "Operasyon ekranı aktif.";
     }
   }
 
   function trimSidebar() {
-    const moduleCard = q("#moduleList")?.closest(".sidebar-card");
-    if (moduleCard) moduleCard.classList.add("aq-layout-hidden");
+    qa(".sidebar .sidebar-card").forEach((card) => {
+      if (q("#sidebarDomain", card)) return;
+      card.classList.add("aq-layout-hidden");
+    });
 
-    const centerCard = q("#centerBtnSide")?.closest(".sidebar-card");
-    if (centerCard) centerCard.classList.add("aq-layout-hidden");
-
-    const noteCard = q("#sidebarDomain")?.closest(".sidebar-card");
-    if (noteCard) {
-      const title = q("h3", noteCard);
+    const summaryCard = q("#sidebarDomain")?.closest(".sidebar-card");
+    if (summaryCard) {
+      const title = q("h3", summaryCard);
       if (title) title.textContent = "Oturum özeti";
     }
+
+    const topbarSub = q(".brand-mini p");
+    if (topbarSub) topbarSub.textContent = "Yetkili kullanıcı oturumu";
+  }
+
+  function ensureSingleMissionDeck() {
+    const strips = qa("#aqOpsStrip");
+    strips.forEach((node, index) => {
+      if (index > 0) node.remove();
+    });
   }
 
   function trimModuleCards() {
@@ -66,7 +99,7 @@
 
       const copy = q(".aq-module-copy", card);
       if (copy) {
-        copy.textContent = "Bu alanı etkinleştir, paneli sadeleştir ve gerektiğinde tek tuşla analize geç.";
+        copy.textContent = "Bu alanı etkinleştir ve gerekirse analize geç.";
       }
 
       card.addEventListener("click", (event) => {
@@ -78,6 +111,8 @@
 
   function run() {
     ensureStyle();
+    trimLoginCopy();
+    ensureSingleMissionDeck();
     trimDashboard();
     trimSidebar();
     trimModuleCards();
