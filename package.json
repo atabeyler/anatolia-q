@@ -1,0 +1,33 @@
+{
+  "name": "anatolia-q-desktop",
+  "version": "1.0.0",
+  "description": "T.C. ANATOLIA-Q masaustu uygulamasi",
+  "main": "electron/main.js",
+  "author": "Bold Askeri Teknoloji ve Savunma Sanayi A.S.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "desktop:start": "electron .",
+    "desktop:dist": "electron-builder --win portable nsis"
+  },
+  "build": {
+    "appId": "tr.bold.anatoliaq.desktop",
+    "productName": "T.C. ANATOLIA-Q",
+    "directories": {
+      "buildResources": "electron/assets"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  }
+}
