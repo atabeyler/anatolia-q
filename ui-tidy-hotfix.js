@@ -2,17 +2,17 @@
   const CHAT_TEXTS = [
     "Genel Chat aktif",
     "Live Chat",
-    "Yazışma akışı tek pencerede sürer. Yeni mesajını aşağıdaki sabit alana yazabilirsin.",
-    "Mesajını yaz ve gönder. Cevabı okumak için aşağı inmek zorunda kalmadan aynı ekranda sohbeti sürdürebilirsin.",
-    "Buraya adını yazarsan sistem daha doğal hitap eder.",
+    "Yaz\u0131\u015fma ak\u0131\u015f\u0131 tek pencerede s\u00fcrer. Yeni mesaj\u0131n\u0131 a\u015fa\u011f\u0131daki sabit alana yazabilirsin.",
+    "Mesaj\u0131n\u0131 yaz ve g\u00f6nder. Cevab\u0131 okumak i\u00e7in a\u015fa\u011f\u0131 inmek zorunda kalmadan ayn\u0131 ekranda sohbeti s\u00fcrd\u00fcrebilirsin.",
+    "Buraya ad\u0131n\u0131 yazarsan sistem daha do\u011fal hitap eder.",
   ];
 
   const CLEAN_REPLACEMENTS = [
     [/Yedek analiz/gi, "Analiz"],
-    [/Sohbet çekirdeği/gi, ""],
-    [/AI servis sınırında yedek analiz kullanıldı\./gi, "Analiz başarıyla üretildi."],
-    [/Ücretli model kotası.*?güvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
-    [/Ucretli model kotasi.*?guvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
+    [/Sohbet \u00e7ekirde\u011fi/gi, ""],
+    [/AI servis s\u0131n\u0131r\u0131nda yedek analiz kullan\u0131ld\u0131\./gi, "Analiz ba\u015far\u0131yla \u00fcretildi."],
+    [/\u00dcretli model kotas\u0131.*?g\u00fcvenli mod devreye girdi\./gi, "Mevcut bulgular \u00e7er\u00e7evesinde durum de\u011ferlendirmesi sunulmu\u015ftur."],
+    [/Ucretli model kotasi.*?guvenli mod devreye girdi\./gi, "Mevcut bulgular \u00e7er\u00e7evesinde durum de\u011ferlendirmesi sunulmu\u015ftur."],
     [/\s*\|\s*Mod:\s*Analiz/gi, ""],
     [/\s*\|\s*Mod:\s*Yedek analiz/gi, ""],
     [/\s{2,}/g, " "],
@@ -56,10 +56,6 @@
     q(selector)?.remove();
   }
 
-  function removeCard(card) {
-    if (card) card.remove();
-  }
-
   function removeCardsByTitle(title, options = {}) {
     const target = normalize(title);
     const { keep = 0, skipSelector = "" } = options;
@@ -68,7 +64,7 @@
       const heading = q("h1, h2, h3, .section-kicker, .aq-kicker, strong", card);
       return normalize(heading?.textContent) === target;
     });
-    matches.slice(keep).forEach(removeCard);
+    matches.slice(keep).forEach((card) => card.remove());
   }
 
   function removeDuplicateButtons(text, keep = 1) {
@@ -91,44 +87,54 @@
   }
 
   function fixLoginScreen() {
-    setText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
+    setText("#loginScreen .hero-kicker", "Kuantum tabanl\u0131 ulusal karar destek sistemi");
     removeNode("#loginScreen .hero-copy");
     removeNode("#loginScreen .hero-grid");
     removeNode("#loginScreen .signal-panel");
     removeNode("#loginScreen .capsule-row");
     removeNode("#loginScreen .brand-sub");
-    setText("#step1 .section-kicker", "Kimlik doğrulama | adım 1/2");
-    setText("#step2 .section-kicker", "İkinci doğrulama | adım 2/2");
-    setText("label[for='loginUser']", "Kullanıcı kodu");
-    setText("label[for='loginPass']", "Şifre");
-    setText("label[for='loginCode']", "Doğrulama kodu");
-    setAttr("#loginUser", "placeholder", "6 haneli kullanıcı kodunu girin");
-    setAttr("#loginPass", "placeholder", "Şifrenizi girin");
+    removeNode("#step1 .field-note");
+    setText("#step1 .section-kicker", "Kimlik do\u011frulama | ad\u0131m 1/2");
+    setText("#step2 .section-kicker", "\u0130kinci do\u011frulama | ad\u0131m 2/2");
+    setText("label[for='loginUser']", "Kullan\u0131c\u0131 kodu");
+    setText("label[for='loginPass']", "\u015eifre");
+    setText("label[for='loginCode']", "Do\u011frulama kodu");
+    setAttr("#loginUser", "placeholder", "6 haneli kullan\u0131c\u0131 kodunu girin");
+    setAttr("#loginPass", "placeholder", "\u015eifrenizi girin");
     setAttr("#loginCode", "placeholder", "6 haneli kod");
-    setText("#loginBtn", "Giriş yap");
-    setText("#verifyBtn", "Doğrula ve aç");
-    setText("#backBtn", "Geri dön");
-    setText("#step1 .field-note", "Yetkisiz giriş yapılamaz. Doğrulama kodu yalnızca merkez e-posta hattına yönlendirilir.");
+    setText("#loginBtn", "Giri\u015f yap");
+    setText("#verifyBtn", "Do\u011frula ve a\u00e7");
+    setText("#backBtn", "Geri d\u00f6n");
   }
 
   function tidyDashboard() {
-    removeCardsByTitle("Merkez kanalı");
-    removeCardsByTitle("Görev modülleri");
-    removeCardsByTitle("Modüller", { skipSelector: "#moduleList" });
-    removeCardsByTitle("Merkez yönlendirme");
-    removeCardsByTitle("Alan odaklı giriş");
-    removeCardsByTitle("Türkiye alarm radarı", { keep: 1 });
-    removeDuplicateButtons("Yeni analiz başlat", 1);
+    removeCardsByTitle("Merkez kanal\u0131");
+    removeCardsByTitle("G\u00f6rev mod\u00fclleri");
+    removeCardsByTitle("Mod\u00fcller", { skipSelector: "#moduleList" });
+    removeCardsByTitle("Merkez y\u00f6nlendirme");
+    removeCardsByTitle("Alan odakl\u0131 giri\u015f");
+    removeCardsByTitle("T\u00fcrkiye alarm radar\u0131", { keep: 1 });
+    removeDuplicateButtons("Yeni analiz ba\u015flat", 1);
+
+    const moduleList = q("#moduleList");
+    if (moduleList) {
+      moduleList.style.display = "grid";
+      moduleList.style.visibility = "visible";
+    }
+
     const opsStrip = q("#aqOpsStrip");
     if (opsStrip) {
       opsStrip.style.gridTemplateColumns = "minmax(0,1fr)";
       opsStrip.style.alignItems = "start";
+      opsStrip.style.marginTop = "16px";
     }
+
     const radarStrip = q(".ops-radar-strip");
     if (radarStrip) {
-      radarStrip.style.gridTemplateColumns = "minmax(0,1fr)";
+      radarStrip.style.gridTemplateColumns = "minmax(340px,0.92fr) minmax(0,1.08fr)";
       radarStrip.style.alignItems = "start";
     }
+
     const mapShell = q("#aqOpsStrip .aq-map-shell");
     if (mapShell) {
       mapShell.style.gridTemplateColumns = "minmax(0,1fr) 260px";
@@ -193,7 +199,7 @@
       "#summaryText",
       "#threatText",
       "#criticalLinkText",
-      "#timelineText"
+      "#timelineText",
     ]);
   }
 
