@@ -1,9 +1,11 @@
 (() => {
-  const HIDE_TITLES = ["merkez kanal", "merkez kanali", "gorev modulleri"];
+  const HIDE_TITLES = ["merkez kanal", "merkez kanalı", "gorev modulleri", "görev modülleri"];
 
   function normalize(value) {
     return String(value || "")
-      .toLowerCase()
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9 ]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -53,7 +55,8 @@
       body.aq-live-polished #aqModuleDeck,
       body.aq-live-polished .aq-module-grid,
       body.aq-live-polished .aq-remove,
-      body.aq-live-polished .aq-dashboard-dup{display:none!important}
+      body.aq-live-polished .aq-dashboard-dup,
+      body.aq-live-polished .aq-chat-empty:empty{display:none!important}
       body.aq-live-polished #aqOpsStrip{grid-template-columns:minmax(0,1fr)!important;margin-top:16px!important}
       body.aq-live-polished #aqOpsStrip .aq-ops-card + .aq-ops-card{display:none!important}
       body.aq-live-polished #page-dashboard .panel:first-child{overflow:hidden}
@@ -72,10 +75,25 @@
     if (node) node.textContent = value;
   }
 
+  function setPlaceholder(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.setAttribute("placeholder", value);
+  }
+
   function pruneLogin() {
     document.body.classList.add("aq-login-pruned");
-    setText("#loginScreen .hero-kicker", "Kuantum tabanli ulusal karar destek sistemi");
-    setText("#loginScreen .brand-sub", "Merkez onayli kapali erisim terminali.");
+    setText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
+    setText("#loginScreen .brand-sub", "Merkez onaylı kapalı erişim terminali.");
+    setText('label[for="loginUser"]', "Kullanıcı kodu");
+    setText('label[for="loginPass"]', "Ortak şifre");
+    setText('label[for="loginCode"]', "Doğrulama kodu");
+    setPlaceholder("#loginUser", "6 haneli kullanıcı kodu");
+    setPlaceholder("#loginPass", "Ortak şifreyi giriniz");
+    setPlaceholder("#loginCode", "6 haneli doğrulama kodu");
+    setText("#step1 .field-note", "Yetkisiz giriş yapılamaz.");
+    setText("#loginBtn", "Giriş yap");
+    setText("#verifyBtn", "Doğrula");
+    setText("#backBtn", "Geri");
   }
 
   function hideCardsByTitle() {
@@ -83,30 +101,30 @@
     cards.forEach((card) => {
       const title = card.querySelector("h1, h2, h3, .aq-kicker, .section-kicker, strong");
       const text = normalize(title ? title.textContent : "");
-      if (HIDE_TITLES.some((value) => text.includes(value))) {
+      if (HIDE_TITLES.some((value) => text.includes(normalize(value)))) {
         card.classList.add("aq-remove");
       }
     });
   }
 
-  function dedupeButtons() {
+  function hideDuplicateButtons() {
     const analyzeButtons = Array.from(document.querySelectorAll("button, .button, .ghost-button")).filter((node) => normalize(node.textContent) === "yeni analiz baslat");
     analyzeButtons.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
   }
 
-  function dedupeRadar() {
+  function hideDuplicateRadar() {
     const radarBlocks = Array.from(document.querySelectorAll(".aq-ops-card, .panel, .sidebar-card, .action-card")).filter((node) => {
       const title = node.querySelector("h1, h2, h3, .aq-kicker, .section-kicker, strong");
-      return normalize(title ? title.textContent : "") === "turkiye alarm radari";
+      return normalize(title ? title.textContent : "") === normalize("Türkiye alarm radarı");
     });
     radarBlocks.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
   }
 
   function polishDashboardCopy() {
     document.body.classList.add("aq-live-polished");
-    setText("#page-dashboard .panel h2", "Operasyon gorunumu");
+    setText("#page-dashboard .panel h2", "Operasyon görünümü");
     const copy = document.querySelector("#page-dashboard .panel .body-copy");
-    if (copy) copy.textContent = "Secili alani ac, analize gec ve operasyon akisinda kal.";
+    if (copy) copy.textContent = "Seçili alanı aç, analize geç ve operasyon akışında kal.";
     const inlineCenter = document.getElementById("centerBtnInline");
     if (inlineCenter) inlineCenter.textContent = "Merkez";
     const centerLogin = document.getElementById("centerBtnLogin");
@@ -118,8 +136,10 @@
     setText("#chatHeading", "Genel Chat");
     const metaA = document.getElementById("aqChatMeta");
     const metaB = document.getElementById("chatMeta");
+    const empty = document.querySelector(".aq-chat-empty");
     if (metaA) metaA.textContent = "";
     if (metaB) metaB.textContent = "";
+    if (empty) empty.textContent = "";
     Array.from(document.querySelectorAll(".aq-pill, .signal-badge")).forEach((node) => {
       if (normalize(node.textContent) === "live chat") node.remove();
     });
@@ -132,7 +152,7 @@
     window.buildReport = function patchedBuildReport(result) {
       let html = original.call(this, result);
       html = html.replace(/<p><strong>Saglayici:<\/strong>.*?<\/p>/gi, "");
-      html = html.replace(/<p><strong>Sa\u011flay\u0131c\u0131:<\/strong>.*?<\/p>/gi, "");
+      html = html.replace(/<p><strong>Sağlayıcı:<\/strong>.*?<\/p>/gi, "");
       return html;
     };
   }
@@ -142,15 +162,15 @@
     pruneLogin();
     polishDashboardCopy();
     hideCardsByTitle();
-    dedupeButtons();
-    dedupeRadar();
+    hideDuplicateButtons();
+    hideDuplicateRadar();
     quietChatLabels();
     patchReportBuilder();
   }
 
   function boot() {
     run();
-    [150, 600, 1400, 2600].forEach((delay) => window.setTimeout(run, delay));
+    [120, 500, 1200, 2200].forEach((delay) => window.setTimeout(run, delay));
     window.addEventListener("pageshow", run, { once: true });
     window.addEventListener("load", run, { once: true });
   }
