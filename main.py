@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
     Anthropic = None
 
 
-APP_VERSION = "1.7.2"
+APP_VERSION = "1.7.4"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
