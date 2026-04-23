@@ -1,6 +1,5 @@
-// deploy-bump: 2026-04-23 1.7.2-clean-2
 (() => {
-  const CHAT_TEXT_REPLACEMENTS = [
+  const REPLACEMENTS = [
     [/Genel Chat aktif/gi, "Genel Chat"],
     [/Live Chat/gi, ""],
     [/Yazışma akışı tek pencerede sürer\. Yeni mesajını aşağıdaki sabit alana yazabilirsin\./gi, ""],
@@ -17,161 +16,226 @@
     [/Genel Chat \| gerÃ§ek mesaj akÄ±ÅŸÄ±/gi, "Genel Chat"],
     [/Sabit mesaj alanı, canlı yanıt akışı ve rahat tonda sohbet ekranı\./gi, ""],
     [/Sabit mesaj alanÄ±, canlÄ± yanÄ±t akÄ±ÅŸÄ± ve rahat tonda sohbet ekranÄ±\./gi, ""],
-  ];
-
-  const ANALYSIS_TEXT_REPLACEMENTS = [
-    [/ucretsiz yedek analiz uretildi/gi, "degerlendirme uretildi"],
-    [/ücretsiz yedek analiz üretildi/gi, "değerlendirme üretildi"],
-    [/Ã¼cretsiz yedek analiz Ã¼retildi/gi, "değerlendirme üretildi"],
     [/Ucretli model kotas[iı].*?guvenli mod devreye girdi\./gi, ""],
     [/Ücretli model kotası.*?güvenli mod devreye girdi\./gi, ""],
     [/Ãœcretli model kotasÄ±.*?gÃ¼venli mod devreye girdi\./gi, ""],
-    [/\s*\|\s*yedek akış/gi, ""],
-    [/\s*\|\s*yedek akis/gi, ""],
-    [/\s*\|\s*yedek akÄ±ÅŸ/gi, ""],
-    [/\s*\|\s*Mod:\s*Sohbet çekirdeği/gi, ""],
-    [/\s*\|\s*Mod:\s*Sohbet Ã§ekirdeÄŸi/gi, ""],
-    [/\s*\|\s*Mod:\s*Yedek analiz/gi, ""],
     [/AI servis sınırında yedek analiz kullanıldı\./gi, "Analiz başarıyla üretildi."],
     [/AI servis sÄ±nÄ±rÄ±nda yedek analiz kullanÄ±ldÄ±\./gi, "Analiz başarıyla üretildi."],
     [/Sohbet cevabı sohbet çekirdeğiyle üretildi\./gi, "Sohbet cevabı hazır."],
     [/Sohbet cevabÄ± sohbet Ã§ekirdeÄŸiyle Ã¼retildi\./gi, "Sohbet cevabı hazır."],
-    [/\bYedek\b/gi, "Analiz"],
   ];
 
   function cleanText(value) {
     let text = String(value ?? "");
-    [...CHAT_TEXT_REPLACEMENTS, ...ANALYSIS_TEXT_REPLACEMENTS].forEach(([pattern, next]) => {
+    REPLACEMENTS.forEach(([pattern, next]) => {
       text = text.replace(pattern, next);
     });
     return text.replace(/\s{2,}/g, " ").trim();
   }
 
-  function cleanNodeText(root) {
-    if (!root) return;
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const changed = [];
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const next = cleanText(node.nodeValue);
-      if (next !== node.nodeValue) changed.push([node, next]);
-    }
-    changed.forEach(([node, next]) => {
-      node.nodeValue = next;
-    });
+  function ensureStyle() {
+    if (document.getElementById("aq-login-hotfix-style")) return;
+    const style = document.createElement("style");
+    style.id = "aq-login-hotfix-style";
+    style.textContent = `
+      .space-scene{pointer-events:none!important}
+      #loginScreen{position:relative;z-index:6}
+      #loginScreen, #loginScreen *{pointer-events:auto}
+      #loginBtn,#verifyBtn,#backBtn,#centerBtnLogin,#centerBtnInline{position:relative;z-index:8}
+    `;
+    document.head.appendChild(style);
   }
 
-  function clearSelectors() {
+  function setStatus(node, kind, message) {
+    if (!node) return;
+    node.textContent = cleanText(message || "");
+    if (message) node.dataset.kind = kind === "warn" ? "success" : kind;
+    else node.removeAttribute("data-kind");
+  }
+
+  function cleanDom(root = document.body) {
+    if (!root) return;
     ["#chatMeta", "#aqChatMeta", "#analysisSubtitle"].forEach((selector) => {
       const node = document.querySelector(selector);
       if (node) node.textContent = cleanText(node.textContent);
     });
-
-    ["#chatHeading", "#aqChatHeading", "#analysisTitle"].forEach((selector) => {
-      const node = document.querySelector(selector);
-      if (node && cleanText(node.textContent)) node.textContent = cleanText(node.textContent);
-    });
-
-    document.querySelectorAll(".signal-badge, .aq-pill").forEach((node) => {
-      if (cleanText(node.textContent) === "") node.remove();
-    });
-  }
-
-  function cleanResultCards() {
-    [
-      "#summaryText",
-      "#threatText",
-      "#timelineText",
-      "#criticalLinkText",
-      "#resultMeta",
-      "#analysisStatus",
-      "#centerStatus",
-      "#aqCenterStatus",
-      "#aqAlarmStatus",
-      "#aqOpsStatus",
-    ].forEach((selector) => {
+    ["#chatHeading", "#aqChatHeading", "#analysisTitle", "#resultMeta", "#analysisStatus", "#centerStatus", "#aqCenterStatus", "#aqAlarmStatus", "#aqOpsStatus", "#summaryText", "#threatText", "#timelineText", "#criticalLinkText"].forEach((selector) => {
       const node = document.querySelector(selector);
       if (node) node.textContent = cleanText(node.textContent);
     });
-  }
-
-  function patchStatus() {
-    if (typeof window.setStatus !== "function" || window.__aqStatusPatched) return;
-    window.__aqStatusPatched = true;
-    const original = window.setStatus;
-    window.setStatus = function patchedSetStatus(node, kind, message) {
-      return original.call(this, node, kind === "warn" ? "success" : kind, cleanText(message));
-    };
-  }
-
-  function deepCleanPayload(value) {
-    if (Array.isArray(value)) return value.map(deepCleanPayload);
-    if (!value || typeof value !== "object") {
-      return typeof value === "string" ? cleanText(value) : value;
-    }
-    const next = {};
-    Object.entries(value).forEach(([key, current]) => {
-      next[key] = deepCleanPayload(current);
+    document.querySelectorAll(".signal-badge, .aq-pill").forEach((node) => {
+      const next = cleanText(node.textContent);
+      if (!next) node.remove();
+      else node.textContent = next;
     });
-    return next;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const changes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const next = cleanText(node.nodeValue);
+      if (next !== node.nodeValue) changes.push([node, next]);
+    }
+    changes.forEach(([node, next]) => {
+      node.nodeValue = next;
+    });
   }
 
-  function patchRenderResult() {
-    if (typeof window.renderResult !== "function" || window.__aqRenderPatched) return;
-    window.__aqRenderPatched = true;
-    const original = window.renderResult;
-    window.renderResult = function patchedRenderResult(result) {
-      return original.call(this, deepCleanPayload(result));
-    };
-  }
+  async function fallbackLogin() {
+    const user = document.getElementById("loginUser");
+    const pass = document.getElementById("loginPass");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginLoad = document.getElementById("loginLoad");
+    const loginStatus = document.getElementById("loginStatus");
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const codeInfo = document.getElementById("codeInfo");
+    const username = (user?.value || "").replace(/\D/g, "").slice(0, 6);
+    const password = pass?.value || "";
 
-  function patchHistory() {
-    if (typeof window.renderHistory !== "function" || window.__aqHistoryPatched) return;
-    window.__aqHistoryPatched = true;
-    const original = window.renderHistory;
-    window.renderHistory = function patchedRenderHistory() {
-      if (window.state && Array.isArray(window.state.historyList)) {
-        window.state.historyList = window.state.historyList.map((item) => ({
-          ...item,
-          ozet: cleanText(item.ozet),
-          summary: cleanText(item.summary),
-          fallback_mode: false,
-        }));
-      }
-      return original.apply(this, arguments);
-    };
-  }
+    if (user) user.value = username;
+    if (!username || !password) {
+      setStatus(loginStatus, "error", "Kullanici kodu ve sifre zorunludur.");
+      return;
+    }
 
-  function patchReportBuilder() {
-    if (typeof window.buildReport !== "function" || window.__aqReportPatched) return;
-    window.__aqReportPatched = true;
-    const original = window.buildReport;
-    window.buildReport = function patchedBuildReport(result) {
-      const cleaned = deepCleanPayload(result);
-      let html = original.call(this, cleaned);
-      html = html.replace(/<p><strong>Sağlayıcı:<\/strong>.*?<\/p>/gi, "");
-      html = html.replace(/<p><strong>SaÄŸlayÄ±cÄ±:<\/strong>.*?<\/p>/gi, "");
-      html = html.replace(/<p><strong>Saglayici:<\/strong>.*?<\/p>/gi, "");
-      [...CHAT_TEXT_REPLACEMENTS, ...ANALYSIS_TEXT_REPLACEMENTS].forEach(([pattern, next]) => {
-        html = html.replace(pattern, next);
+    try {
+      if (loginBtn) loginBtn.disabled = true;
+      loginLoad?.classList.add("active");
+      setStatus(loginStatus, "", "");
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-      return html;
-    };
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || data.message || "Giris basarisiz.");
+      window.__aqPendingUser = username;
+      step1?.classList.add("hidden");
+      step2?.classList.remove("hidden");
+      setStatus(codeInfo, "info", data.message || "Dogrulama kodu gonderildi.");
+      document.getElementById("loginCode")?.focus();
+    } catch (error) {
+      setStatus(loginStatus, "error", error.message || "Giris basarisiz.");
+    } finally {
+      if (loginBtn) loginBtn.disabled = false;
+      loginLoad?.classList.remove("active");
+    }
   }
 
-  function runCleanup() {
-    clearSelectors();
-    cleanResultCards();
-    cleanNodeText(document.body);
+  async function fallbackVerify() {
+    const verifyBtn = document.getElementById("verifyBtn");
+    const verifyLoad = document.getElementById("verifyLoad");
+    const verifyStatus = document.getElementById("verifyStatus");
+    const codeInput = document.getElementById("loginCode");
+    const code = (codeInput?.value || "").replace(/\D/g, "").slice(0, 6);
+    if (codeInput) codeInput.value = code;
+    if (code.length !== 6 || !window.__aqPendingUser) {
+      setStatus(verifyStatus, "error", "6 haneli dogrulama kodunu girin.");
+      return;
+    }
+
+    try {
+      if (verifyBtn) verifyBtn.disabled = true;
+      verifyLoad?.classList.add("active");
+      setStatus(verifyStatus, "", "");
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: window.__aqPendingUser, code }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || data.message || "Dogrulama basarisiz.");
+      sessionStorage.setItem("aq_session_token", data.token || "");
+      sessionStorage.setItem("aq_session_user", data.username || data.user || window.__aqPendingUser);
+      window.location.reload();
+    } catch (error) {
+      setStatus(verifyStatus, "error", error.message || "Dogrulama basarisiz.");
+    } finally {
+      if (verifyBtn) verifyBtn.disabled = false;
+      verifyLoad?.classList.remove("active");
+    }
+  }
+
+  function bindLogin() {
+    const loginBtn = document.getElementById("loginBtn");
+    const verifyBtn = document.getElementById("verifyBtn");
+    const backBtn = document.getElementById("backBtn");
+    const loginUser = document.getElementById("loginUser");
+    const loginPass = document.getElementById("loginPass");
+    const loginCode = document.getElementById("loginCode");
+
+    if (loginBtn && loginBtn.dataset.aqBound !== "1") {
+      loginBtn.dataset.aqBound = "1";
+      loginBtn.addEventListener("click", () => {
+        if (typeof window.doLogin === "function") return window.doLogin();
+        return fallbackLogin();
+      });
+      loginBtn.disabled = false;
+    }
+
+    if (verifyBtn && verifyBtn.dataset.aqBound !== "1") {
+      verifyBtn.dataset.aqBound = "1";
+      verifyBtn.addEventListener("click", () => {
+        if (typeof window.doVerify === "function") return window.doVerify();
+        return fallbackVerify();
+      });
+      verifyBtn.disabled = false;
+    }
+
+    if (backBtn && backBtn.dataset.aqBound !== "1") {
+      backBtn.dataset.aqBound = "1";
+      backBtn.addEventListener("click", () => {
+        if (typeof window.resetLoginFlow === "function") return window.resetLoginFlow();
+        document.getElementById("step2")?.classList.add("hidden");
+        document.getElementById("step1")?.classList.remove("hidden");
+      });
+    }
+
+    if (loginUser && loginUser.dataset.aqBound !== "1") {
+      loginUser.dataset.aqBound = "1";
+      loginUser.addEventListener("input", () => {
+        loginUser.value = loginUser.value.replace(/\D/g, "").slice(0, 6);
+      });
+      loginUser.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          loginBtn?.click();
+        }
+      });
+    }
+
+    if (loginPass && loginPass.dataset.aqBound !== "1") {
+      loginPass.dataset.aqBound = "1";
+      loginPass.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          loginBtn?.click();
+        }
+      });
+    }
+
+    if (loginCode && loginCode.dataset.aqBound !== "1") {
+      loginCode.dataset.aqBound = "1";
+      loginCode.addEventListener("input", () => {
+        loginCode.value = loginCode.value.replace(/\D/g, "").slice(0, 6);
+      });
+      loginCode.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          verifyBtn?.click();
+        }
+      });
+    }
   }
 
   function init() {
-    patchStatus();
-    patchRenderResult();
-    patchHistory();
-    patchReportBuilder();
-    runCleanup();
-    const observer = new MutationObserver(() => runCleanup());
+    ensureStyle();
+    bindLogin();
+    cleanDom();
+    const observer = new MutationObserver(() => {
+      bindLogin();
+      cleanDom();
+    });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 
