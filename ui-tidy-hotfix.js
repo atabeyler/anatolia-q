@@ -1,3 +1,4 @@
+// deploy-bump: 2026-04-23 1.7.2-clean-2
 (() => {
   const CHAT_TEXT_REPLACEMENTS = [
     [/Genel Chat aktif/gi, "Genel Chat"],
