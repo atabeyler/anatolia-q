@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
     Anthropic = None
 
 
-APP_VERSION = "1.7.10"
+APP_VERSION = "1.7.12"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -866,7 +866,7 @@ async def create_alert(request: Request, req: dict):
     alerts_store.append(item)
     trim_store(alerts_store)
 
-    try {
+    try:
         send_mail(
             f"T.C. ANATOLIA-Q Alarm | {item['region']}",
             f"<p>Kullanc: <b>{session['username']}</b></p><p>Rol: <b>{session['role']}</b></p><p>Bolge: <b>{item['region']}</b></p><p>Baslk: <b>{item['title']}</b></p><p>Detay: {item['detail']}</p><p>Oncelik: <b>{item['priority']}</b></p><p>Saat: {item['timestamp']}</p>",
@@ -917,7 +917,7 @@ async def push_ops_feed(request: Request, req: dict):
     trim_store(ops_feed_store, limit=120)
 
     if channel == "emergency":
-        try {
+        try:
             send_mail(
                 "T.C. ANATOLIA-Q Acil Alarm",
                 f"<p>Kullanc: <b>{session['username']}</b></p><p>Rol: <b>{session['role']}</b></p><p>Mesaj: {item['message']}</p><p>Oncelik: <b>{item['priority']}</b></p><p>Saat: {item['timestamp']}</p>",
