@@ -2,25 +2,25 @@
   const CHAT_TEXT_REPLACEMENTS = [
     [/Genel Chat aktif/gi, "Genel Chat"],
     [/Live Chat/gi, ""],
-    [/Yazışma akışı tek pencerede sürer\. Yeni mesajını aşağıdaki sabit alana yazabilirsin\./gi, ""],
-    [/Yazışma akışı burada devam eder\. Yeni mesajını alttaki kutuya yaz\./gi, ""],
-    [/Mesaj akışı burada tutulur\. Yeni mesajını aynı kutuya yazarak devam edebilirsin\./gi, ""],
-    [/Buraya adını yazarsan sistem daha doğal hitap eder\./gi, ""],
-    [/Genel Chat \| gerçek mesaj akışı/gi, "Genel Chat"],
-    [/Sabit mesaj alanı, canlı yanıt akışı ve rahat tonda sohbet ekranı\./gi, ""],
+    [/YazÄ±ÅŸma akÄ±ÅŸÄ± tek pencerede sÃ¼rer\. Yeni mesajÄ±nÄ± aÅŸaÄŸÄ±daki sabit alana yazabilirsin\./gi, ""],
+    [/YazÄ±ÅŸma akÄ±ÅŸÄ± burada devam eder\. Yeni mesajÄ±nÄ± alttaki kutuya yaz\./gi, ""],
+    [/Mesaj akÄ±ÅŸÄ± burada tutulur\. Yeni mesajÄ±nÄ± aynÄ± kutuya yazarak devam edebilirsin\./gi, ""],
+    [/Buraya adÄ±nÄ± yazarsan sistem daha doÄŸal hitap eder\./gi, ""],
+    [/Genel Chat \| gerÃ§ek mesaj akÄ±ÅŸÄ±/gi, "Genel Chat"],
+    [/Sabit mesaj alanÄ±, canlÄ± yanÄ±t akÄ±ÅŸÄ± ve rahat tonda sohbet ekranÄ±\./gi, ""],
   ];
 
   const ANALYSIS_TEXT_REPLACEMENTS = [
-    [/ucretsiz yedek analiz uretildi/gi, "değerlendirme üretildi"],
-    [/ücretsiz yedek analiz üretildi/gi, "değerlendirme üretildi"],
-    [/Ucretli model kotas[iı].*?guvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
-    [/Ücretli model kotası.*?güvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
-    [/\s*\|\s*yedek akış/gi, ""],
+    [/ucretsiz yedek analiz uretildi/gi, "deÄŸerlendirme Ã¼retildi"],
+    [/Ã¼cretsiz yedek analiz Ã¼retildi/gi, "deÄŸerlendirme Ã¼retildi"],
+    [/Ucretli model kotas[iÄ±].*?guvenli mod devreye girdi\./gi, "Mevcut bulgular Ã§erÃ§evesinde durum deÄŸerlendirmesi sunulmuÅŸtur."],
+    [/Ãœcretli model kotasÄ±.*?gÃ¼venli mod devreye girdi\./gi, "Mevcut bulgular Ã§erÃ§evesinde durum deÄŸerlendirmesi sunulmuÅŸtur."],
+    [/\s*\|\s*yedek akÄ±ÅŸ/gi, ""],
     [/\s*\|\s*yedek akis/gi, ""],
-    [/\s*\|\s*Mod:\s*Sohbet çekirdeği/gi, ""],
+    [/\s*\|\s*Mod:\s*Sohbet Ã§ekirdeÄŸi/gi, ""],
     [/\s*\|\s*Mod:\s*Yedek analiz/gi, ""],
-    [/AI servis sınırında yedek analiz kullanıldı\./gi, "Analiz başarıyla üretildi."],
-    [/Sohbet cevabı sohbet çekirdeğiyle üretildi\./gi, "Sohbet cevabı hazır."],
+    [/AI servis sÄ±nÄ±rÄ±nda yedek analiz kullanÄ±ldÄ±\./gi, "Analiz baÅŸarÄ±yla Ã¼retildi."],
+    [/Sohbet cevabÄ± sohbet Ã§ekirdeÄŸiyle Ã¼retildi\./gi, "Sohbet cevabÄ± hazÄ±r."],
     [/\bYedek\b/gi, "Analiz"],
   ];
 
@@ -172,8 +172,8 @@
 
   function pruneLoginScreen() {
     document.body.classList.add("aq-login-pruned");
-    setNodeText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
-    setNodeText("#loginScreen .brand-sub", "Merkez onaylı kapalı erişim terminali.");
+    setNodeText("#loginScreen .hero-kicker", "Kuantum tabanlÄ± ulusal karar destek sistemi");
+    setNodeText("#loginScreen .brand-sub", "Merkez onaylÄ± kapalÄ± eriÅŸim terminali.");
     const switcher = document.getElementById("aqLangSwitch");
     if (switcher) switcher.remove();
   }
@@ -205,8 +205,15 @@
 
   function tidyDashboardLayout() {
     document.body.classList.add("aq-app-boost");
-    hideCardsByHeading("Merkez kanalı");
+    hideCardsByHeading("Merkez kanalÄ±");
     hideCardsByHeading("Merkez kanal");
+    hideCardsByHeading("ModÃƒÂ¼ller");
+    hideCardsByHeading("Moduller");
+    hideCardsByHeading("GÃƒÂ¶rev modÃƒÂ¼lleri");
+    hideCardsByHeading("Gorev modulleri");
+
+    const moduleSidebarCard = document.getElementById("moduleList")?.closest(".sidebar-card");
+    if (moduleSidebarCard) moduleSidebarCard.classList.add("aq-remove-card");
 
     const loginCenter = document.getElementById("centerBtnLogin");
     if (loginCenter) loginCenter.classList.add("hidden");
@@ -214,10 +221,10 @@
     setNodeText("#page-dashboard .hero-strip h2", "");
     setNodeText("#page-dashboard .hero-strip p", "");
 
-    hideDuplicateButtonsByText("Yeni analiz başlat", 1);
-    hideDuplicateCardsByHeading("Türkiye alarm radarı", 1);
-    hideDuplicateCardsByHeading("Türkiye alarm radar", 1);
-    setNodeText("#aqOpsStrip .aq-kicker", "Türkiye alarm radarı");
+    hideDuplicateButtonsByText("Yeni analiz baÅŸlat", 1);
+    hideDuplicateCardsByHeading("TÃ¼rkiye alarm radarÄ±", 1);
+    hideDuplicateCardsByHeading("TÃ¼rkiye alarm radar", 1);
+    setNodeText("#aqOpsStrip .aq-kicker", "TÃ¼rkiye alarm radarÄ±");
   }
 
   function patchStatus() {
@@ -274,7 +281,7 @@
     window.buildReport = function patchedBuildReport(result) {
       const cleaned = deepCleanPayload(result);
       let html = original.call(this, cleaned);
-      html = html.replace(/<p><strong>Sağlayıcı:<\/strong>.*?<\/p>/gi, "");
+      html = html.replace(/<p><strong>SaÄŸlayÄ±cÄ±:<\/strong>.*?<\/p>/gi, "");
       html = html.replace(/<p><strong>Saglayici:<\/strong>.*?<\/p>/gi, "");
       [...CHAT_TEXT_REPLACEMENTS, ...ANALYSIS_TEXT_REPLACEMENTS].forEach(([pattern, next]) => {
         html = html.replace(pattern, next);
@@ -304,7 +311,7 @@
 
     if (user) user.value = username;
     if (!username || !password) {
-      fallbackSetStatus(loginStatus, "error", "Kullanıcı kodu ve şifre zorunludur.");
+      fallbackSetStatus(loginStatus, "error", "KullanÄ±cÄ± kodu ve ÅŸifre zorunludur.");
       return;
     }
 
@@ -318,14 +325,14 @@
         body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.message || "Giriş başarısız.");
+      if (!response.ok) throw new Error(data.detail || data.message || "GiriÅŸ baÅŸarÄ±sÄ±z.");
       window.__aqPendingUser = username;
       step1?.classList.add("hidden");
       step2?.classList.remove("hidden");
-      fallbackSetStatus(codeInfo, "info", data.message || "Doğrulama kodu gönderildi.");
+      fallbackSetStatus(codeInfo, "info", data.message || "DoÄŸrulama kodu gÃ¶nderildi.");
       document.getElementById("loginCode")?.focus();
     } catch (error) {
-      fallbackSetStatus(loginStatus, "error", error.message || "Giriş başarısız.");
+      fallbackSetStatus(loginStatus, "error", error.message || "GiriÅŸ baÅŸarÄ±sÄ±z.");
     } finally {
       if (loginBtn) loginBtn.disabled = false;
       loginLoad?.classList.remove("active");
@@ -340,7 +347,7 @@
     const code = (codeInput?.value || "").replace(/\D/g, "").slice(0, 6);
     if (codeInput) codeInput.value = code;
     if (code.length !== 6 || !window.__aqPendingUser) {
-      fallbackSetStatus(verifyStatus, "error", "6 haneli doğrulama kodunu girin.");
+      fallbackSetStatus(verifyStatus, "error", "6 haneli doÄŸrulama kodunu girin.");
       return;
     }
 
@@ -354,12 +361,12 @@
         body: JSON.stringify({ username: window.__aqPendingUser, code }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.message || "Doğrulama başarısız.");
+      if (!response.ok) throw new Error(data.detail || data.message || "DoÄŸrulama baÅŸarÄ±sÄ±z.");
       sessionStorage.setItem("aq_session_token", data.token || "");
       sessionStorage.setItem("aq_session_user", data.username || data.user || window.__aqPendingUser);
       window.location.reload();
     } catch (error) {
-      fallbackSetStatus(verifyStatus, "error", error.message || "Doğrulama başarısız.");
+      fallbackSetStatus(verifyStatus, "error", error.message || "DoÄŸrulama baÅŸarÄ±sÄ±z.");
     } finally {
       if (verifyBtn) verifyBtn.disabled = false;
       verifyLoad?.classList.remove("active");
