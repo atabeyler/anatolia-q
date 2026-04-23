@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
     Anthropic = None
 
 
-APP_VERSION = "1.7.4"
+APP_VERSION = "1.7.5"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -264,12 +264,12 @@ def normalize_general_chat(raw: dict, chat_name: str = "") -> dict:
 
     return {
         "ozet": str(raw.get("ozet") or f"Selam {name}, devam edelim. Sorunu biraz daha acarsan daha net gidebilirim."),
-        "tehdit_analizi": str(raw.get("tehdit_analizi") or "Sohbet modu ack. Istersen bu konuyu daha ciddi ya da daha eglenceli tonda surdurebiliriz."),
+        "tehdit_analizi": str(raw.get("tehdit_analizi") or "Konuya dair kisa degerlendirme hazirlandi."),
         "senaryolar": [str(item) for item in scenarios[:3]],
         "oncelikli_oneri": str(raw.get("oncelikli_oneri") or "Bir sonraki mesajda tek soru sor; cevab keskinlestireyim."),
         "etkilenen_kurumlar": raw.get("etkilenen_kurumlar") or ["Genel Bilgi", "Gundelik Dil", "Hzl Ozet"],
         "zaman_cercevesi": str(raw.get("zaman_cercevesi") or "Anlk sohbet"),
-        "sohbet_tonu": str(raw.get("sohbet_tonu") or f"Rahat, akc ve hafif sakac. Hitap: {name}"),
+        "sohbet_tonu": str(raw.get("sohbet_tonu") or "Rahat, akici ve hafif sakaci"),
         "kritik_baglanti": str(raw.get("kritik_baglanti") or "Istersen ayn konuda devam edebiliriz."),
         "tehdit_seviyesi": str(raw.get("tehdit_seviyesi") or "DUSUK").upper(),
     }
@@ -342,7 +342,7 @@ def general_chat_reply(situation, chat_name=""):
     low = text.lower()
 
     if any(word in low for word in ["selam", "merhaba", "sa", "naber", "naslsn", "nasilsin"]):
-        answer = f"Selam {name}, buradaym. Sistem ack, tempo iyi. Ne konusmak istiyorsun?"
+        answer = f"Selam {name}, ne konusmak istiyorsun?"
     elif any(word in low for word in ["nedir", "ne demek", "anlat", "ackla", "acikla"]):
         answer = f"{name}, bunu sade anlatalm: {text[:220]}. Ksa cevap su; konu parcalar dogru yere oturtma isi."
     elif "?" in text or any(word in low for word in ["neden", "niye", "nasl", "nasil", "kim", "ne zaman", "hangi"]):
@@ -353,7 +353,7 @@ def general_chat_reply(situation, chat_name=""):
     return normalize_general_chat(
         {
             "ozet": answer,
-            "tehdit_analizi": "Ton rahat tutuldu; istersen bir sonraki mesajda daha ciddi, daha teknik ya da daha komik moda gecebilirim.",
+            "tehdit_analizi": "Konuya dair kisa degerlendirme hazirlandi.",
             "senaryolar": [
                 "Bunu daha sade anlat.",
                 "Bana 3 maddede ozetle.",
@@ -362,7 +362,7 @@ def general_chat_reply(situation, chat_name=""):
             "oncelikli_oneri": "Bir sonraki mesajda tek bir soru ya da konu baslg at; cevab daha keskinlestireyim.",
             "etkilenen_kurumlar": ["Genel Bilgi", "Gundelik Dil", "Hzl Ozet"],
             "zaman_cercevesi": "Anlk sohbet",
-            "sohbet_tonu": f"Rahat, akc ve hafif sakac. Hitap: {name}",
+            "sohbet_tonu": "Rahat, akici ve hafif sakaci",
             "kritik_baglanti": "Ayn konuyu daha ciddi, daha ksa ya da daha eglenceli tonda surdurebiliriz.",
             "tehdit_seviyesi": "DUSUK",
         },
