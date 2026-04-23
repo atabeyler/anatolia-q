@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
     Anthropic = None
 
 
-APP_VERSION = "1.7.6"
+APP_VERSION = "1.7.7"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -359,7 +359,7 @@ def general_chat_reply(situation, chat_name=""):
                 "Bana 3 maddede ozetle.",
                 "Bir tk daha ciddi tonda yeniden yaz.",
             ],
-            "oncelikli_oneri": "Bir sonraki mesajda tek bir soru ya da konu baslg at; cevab daha keskinlestireyim.",
+            "oncelikli_oneri": "Bir sonraki mesajda tek bir soru ya da konu baslg at; cevab keskinlestireyim.",
             "etkilenen_kurumlar": ["Genel Bilgi", "Gundelik Dil", "Hzl Ozet"],
             "zaman_cercevesi": "Anlk sohbet",
             "sohbet_tonu": "Rahat, akici ve hafif sakaci",
