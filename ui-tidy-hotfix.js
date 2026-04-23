@@ -1,5 +1,47 @@
 (() => {
   const HIDE_TITLES = ["merkez kanal", "merkez kanalı", "gorev modulleri", "görev modülleri"];
+  const STORAGE_KEY = "aq_ui_lang";
+
+  const COPY = {
+    tr: {
+      heroKicker: "Kuantum tabanlı ulusal karar destek sistemi",
+      brandSub: "Merkez onaylı kapalı erişim terminali.",
+      loginUserLabel: "Kullanıcı kodu",
+      loginPassLabel: "Ortak şifre",
+      loginCodeLabel: "Doğrulama kodu",
+      loginUserPlaceholder: "6 haneli kullanıcı kodu",
+      loginPassPlaceholder: "Ortak şifreyi giriniz",
+      loginCodePlaceholder: "6 haneli doğrulama kodu",
+      loginNote: "Yetkisiz giriş yapılamaz.",
+      loginBtn: "Giriş yap",
+      verifyBtn: "Doğrula",
+      backBtn: "Geri",
+      dashboardTitle: "Operasyon görünümü",
+      dashboardCopy: "Seçili alanı aç, analize geç ve operasyon akışında kal.",
+      centerBtn: "Merkez",
+      chatTitle: "Genel Chat",
+      langLabel: "Dil"
+    },
+    en: {
+      heroKicker: "Quantum-based national decision support system",
+      brandSub: "Center-approved closed access terminal.",
+      loginUserLabel: "User code",
+      loginPassLabel: "Shared password",
+      loginCodeLabel: "Verification code",
+      loginUserPlaceholder: "6-digit user code",
+      loginPassPlaceholder: "Enter shared password",
+      loginCodePlaceholder: "6-digit verification code",
+      loginNote: "Unauthorized access is blocked.",
+      loginBtn: "Sign in",
+      verifyBtn: "Verify",
+      backBtn: "Back",
+      dashboardTitle: "Operations overview",
+      dashboardCopy: "Open the selected domain, switch to analysis and stay in the operational flow.",
+      centerBtn: "Center",
+      chatTitle: "General Chat",
+      langLabel: "Language"
+    }
+  };
 
   function normalize(value) {
     return String(value || "")
@@ -11,6 +53,16 @@
       .trim();
   }
 
+  function getLang() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved === "en" ? "en" : "tr";
+  }
+
+  function setLang(lang) {
+    localStorage.setItem(STORAGE_KEY, lang === "en" ? "en" : "tr");
+    applyLanguage();
+  }
+
   function ensureStyle() {
     if (document.getElementById("aq-final-polish")) return;
     const style = document.createElement("style");
@@ -20,6 +72,10 @@
       #loginScreen{position:relative;z-index:6}
       #loginScreen,#loginScreen *{pointer-events:auto}
       #loginBtn,#verifyBtn,#backBtn{position:relative;z-index:9}
+      .aq-lang-switch{position:fixed;top:18px;right:18px;z-index:60;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:999px;border:1px solid rgba(105,224,255,.18);background:rgba(6,14,24,.88);box-shadow:0 12px 30px rgba(0,0,0,.24);backdrop-filter:blur(12px)}
+      .aq-lang-label{color:#8fb2d4;font:11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
+      .aq-lang-btn{border:1px solid rgba(105,224,255,.16);background:rgba(8,16,28,.76);color:#9bb5d2;border-radius:999px;padding:8px 10px;font:11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+      .aq-lang-btn.active{background:linear-gradient(135deg,rgba(105,224,255,.24),rgba(94,144,255,.20));color:#eef7ff;border-color:rgba(105,224,255,.34)}
       body.aq-login-pruned #loginScreen .hero-copy,
       body.aq-login-pruned #loginScreen .hero-grid,
       body.aq-login-pruned #loginScreen .hero-console,
@@ -80,20 +136,49 @@
     if (node) node.setAttribute("placeholder", value);
   }
 
-  function pruneLogin() {
-    document.body.classList.add("aq-login-pruned");
-    setText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
-    setText("#loginScreen .brand-sub", "Merkez onaylı kapalı erişim terminali.");
-    setText('label[for="loginUser"]', "Kullanıcı kodu");
-    setText('label[for="loginPass"]', "Ortak şifre");
-    setText('label[for="loginCode"]', "Doğrulama kodu");
-    setPlaceholder("#loginUser", "6 haneli kullanıcı kodu");
-    setPlaceholder("#loginPass", "Ortak şifreyi giriniz");
-    setPlaceholder("#loginCode", "6 haneli doğrulama kodu");
-    setText("#step1 .field-note", "Yetkisiz giriş yapılamaz.");
-    setText("#loginBtn", "Giriş yap");
-    setText("#verifyBtn", "Doğrula");
-    setText("#backBtn", "Geri");
+  function ensureLanguageSwitch() {
+    if (document.getElementById("aqLangSwitch")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "aqLangSwitch";
+    wrap.className = "aq-lang-switch";
+    wrap.innerHTML = `
+      <span class="aq-lang-label" id="aqLangLabel">Dil</span>
+      <button type="button" class="aq-lang-btn" data-lang="tr">TR</button>
+      <button type="button" class="aq-lang-btn" data-lang="en">EN</button>
+    `;
+    wrap.querySelectorAll("[data-lang]").forEach((button) => {
+      button.addEventListener("click", () => setLang(button.getAttribute("data-lang")));
+    });
+    document.body.appendChild(wrap);
+  }
+
+  function applyLanguage() {
+    const lang = getLang();
+    const copy = COPY[lang];
+    document.body.classList.add("aq-login-pruned", "aq-live-polished");
+    setText("#aqLangLabel", copy.langLabel);
+    setText("#loginScreen .hero-kicker", copy.heroKicker);
+    setText("#loginScreen .brand-sub", copy.brandSub);
+    setText('label[for="loginUser"]', copy.loginUserLabel);
+    setText('label[for="loginPass"]', copy.loginPassLabel);
+    setText('label[for="loginCode"]', copy.loginCodeLabel);
+    setPlaceholder("#loginUser", copy.loginUserPlaceholder);
+    setPlaceholder("#loginPass", copy.loginPassPlaceholder);
+    setPlaceholder("#loginCode", copy.loginCodePlaceholder);
+    setText("#step1 .field-note", copy.loginNote);
+    setText("#loginBtn", copy.loginBtn);
+    setText("#verifyBtn", copy.verifyBtn);
+    setText("#backBtn", copy.backBtn);
+    setText("#page-dashboard .panel h2", copy.dashboardTitle);
+    const dashboardCopy = document.querySelector("#page-dashboard .panel .body-copy");
+    if (dashboardCopy) dashboardCopy.textContent = copy.dashboardCopy;
+    const inlineCenter = document.getElementById("centerBtnInline");
+    if (inlineCenter) inlineCenter.textContent = copy.centerBtn;
+    setText("#aqChatHeading", copy.chatTitle);
+    setText("#chatHeading", copy.chatTitle);
+    document.querySelectorAll("#aqLangSwitch [data-lang]").forEach((button) => {
+      button.classList.toggle("active", button.getAttribute("data-lang") === lang);
+    });
   }
 
   function hideCardsByTitle() {
@@ -108,7 +193,7 @@
   }
 
   function hideDuplicateButtons() {
-    const analyzeButtons = Array.from(document.querySelectorAll("button, .button, .ghost-button")).filter((node) => normalize(node.textContent) === "yeni analiz baslat");
+    const analyzeButtons = Array.from(document.querySelectorAll("button, .button, .ghost-button")).filter((node) => normalize(node.textContent) === normalize("Yeni analiz başlat"));
     analyzeButtons.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
   }
 
@@ -120,20 +205,7 @@
     radarBlocks.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
   }
 
-  function polishDashboardCopy() {
-    document.body.classList.add("aq-live-polished");
-    setText("#page-dashboard .panel h2", "Operasyon görünümü");
-    const copy = document.querySelector("#page-dashboard .panel .body-copy");
-    if (copy) copy.textContent = "Seçili alanı aç, analize geç ve operasyon akışında kal.";
-    const inlineCenter = document.getElementById("centerBtnInline");
-    if (inlineCenter) inlineCenter.textContent = "Merkez";
-    const centerLogin = document.getElementById("centerBtnLogin");
-    if (centerLogin) centerLogin.classList.add("hidden");
-  }
-
   function quietChatLabels() {
-    setText("#aqChatHeading", "Genel Chat");
-    setText("#chatHeading", "Genel Chat");
     const metaA = document.getElementById("aqChatMeta");
     const metaB = document.getElementById("chatMeta");
     const empty = document.querySelector(".aq-chat-empty");
@@ -159,8 +231,8 @@
 
   function run() {
     ensureStyle();
-    pruneLogin();
-    polishDashboardCopy();
+    ensureLanguageSwitch();
+    applyLanguage();
     hideCardsByTitle();
     hideDuplicateButtons();
     hideDuplicateRadar();
