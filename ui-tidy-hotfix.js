@@ -8,6 +8,8 @@
     [/YazÄ±ÅŸma akÄ±ÅŸÄ± burada devam eder\. Yeni mesajÄ±nÄ± alttaki kutuya yaz\./gi, ""],
     [/Mesaj akışı burada tutulur\. Yeni mesajını aynı kutuya yazarak devam edebilirsin\./gi, ""],
     [/Mesaj akÄ±ÅŸÄ± burada tutulur\. Yeni mesajÄ±nÄ± aynÄ± kutuya yazarak devam edebilirsin\./gi, ""],
+    [/Mesajını yaz ve gönder\. Cevabı okumak için aşağı inmek zorunda kalmadan aynı ekranda sohbeti sürdürebilirsin\./gi, ""],
+    [/MesajÄ±nÄ± yaz ve gÃ¶nder\. CevabÄ± okumak iÃ§in aÅŸaÄŸÄ± inmek zorunda kalmadan aynÄ± ekranda sohbeti sÃ¼rdÃ¼rebilirsin\./gi, ""],
     [/Buraya adını yazarsan sistem daha doğal hitap eder\./gi, ""],
     [/Buraya adÄ±nÄ± yazarsan sistem daha doÄŸal hitap eder\./gi, ""],
     [/Genel Chat \| gerçek mesaj akışı/gi, "Genel Chat"],
@@ -20,9 +22,9 @@
     [/ucretsiz yedek analiz uretildi/gi, "degerlendirme uretildi"],
     [/ücretsiz yedek analiz üretildi/gi, "değerlendirme üretildi"],
     [/Ã¼cretsiz yedek analiz Ã¼retildi/gi, "değerlendirme üretildi"],
-    [/Ucretli model kotas[iı].*?guvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
-    [/Ücretli model kotası.*?güvenli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
-    [/Ãœcretli model kotasÄ±.*?gÃ¼venli mod devreye girdi\./gi, "Mevcut bulgular çerçevesinde durum değerlendirmesi sunulmuştur."],
+    [/Ucretli model kotas[iı].*?guvenli mod devreye girdi\./gi, ""],
+    [/Ücretli model kotası.*?güvenli mod devreye girdi\./gi, ""],
+    [/Ãœcretli model kotasÄ±.*?gÃ¼venli mod devreye girdi\./gi, ""],
     [/\s*\|\s*yedek akış/gi, ""],
     [/\s*\|\s*yedek akis/gi, ""],
     [/\s*\|\s*yedek akÄ±ÅŸ/gi, ""],
@@ -59,9 +61,9 @@
   }
 
   function clearSelectors() {
-    ["#chatMeta", "#aqChatMeta"].forEach((selector) => {
+    ["#chatMeta", "#aqChatMeta", "#analysisSubtitle"].forEach((selector) => {
       const node = document.querySelector(selector);
-      if (node) node.textContent = "";
+      if (node) node.textContent = cleanText(node.textContent);
     });
 
     ["#chatHeading", "#aqChatHeading", "#analysisTitle"].forEach((selector) => {
