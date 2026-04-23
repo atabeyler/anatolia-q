@@ -1,326 +1,165 @@
 (() => {
-  const TEXT_REPLACEMENTS = [
-    [/Genel Chat aktif/gi, "Genel Chat"],
-    [/Live Chat/gi, ""],
-    [/Yaz(?:ı|Ä±)şma ak(?:ı|Ä±)şı tek pencerede sürer\.? Yeni mesaj(?:ı|Ä±)n(?:ı|Ä±) aşağıdaki sabit alana yazabilirsin\.?/gi, ""],
-    [/Yaz(?:ı|Ä±)şma ak(?:ı|Ä±)şı burada devam eder\.? Yeni mesaj(?:ı|Ä±)n(?:ı|Ä±) alttaki kutuya yaz\.?/gi, ""],
-    [/Mesaj ak(?:ı|Ä±)şı burada tutulur\.? Yeni mesaj(?:ı|Ä±)n(?:ı|Ä±) aynı kutuya yazarak devam edebilirsin\.?/gi, ""],
-    [/Mesaj(?:ı|Ä±)n(?:ı|Ä±) yaz ve gönder\.? Cevab(?:ı|Ä±) okumak için aşağı inmek zorunda kalmadan aynı ekranda sohbeti sürdürebilirsin\.?/gi, ""],
-    [/Buraya ad(?:ı|Ä±)n(?:ı|Ä±) yazarsan sistem daha doğal hitap eder\.?/gi, ""],
-    [/Genel Chat \| gerçek mesaj ak(?:ı|Ä±)şı/gi, "Genel Chat"],
-    [/Sabit mesaj alan(?:ı|Ä±), canlı yanıt ak(?:ı|Ä±)şı ve rahat tonda sohbet ekran(?:ı|Ä±)\.?/gi, ""],
-    [/Ucretli model kotas(?:i|ı|Ä±).*?guvenli mod devreye girdi\.?/gi, ""],
-    [/Ücretli model kotası.*?güvenli mod devreye girdi\.?/gi, ""],
-    [/AI servis sınırında yedek analiz kullanıldı\.?/gi, "Analiz başarıyla üretildi."],
-    [/Sohbet cevabı sohbet çekirdeğiyle üretildi\.?/gi, "Sohbet cevabı hazır."],
-    [/\s*\|\s*yedek akış/gi, ""],
-    [/\s*\|\s*Mod:\s*Sohbet çekirdeği/gi, ""],
-    [/\s*\|\s*Mod:\s*Yedek analiz/gi, ""],
-  ];
+  const HIDE_TITLES = ["merkez kanal", "merkez kanali", "gorev modulleri"];
 
-  function cleanText(value) {
-    let text = String(value ?? "");
-    for (const [pattern, next] of TEXT_REPLACEMENTS) text = text.replace(pattern, next);
-    return text.replace(/\s{2,}/g, " ").trim();
+  function normalize(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
-  function ensureInteractionStyle() {
-    if (document.getElementById("aq-login-hotfix-style")) return;
+  function ensureStyle() {
+    if (document.getElementById("aq-final-polish")) return;
     const style = document.createElement("style");
-    style.id = "aq-login-hotfix-style";
+    style.id = "aq-final-polish";
     style.textContent = `
       .space-scene{pointer-events:none!important}
       #loginScreen{position:relative;z-index:6}
       #loginScreen,#loginScreen *{pointer-events:auto}
-      #loginBtn,#verifyBtn,#backBtn,#centerBtnLogin,#centerBtnInline{position:relative;z-index:8}
+      #loginBtn,#verifyBtn,#backBtn{position:relative;z-index:9}
+      body.aq-login-pruned #loginScreen .hero-copy,
+      body.aq-login-pruned #loginScreen .hero-grid,
+      body.aq-login-pruned #loginScreen .hero-console,
+      body.aq-login-pruned #loginScreen .capsule-row{display:none!important}
+      body.aq-login-pruned #loginScreen .hero-panel{justify-content:center;min-height:calc(100vh - 32px);background:
+        radial-gradient(circle at 18% 18%, rgba(105,224,255,.18), transparent 24%),
+        radial-gradient(circle at 82% 16%, rgba(94,144,255,.20), transparent 22%),
+        linear-gradient(180deg, rgba(4,12,24,.96), rgba(2,8,16,.98));overflow:hidden}
+      body.aq-login-pruned #loginScreen .hero-panel::before{content:"";position:absolute;inset:-12%;pointer-events:none;background:
+        conic-gradient(from 0deg at 50% 50%, transparent 0 24%, rgba(105,224,255,.10) 32%, transparent 42%, rgba(94,144,255,.10) 56%, transparent 70%);filter:blur(28px);animation:aqSpin 18s linear infinite}
+      body.aq-login-pruned #loginScreen .hero-panel::after{content:"";position:absolute;right:-120px;bottom:-120px;width:420px;height:420px;border-radius:50%;pointer-events:none;background:radial-gradient(circle, rgba(105,224,255,.24), transparent 64%);animation:aqFloat 9s ease-in-out infinite}
+      body.aq-login-pruned #loginScreen .hero-kicker{font-size:11px;color:#89e8ff;letter-spacing:.22em;text-transform:uppercase}
+      body.aq-login-pruned #loginScreen .hero-title{max-width:8ch;font-size:clamp(48px,7vw,92px)}
+      body.aq-login-pruned #loginScreen .auth-panel{background:
+        radial-gradient(circle at 82% 18%, rgba(105,224,255,.10), transparent 20%),
+        linear-gradient(180deg, rgba(7,17,31,.94), rgba(4,10,18,.98))}
+      body.aq-login-pruned #loginScreen .auth-form{box-shadow:0 20px 50px rgba(0,0,0,.26), inset 0 0 0 1px rgba(105,224,255,.06)}
+      body.aq-login-pruned #loginScreen .brand-sub{max-width:32ch}
+      body.aq-live-polished .app-frame{background:
+        radial-gradient(circle at 8% 12%, rgba(105,224,255,.08), transparent 18%),
+        radial-gradient(circle at 92% 12%, rgba(94,144,255,.08), transparent 18%),
+        linear-gradient(180deg, rgba(7,17,31,.92), rgba(3,9,17,.98))}
+      body.aq-live-polished .app-frame::after{content:"";position:absolute;inset:0;pointer-events:none;background:
+        linear-gradient(115deg, transparent 0%, rgba(105,224,255,.05) 34%, transparent 54%),
+        linear-gradient(180deg, transparent 0%, rgba(255,255,255,.03) 50%, transparent 100%);animation:aqSweep 12s linear infinite}
+      body.aq-live-polished .app-body,
+      body.aq-live-polished .workspace,
+      body.aq-live-polished .page,
+      body.aq-live-polished #page-dashboard,
+      body.aq-live-polished #page-analysis{align-items:start!important;align-content:start!important;min-height:0!important}
+      body.aq-live-polished #page-dashboard .quick-actions,
+      body.aq-live-polished #page-dashboard .ops-radar-strip,
+      body.aq-live-polished #aqModuleDeck,
+      body.aq-live-polished .aq-module-grid,
+      body.aq-live-polished .aq-remove,
+      body.aq-live-polished .aq-dashboard-dup{display:none!important}
+      body.aq-live-polished #aqOpsStrip{grid-template-columns:minmax(0,1fr)!important;margin-top:16px!important}
+      body.aq-live-polished #aqOpsStrip .aq-ops-card + .aq-ops-card{display:none!important}
+      body.aq-live-polished #page-dashboard .panel:first-child{overflow:hidden}
+      body.aq-live-polished #page-dashboard .panel:first-child::after{content:"";position:absolute;inset:-20% auto auto -10%;width:42%;height:160%;background:linear-gradient(180deg, rgba(105,224,255,.12), transparent);transform:rotate(18deg);filter:blur(20px);pointer-events:none;animation:aqBeam 10s ease-in-out infinite}
+      body.aq-live-polished .page-actions{justify-content:flex-start}
+      @keyframes aqSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+      @keyframes aqFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+      @keyframes aqSweep{from{transform:translateX(-6%)}50%{transform:translateX(4%)}to{transform:translateX(-6%)}}
+      @keyframes aqBeam{0%,100%{transform:translateX(0) rotate(18deg)}50%{transform:translateX(36px) rotate(18deg)}}
     `;
     document.head.appendChild(style);
   }
 
-  function cleanSelectorText(selectors) {
-    selectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((node) => {
-        const next = cleanText(node.textContent);
-        if (next !== node.textContent) node.textContent = next;
-      });
-    });
+  function setText(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.textContent = value;
   }
 
-  function cleanFixedNodes() {
-    ["#chatMeta", "#aqChatMeta"].forEach((selector) => {
-      const node = document.querySelector(selector);
-      if (node) node.textContent = "";
-    });
-
-    cleanSelectorText([
-      "#chatHeading",
-      "#aqChatHeading",
-      "#analysisTitle",
-      "#analysisStatus",
-      "#centerStatus",
-      "#aqCenterStatus",
-      "#aqAlarmStatus",
-      "#aqOpsStatus",
-      "#summaryText",
-      "#threatText",
-      "#timelineText",
-      "#criticalLinkText",
-      ".field-note",
-      ".hero-copy",
-      ".ops-line",
-      ".signal-line",
-      ".metric-copy",
-      ".kicker-copy",
-      ".mini-stat span",
-      ".timeline-entry p",
-      ".history-card p",
-      ".chat-meta",
-    ]);
-
-    document.querySelectorAll(".signal-badge, .aq-pill").forEach((node) => {
-      const next = cleanText(node.textContent);
-      if (!next) node.remove();
-      else if (next !== node.textContent) node.textContent = next;
-    });
+  function pruneLogin() {
+    document.body.classList.add("aq-login-pruned");
+    setText("#loginScreen .hero-kicker", "Kuantum tabanli ulusal karar destek sistemi");
+    setText("#loginScreen .brand-sub", "Merkez onayli kapali erisim terminali.");
   }
 
-  function deepCleanPayload(value) {
-    if (Array.isArray(value)) return value.map(deepCleanPayload);
-    if (!value || typeof value !== "object") return typeof value === "string" ? cleanText(value) : value;
-    const next = {};
-    Object.entries(value).forEach(([key, current]) => {
-      next[key] = deepCleanPayload(current);
-    });
-    return next;
-  }
-
-  function patchStatus() {
-    if (typeof window.setStatus !== "function" || window.__aqStatusPatched) return;
-    window.__aqStatusPatched = true;
-    const original = window.setStatus;
-    window.setStatus = function patchedSetStatus(node, kind, message) {
-      return original.call(this, node, kind === "warn" ? "success" : kind, cleanText(message));
-    };
-  }
-
-  function patchRenderResult() {
-    if (typeof window.renderResult !== "function" || window.__aqRenderPatched) return;
-    window.__aqRenderPatched = true;
-    const original = window.renderResult;
-    window.renderResult = function patchedRenderResult(result) {
-      return original.call(this, deepCleanPayload(result));
-    };
-  }
-
-  function patchHistory() {
-    if (typeof window.renderHistory !== "function" || window.__aqHistoryPatched) return;
-    window.__aqHistoryPatched = true;
-    const original = window.renderHistory;
-    window.renderHistory = function patchedRenderHistory() {
-      if (window.state && Array.isArray(window.state.historyList)) {
-        window.state.historyList = window.state.historyList.map((item) => ({
-          ...item,
-          ozet: cleanText(item.ozet),
-          summary: cleanText(item.summary),
-          fallback_mode: false,
-        }));
+  function hideCardsByTitle() {
+    const cards = Array.from(document.querySelectorAll(".sidebar-card, .panel, .action-card, .aq-ops-card, .aq-center-card"));
+    cards.forEach((card) => {
+      const title = card.querySelector("h1, h2, h3, .aq-kicker, .section-kicker, strong");
+      const text = normalize(title ? title.textContent : "");
+      if (HIDE_TITLES.some((value) => text.includes(value))) {
+        card.classList.add("aq-remove");
       }
-      return original.apply(this, arguments);
-    };
+    });
+  }
+
+  function dedupeButtons() {
+    const analyzeButtons = Array.from(document.querySelectorAll("button, .button, .ghost-button")).filter((node) => normalize(node.textContent) === "yeni analiz baslat");
+    analyzeButtons.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
+  }
+
+  function dedupeRadar() {
+    const radarBlocks = Array.from(document.querySelectorAll(".aq-ops-card, .panel, .sidebar-card, .action-card")).filter((node) => {
+      const title = node.querySelector("h1, h2, h3, .aq-kicker, .section-kicker, strong");
+      return normalize(title ? title.textContent : "") === "turkiye alarm radari";
+    });
+    radarBlocks.slice(1).forEach((node) => node.classList.add("aq-dashboard-dup"));
+  }
+
+  function polishDashboardCopy() {
+    document.body.classList.add("aq-live-polished");
+    setText("#page-dashboard .panel h2", "Operasyon gorunumu");
+    const copy = document.querySelector("#page-dashboard .panel .body-copy");
+    if (copy) copy.textContent = "Secili alani ac, analize gec ve operasyon akisinda kal.";
+    const inlineCenter = document.getElementById("centerBtnInline");
+    if (inlineCenter) inlineCenter.textContent = "Merkez";
+    const centerLogin = document.getElementById("centerBtnLogin");
+    if (centerLogin) centerLogin.classList.add("hidden");
+  }
+
+  function quietChatLabels() {
+    setText("#aqChatHeading", "Genel Chat");
+    setText("#chatHeading", "Genel Chat");
+    const metaA = document.getElementById("aqChatMeta");
+    const metaB = document.getElementById("chatMeta");
+    if (metaA) metaA.textContent = "";
+    if (metaB) metaB.textContent = "";
+    Array.from(document.querySelectorAll(".aq-pill, .signal-badge")).forEach((node) => {
+      if (normalize(node.textContent) === "live chat") node.remove();
+    });
   }
 
   function patchReportBuilder() {
-    if (typeof window.buildReport !== "function" || window.__aqReportPatched) return;
-    window.__aqReportPatched = true;
+    if (typeof window.buildReport !== "function" || window.__aqReportPolished) return;
+    window.__aqReportPolished = true;
     const original = window.buildReport;
     window.buildReport = function patchedBuildReport(result) {
-      const cleaned = deepCleanPayload(result);
-      let html = original.call(this, cleaned);
-      html = html.replace(/<p><strong>Sağlayıcı:<\/strong>.*?<\/p>/gi, "");
+      let html = original.call(this, result);
       html = html.replace(/<p><strong>Saglayici:<\/strong>.*?<\/p>/gi, "");
-      for (const [pattern, next] of TEXT_REPLACEMENTS) html = html.replace(pattern, next);
+      html = html.replace(/<p><strong>Sa\u011flay\u0131c\u0131:<\/strong>.*?<\/p>/gi, "");
       return html;
     };
   }
 
-  function fallbackSetStatus(node, kind, message) {
-    if (!node) return;
-    node.textContent = cleanText(message || "");
-    if (message) node.dataset.kind = kind === "warn" ? "success" : kind;
-    else node.removeAttribute("data-kind");
-  }
-
-  async function fallbackLogin() {
-    const user = document.getElementById("loginUser");
-    const pass = document.getElementById("loginPass");
-    const loginBtn = document.getElementById("loginBtn");
-    const loginLoad = document.getElementById("loginLoad");
-    const loginStatus = document.getElementById("loginStatus");
-    const step1 = document.getElementById("step1");
-    const step2 = document.getElementById("step2");
-    const codeInfo = document.getElementById("codeInfo");
-    const username = (user?.value || "").replace(/\D/g, "").slice(0, 6);
-    const password = pass?.value || "";
-
-    if (user) user.value = username;
-    if (!username || !password) {
-      fallbackSetStatus(loginStatus, "error", "Kullanıcı kodu ve şifre zorunludur.");
-      return;
-    }
-
-    try {
-      if (loginBtn) loginBtn.disabled = true;
-      loginLoad?.classList.add("active");
-      fallbackSetStatus(loginStatus, "", "");
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.message || "Giriş başarısız.");
-      window.__aqPendingUser = username;
-      step1?.classList.add("hidden");
-      step2?.classList.remove("hidden");
-      fallbackSetStatus(codeInfo, "info", data.message || "Doğrulama kodu gönderildi.");
-      document.getElementById("loginCode")?.focus();
-    } catch (error) {
-      fallbackSetStatus(loginStatus, "error", error.message || "Giriş başarısız.");
-    } finally {
-      if (loginBtn) loginBtn.disabled = false;
-      loginLoad?.classList.remove("active");
-    }
-  }
-
-  async function fallbackVerify() {
-    const verifyBtn = document.getElementById("verifyBtn");
-    const verifyLoad = document.getElementById("verifyLoad");
-    const verifyStatus = document.getElementById("verifyStatus");
-    const codeInput = document.getElementById("loginCode");
-    const code = (codeInput?.value || "").replace(/\D/g, "").slice(0, 6);
-    if (codeInput) codeInput.value = code;
-    if (code.length !== 6 || !window.__aqPendingUser) {
-      fallbackSetStatus(verifyStatus, "error", "6 haneli doğrulama kodunu girin.");
-      return;
-    }
-
-    try {
-      if (verifyBtn) verifyBtn.disabled = true;
-      verifyLoad?.classList.add("active");
-      fallbackSetStatus(verifyStatus, "", "");
-      const response = await fetch("/api/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: window.__aqPendingUser, code }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.message || "Doğrulama başarısız.");
-      sessionStorage.setItem("aq_session_token", data.token || "");
-      sessionStorage.setItem("aq_session_user", data.username || data.user || window.__aqPendingUser);
-      window.location.reload();
-    } catch (error) {
-      fallbackSetStatus(verifyStatus, "error", error.message || "Doğrulama başarısız.");
-    } finally {
-      if (verifyBtn) verifyBtn.disabled = false;
-      verifyLoad?.classList.remove("active");
-    }
-  }
-
-  function bindLoginHotfix() {
-    const loginBtn = document.getElementById("loginBtn");
-    const verifyBtn = document.getElementById("verifyBtn");
-    const backBtn = document.getElementById("backBtn");
-    const loginUser = document.getElementById("loginUser");
-    const loginPass = document.getElementById("loginPass");
-    const loginCode = document.getElementById("loginCode");
-
-    if (loginBtn && loginBtn.dataset.aqBound !== "1") {
-      loginBtn.dataset.aqBound = "1";
-      loginBtn.addEventListener("click", () => {
-        if (typeof window.doLogin === "function") return window.doLogin();
-        return fallbackLogin();
-      });
-      loginBtn.disabled = false;
-    }
-
-    if (verifyBtn && verifyBtn.dataset.aqBound !== "1") {
-      verifyBtn.dataset.aqBound = "1";
-      verifyBtn.addEventListener("click", () => {
-        if (typeof window.doVerify === "function") return window.doVerify();
-        return fallbackVerify();
-      });
-      verifyBtn.disabled = false;
-    }
-
-    if (backBtn && backBtn.dataset.aqBound !== "1") {
-      backBtn.dataset.aqBound = "1";
-      backBtn.addEventListener("click", () => {
-        if (typeof window.resetLoginFlow === "function") return window.resetLoginFlow();
-        document.getElementById("step2")?.classList.add("hidden");
-        document.getElementById("step1")?.classList.remove("hidden");
-      });
-    }
-
-    if (loginUser && loginUser.dataset.aqBound !== "1") {
-      loginUser.dataset.aqBound = "1";
-      loginUser.addEventListener("input", () => {
-        loginUser.value = loginUser.value.replace(/\D/g, "").slice(0, 6);
-      });
-      loginUser.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          loginBtn?.click();
-        }
-      });
-    }
-
-    if (loginPass && loginPass.dataset.aqBound !== "1") {
-      loginPass.dataset.aqBound = "1";
-      loginPass.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          loginBtn?.click();
-        }
-      });
-    }
-
-    if (loginCode && loginCode.dataset.aqBound !== "1") {
-      loginCode.dataset.aqBound = "1";
-      loginCode.addEventListener("input", () => {
-        loginCode.value = loginCode.value.replace(/\D/g, "").slice(0, 6);
-      });
-      loginCode.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          verifyBtn?.click();
-        }
-      });
-    }
-  }
-
-  function runCleanup() {
-    cleanFixedNodes();
-  }
-
-  function init() {
-    ensureInteractionStyle();
-    patchStatus();
-    patchRenderResult();
-    patchHistory();
+  function run() {
+    ensureStyle();
+    pruneLogin();
+    polishDashboardCopy();
+    hideCardsByTitle();
+    dedupeButtons();
+    dedupeRadar();
+    quietChatLabels();
     patchReportBuilder();
-    bindLoginHotfix();
-    runCleanup();
-    [250, 900, 1800].forEach((delay) => {
-      window.setTimeout(() => {
-        bindLoginHotfix();
-        runCleanup();
-      }, delay);
-    });
+  }
+
+  function boot() {
+    run();
+    [150, 600, 1400, 2600].forEach((delay) => window.setTimeout(run, delay));
+    if (!window.__aqPolishObserver) {
+      window.__aqPolishObserver = new MutationObserver(() => run());
+      window.__aqPolishObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
-    init();
+    boot();
   }
 })();
