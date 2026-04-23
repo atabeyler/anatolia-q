@@ -1,6 +1,4 @@
 (() => {
-  const LANG_KEY = "aq_ui_lang";
-
   const CHAT_TEXT_REPLACEMENTS = [
     [/Genel Chat aktif/gi, "Genel Chat"],
     [/Live Chat/gi, ""],
@@ -26,80 +24,14 @@
     [/\bYedek\b/gi, "Analiz"],
   ];
 
-  const COPY = {
-    tr: {
-      heroKicker: "Kuantum tabanlı ulusal karar destek sistemi",
-      brandSub: "Merkez onaylı kapalı erişim terminali.",
-      appSub: "Ulusal karar destek sistemi",
-      sessionActive: "Oturum aktif",
-      navDashboard: "Panel",
-      navAnalysis: "Analiz",
-      navHistory: "Geçmiş",
-      guide: "Kullanım Kılavuzu",
-      center: "Merkez",
-      logout: "Çıkış",
-      userPrefix: "Kullanıcı kodu:",
-      modules: "Modüller",
-      opNoteTitle: "Operasyon notu",
-      opNoteCopy:
-        "Aktör, zaman, lokasyon, tetikleyici, muhtemel hedef ve belirsizlik seviyesini aynı olay akışı içinde vermek sonuç kalitesini ciddi biçimde artırır.",
-      sessionSummary: "Oturum özeti",
-      selectedDomain: "Seçili alan",
-      analysisCount: "Analiz sayısı",
-      reportCount: "İndirilen rapor",
-      dashboardAnalyze: "Yeni analiz başlat",
-      dashboardRefresh: "Sunucu geçmişini yenile",
-      radar: "Türkiye alarm radarı",
-      totalAnalyses: "Toplam analiz",
-      criticalFindings: "Kritik tespit",
-      downloadedDocs: "İndirilen rapor",
-      activeUser: "Aktif kullanıcı kodu",
-      startAnalysis: "Analiz başlat",
-      sendMessage: "Mesajı gönder",
-      clear: "Temizle",
-      download: "Rapor indir",
-    },
-    en: {
-      heroKicker: "Quantum-based national decision support system",
-      brandSub: "Center-authorized secure access terminal.",
-      appSub: "National decision support system",
-      sessionActive: "Session active",
-      navDashboard: "Dashboard",
-      navAnalysis: "Analysis",
-      navHistory: "History",
-      guide: "User Guide",
-      center: "Center",
-      logout: "Log out",
-      userPrefix: "User code:",
-      modules: "Modules",
-      opNoteTitle: "Operational note",
-      opNoteCopy:
-        "Providing the actor, time, location, trigger, likely target, and uncertainty level within one event flow significantly improves output quality.",
-      sessionSummary: "Session summary",
-      selectedDomain: "Selected domain",
-      analysisCount: "Analysis count",
-      reportCount: "Downloaded reports",
-      dashboardAnalyze: "Start new analysis",
-      dashboardRefresh: "Refresh server history",
-      radar: "Turkey alert radar",
-      totalAnalyses: "Total analyses",
-      criticalFindings: "Critical findings",
-      downloadedDocs: "Downloaded reports",
-      activeUser: "Active user code",
-      startAnalysis: "Start analysis",
-      sendMessage: "Send message",
-      clear: "Clear",
-      download: "Download report",
-    },
-  };
-
-  function currentLang() {
-    const saved = String(localStorage.getItem(LANG_KEY) || "").toLowerCase();
-    return saved === "en" ? "en" : "tr";
-  }
-
-  function setLang(lang) {
-    localStorage.setItem(LANG_KEY, lang === "en" ? "en" : "tr");
+  function normalize(value) {
+    return String(value || "")
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function ensureInteractionStyle() {
@@ -154,45 +86,20 @@
       body.aq-app-boost .workspace,
       body.aq-app-boost .page,
       body.aq-app-boost #page-dashboard{align-content:start}
-      body.aq-app-boost #page-dashboard .hero-strip{justify-content:flex-end;align-items:center}
       body.aq-app-boost #page-dashboard .hero-strip > div:first-child{display:none!important}
       body.aq-app-boost #page-dashboard .quick-actions,
       body.aq-app-boost #page-dashboard .ops-radar-strip{display:none!important}
-      body.aq-app-boost #aqOpsStrip .aq-ops-card + .aq-ops-card{display:none!important}
       body.aq-app-boost #aqOpsStrip{grid-template-columns:minmax(0,1fr)!important;margin-top:16px!important}
       body.aq-app-boost #aqOpsStrip .aq-ops-card{min-height:0}
-      body.aq-app-boost #page-dashboard .panel:first-child{overflow:hidden}
-      body.aq-app-boost #page-dashboard .panel:first-child::after{content:"";position:absolute;inset:-20% auto auto -10%;width:42%;height:160%;background:linear-gradient(180deg, rgba(105,224,255,.12), transparent);transform:rotate(18deg);filter:blur(20px);pointer-events:none;animation:aqBeamDrift 10s ease-in-out infinite}
-      body.aq-app-boost .sidebar-card.aq-remove-card{display:none!important}
-      body.aq-app-boost .page-actions{justify-content:flex-start}
-      body.aq-app-boost #aqLangSwitch{position:fixed;top:18px;right:18px;z-index:60;display:inline-flex;gap:6px;padding:6px;border-radius:999px;border:1px solid rgba(105,224,255,.16);background:rgba(6,14,24,.78);box-shadow:0 12px 30px rgba(0,0,0,.24);backdrop-filter:blur(12px)}
-      body.aq-app-boost #aqLangSwitch button{border:0;min-width:48px;padding:9px 12px;border-radius:999px;background:transparent;color:#8fb2d4;font:11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
-      body.aq-app-boost #aqLangSwitch button.active{background:linear-gradient(135deg, rgba(105,224,255,.24), rgba(94,144,255,.18));color:#eef7ff;box-shadow:0 0 16px rgba(105,224,255,.14)}
+      body.aq-app-boost .aq-remove-card,
+      body.aq-app-boost .aq-hide-duplicate{display:none!important}
       @keyframes aqHeroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
       @keyframes aqPanelSweep{from{transform:translateX(-6%)}50%{transform:translateX(4%)}to{transform:translateX(-6%)}}
-      @keyframes aqBeamDrift{0%,100%{transform:translateX(0) rotate(18deg)}50%{transform:translateX(36px) rotate(18deg)}}
       @keyframes aqTopbarSweep{from{transform:translateX(-120%)}to{transform:translateX(140%)}}
       @keyframes aqOrbPulse{0%,100%{transform:scale(.92);opacity:.45}50%{transform:scale(1.08);opacity:.9}}
       @keyframes aqNebulaShift{0%,100%{transform:translateX(0) translateY(0)}50%{transform:translateX(24px) translateY(-10px)}}
     `;
     document.head.appendChild(style);
-  }
-
-  function ensureLanguageSwitch() {
-    if (document.getElementById("aqLangSwitch")) return;
-    const wrap = document.createElement("div");
-    wrap.id = "aqLangSwitch";
-    wrap.innerHTML = `
-      <button type="button" data-lang="tr">TR</button>
-      <button type="button" data-lang="en">EN</button>
-    `;
-    wrap.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
-        setLang(button.dataset.lang || "tr");
-        applyLanguage();
-      });
-    });
-    document.body.appendChild(wrap);
   }
 
   function cleanText(value) {
@@ -206,74 +113,6 @@
   function setNodeText(selector, text) {
     const node = document.querySelector(selector);
     if (node && typeof text === "string") node.textContent = text;
-  }
-
-  function setButtonText(selector, text) {
-    document.querySelectorAll(selector).forEach((node) => {
-      node.textContent = text;
-    });
-  }
-
-  function setMiniStat(index, text) {
-    const node = document.querySelector(`.mini-stat:nth-of-type(${index}) span`);
-    if (node) node.textContent = text;
-  }
-
-  function setMetric(index, title) {
-    const node = document.querySelector(`.metrics .metric:nth-of-type(${index}) .metric-label`);
-    if (node) node.textContent = title;
-  }
-
-  function setUserBadge(copy) {
-    const badge = document.getElementById("userBadge");
-    if (!badge) return;
-    const code = String(badge.textContent || "").replace(/[^\d]/g, "");
-    badge.textContent = `${copy.userPrefix} ${code || "--"}`;
-  }
-
-  function applyLanguage() {
-    const lang = currentLang();
-    const copy = COPY[lang];
-
-    setNodeText("#loginScreen .hero-kicker", copy.heroKicker);
-    setNodeText("#loginScreen .brand-sub", copy.brandSub);
-    setNodeText(".topbar-left .brand-mini p", copy.appSub);
-    setNodeText(".live-chip", copy.sessionActive);
-    setNodeText('[data-page="dashboard"]', copy.navDashboard);
-    setNodeText('[data-page="analysis"]', copy.navAnalysis);
-    setNodeText('[data-page="history"]', copy.navHistory);
-    setNodeText("#guideBtnApp", copy.guide);
-    setNodeText("#guideBtnDash", copy.guide);
-    setNodeText("#guideBtnInline", copy.guide);
-    setNodeText("#centerBtnApp", copy.center);
-    setNodeText("#centerBtnInline", copy.center);
-    setNodeText("#centerBtnSide", copy.center);
-    setNodeText("#logoutBtn", copy.logout);
-    setNodeText(".sidebar-card .section-kicker", copy.modules);
-    setNodeText(".sidebar-card h2", copy.opNoteTitle);
-    setNodeText(".sidebar-card .body-copy", copy.opNoteCopy);
-    setNodeText(".sidebar-card h3", copy.sessionSummary);
-    setMiniStat(1, copy.selectedDomain);
-    setMiniStat(2, copy.analysisCount);
-    setMiniStat(3, copy.reportCount);
-    setNodeText("#loadHistoryBtn", copy.dashboardRefresh);
-    setButtonText('[data-jump="analysis"]', copy.dashboardAnalyze);
-    setNodeText("#runBtn", typeof window.state !== "undefined" && window.state.domain === "genel_chat" ? copy.sendMessage : copy.startAnalysis);
-    setNodeText("#clearBtn", copy.clear);
-    setNodeText("#downloadBtn", copy.download);
-    setNodeText("#aqOpsStrip .aq-kicker", copy.radar);
-    setMetric(1, copy.totalAnalyses);
-    setMetric(2, copy.criticalFindings);
-    setMetric(3, copy.downloadedDocs);
-    setMetric(4, copy.activeUser);
-    setNodeText("#page-dashboard .hero-strip h2", "");
-    setNodeText("#page-dashboard .hero-strip p", "");
-    setUserBadge(copy);
-
-    document.querySelectorAll("#aqLangSwitch button").forEach((button) => {
-      button.classList.toggle("active", button.dataset.lang === lang);
-    });
-    document.documentElement.lang = lang;
   }
 
   function clearSelectors() {
@@ -333,27 +172,51 @@
 
   function pruneLoginScreen() {
     document.body.classList.add("aq-login-pruned");
-    setNodeText("#loginScreen .hero-kicker", COPY.tr.heroKicker);
-    setNodeText("#loginScreen .brand-sub", COPY.tr.brandSub);
+    setNodeText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
+    setNodeText("#loginScreen .brand-sub", "Merkez onaylı kapalı erişim terminali.");
+    const switcher = document.getElementById("aqLangSwitch");
+    if (switcher) switcher.remove();
   }
 
-  function findCardByHeading(text) {
-    return Array.from(document.querySelectorAll(".sidebar-card, .panel, .action-card")).find((card) => {
-      const title = card.querySelector("h2, h3, .section-kicker");
-      return title && title.textContent && title.textContent.toLowerCase().includes(text.toLowerCase());
+  function hideCardsByHeading(text) {
+    Array.from(document.querySelectorAll(".sidebar-card, .panel, .action-card, .aq-ops-card")).forEach((card) => {
+      const title = card.querySelector("h1, h2, h3, .section-kicker, .aq-kicker, strong");
+      if (normalize(title?.textContent) === normalize(text)) {
+        card.classList.add("aq-remove-card");
+      }
     });
+  }
+
+  function hideDuplicateButtonsByText(text, keepCount = 1) {
+    const buttons = Array.from(document.querySelectorAll("button")).filter((button) => {
+      if (button.closest("#page-analysis")) return false;
+      return normalize(button.textContent) === normalize(text);
+    });
+    buttons.slice(keepCount).forEach((button) => button.classList.add("aq-hide-duplicate"));
+  }
+
+  function hideDuplicateCardsByHeading(text, keepCount = 1) {
+    const cards = Array.from(document.querySelectorAll(".panel, .aq-ops-card, .action-card, .sidebar-card")).filter((card) => {
+      const title = card.querySelector("h1, h2, h3, .section-kicker, .aq-kicker, strong");
+      return normalize(title?.textContent) === normalize(text);
+    });
+    cards.slice(keepCount).forEach((card) => card.classList.add("aq-hide-duplicate"));
   }
 
   function tidyDashboardLayout() {
     document.body.classList.add("aq-app-boost");
-    const centerCard = findCardByHeading("Merkez kanal");
-    if (centerCard) centerCard.classList.add("aq-remove-card");
+    hideCardsByHeading("Merkez kanalı");
+    hideCardsByHeading("Merkez kanal");
 
     const loginCenter = document.getElementById("centerBtnLogin");
     if (loginCenter) loginCenter.classList.add("hidden");
 
     setNodeText("#page-dashboard .hero-strip h2", "");
     setNodeText("#page-dashboard .hero-strip p", "");
+
+    hideDuplicateButtonsByText("Yeni analiz başlat", 1);
+    hideDuplicateCardsByHeading("Türkiye alarm radarı", 1);
+    hideDuplicateCardsByHeading("Türkiye alarm radar", 1);
     setNodeText("#aqOpsStrip .aq-kicker", "Türkiye alarm radarı");
   }
 
@@ -581,7 +444,6 @@
     cleanKnownTextBlocks();
     pruneLoginScreen();
     tidyDashboardLayout();
-    applyLanguage();
   }
 
   function scheduleStabilizers() {
@@ -595,7 +457,6 @@
 
   function init() {
     ensureInteractionStyle();
-    ensureLanguageSwitch();
     patchStatus();
     patchRenderResult();
     patchHistory();
