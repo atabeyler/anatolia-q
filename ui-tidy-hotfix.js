@@ -151,10 +151,8 @@
   function boot() {
     run();
     [150, 600, 1400, 2600].forEach((delay) => window.setTimeout(run, delay));
-    if (!window.__aqPolishObserver) {
-      window.__aqPolishObserver = new MutationObserver(() => run());
-      window.__aqPolishObserver.observe(document.documentElement, { childList: true, subtree: true });
-    }
+    window.addEventListener("pageshow", run, { once: true });
+    window.addEventListener("load", run, { once: true });
   }
 
   if (document.readyState === "loading") {
