@@ -52,6 +52,10 @@
     if (node) node.setAttribute(name, value);
   }
 
+  function removeNode(selector) {
+    q(selector)?.remove();
+  }
+
   function removeCard(card) {
     if (card) card.remove();
   }
@@ -88,20 +92,11 @@
 
   function fixLoginScreen() {
     setText("#loginScreen .hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
-    setText("#loginScreen .hero-copy", "Bu arayüz yalnızca yetkili personel içindir. Kullanıcı kodu, ortak şifre ve merkez onaylı ikinci aşama doğrulama olmadan erişim sağlanamaz.");
-    setText("#loginScreen .brand-sub", "Yetkili kullanıcılar için kapalı erişim arayüzü. Doğrulama, oturum güvenliği ve merkez teyidi tek hatta tutulur.");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(1) strong", "Gizlilik katmanı");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(1) span", "Tüm erişim talepleri kapalı doğrulama hattında ilerler. Yetkisiz giriş denemeleri dikkate alınır.");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(2) strong", "Merkez teyidi");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(2) span", "İkinci aşama kodu yalnızca merkez hattına gider. Oturum açma yetkisi merkez kontrolünde kalır.");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(3) strong", "Oturum güvenliği");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(3) span", "Doğrulama tamamlanmadan sistem açılmaz. Oturum akışı kod bazlı kimlik eşleşmesi ile sürer.");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(4) strong", "Yetki disiplini");
-    setText("#loginScreen .hero-grid .hero-card:nth-child(4) span", "Merkez, doğrulama, yönetsel irtibat ve kullanıcı yetkileri tek hatta tutulur.");
-    setText("#loginScreen .signal-title", "Gizlilik durumu");
-    setText("#loginScreen .signal-line:nth-child(1)", "Yetkisiz kullanıcılar için erişim kapalıdır. Doğrulama hattı merkez tarafından yönetilir.");
-    setText("#loginScreen .signal-line:nth-child(2)", "Kod, şifre ve ikinci aşama teyit tamamlanmadan operasyon ekranı açılmaz.");
-    setText("#loginScreen .signal-line:nth-child(3)", "Merkez iletişim, kullanıcı kodu ve yönetsel teyit akışı aynı güvenlik düzleminde tutulur.");
+    removeNode("#loginScreen .hero-copy");
+    removeNode("#loginScreen .hero-grid");
+    removeNode("#loginScreen .signal-panel");
+    removeNode("#loginScreen .capsule-row");
+    removeNode("#loginScreen .brand-sub");
     setText("#step1 .section-kicker", "Kimlik doğrulama | adım 1/2");
     setText("#step2 .section-kicker", "İkinci doğrulama | adım 2/2");
     setText("label[for='loginUser']", "Kullanıcı kodu");
@@ -120,8 +115,25 @@
     removeCardsByTitle("Merkez kanalı");
     removeCardsByTitle("Görev modülleri");
     removeCardsByTitle("Modüller", { skipSelector: "#moduleList" });
+    removeCardsByTitle("Merkez yönlendirme");
+    removeCardsByTitle("Alan odaklı giriş");
     removeCardsByTitle("Türkiye alarm radarı", { keep: 1 });
     removeDuplicateButtons("Yeni analiz başlat", 1);
+    const opsStrip = q("#aqOpsStrip");
+    if (opsStrip) {
+      opsStrip.style.gridTemplateColumns = "minmax(0,1fr)";
+      opsStrip.style.alignItems = "start";
+    }
+    const radarStrip = q(".ops-radar-strip");
+    if (radarStrip) {
+      radarStrip.style.gridTemplateColumns = "minmax(0,1fr)";
+      radarStrip.style.alignItems = "start";
+    }
+    const mapShell = q("#aqOpsStrip .aq-map-shell");
+    if (mapShell) {
+      mapShell.style.gridTemplateColumns = "minmax(0,1fr) 260px";
+      mapShell.style.alignItems = "stretch";
+    }
   }
 
   function patchStatus() {
