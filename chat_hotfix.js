@@ -6,6 +6,7 @@
   let centerTab = "merkez";
   let alertsCache = [];
   let opsCache = [];
+  let historyCache = [];
 
   const byId = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);
@@ -91,6 +92,19 @@
       .aq-feed-list,.aq-alert-list{display:grid;gap:10px;max-height:320px;overflow:auto}
       .aq-alert-card strong,.aq-feed-card strong{display:block;color:#eef7ff;margin-bottom:6px}
       .aq-alert-meta,.aq-feed-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+      .aq-history-grid{display:grid;gap:14px}
+      .aq-history-card{padding:20px;border-radius:22px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(8,20,34,.94),rgba(5,12,22,.97));box-shadow:0 18px 36px rgba(0,0,0,.22)}
+      .aq-history-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+      .aq-history-title{margin:0;color:#eef7ff;font-size:16px}
+      .aq-history-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+      .aq-history-summary{margin:14px 0;color:#dcecff;line-height:1.75;font-size:14px}
+      .aq-history-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+      .aq-history-box{padding:14px 16px;border-radius:16px;border:1px solid rgba(105,224,255,.12);background:rgba(5,12,22,.74)}
+      .aq-history-box strong{display:block;margin-bottom:8px;color:#69e0ff;font:11px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+      .aq-history-box p,.aq-history-box li{margin:0;color:#dcecff;line-height:1.7;font-size:13px}
+      .aq-history-box ul{margin:0;padding-left:18px}
+      .aq-history-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+      .aq-history-empty{padding:18px;border-radius:18px;border:1px dashed rgba(105,224,255,.18);background:rgba(5,12,22,.62);color:#9bb5d2;font:13px "IBM Plex Mono",monospace}
       .aq-ops-message{padding:14px 16px;border-radius:16px;border:1px solid rgba(105,224,255,.14);background:rgba(5,12,22,.88)}
       .aq-ops-message.emergency{border-color:rgba(255,107,107,.26);background:rgba(40,12,12,.74)}
       .aq-pulse-banner{position:relative;overflow:hidden;padding:14px 16px;border-radius:18px;border:1px solid rgba(105,224,255,.16);background:linear-gradient(135deg,rgba(105,224,255,.14),rgba(94,144,255,.08))}
@@ -99,7 +113,7 @@
       @keyframes aqBeacon{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.15)}}
       @keyframes aqPing{0%{transform:scale(.72);opacity:.7}100%{transform:scale(1.8);opacity:0}}
       @keyframes aqSweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
-      @media (max-width:1180px){.aq-ops-strip,.aq-two-col,.aq-map-shell,.aq-chat-ident{grid-template-columns:1fr}}
+      @media (max-width:1180px){.aq-ops-strip,.aq-two-col,.aq-map-shell,.aq-chat-ident,.aq-history-sections{grid-template-columns:1fr}}
       @media (max-width:720px){.aq-guide-overlay{align-items:flex-start;padding:12px}.aq-guide-panel{padding:22px;max-height:calc(100vh - 24px)}.aq-fab{right:12px;bottom:12px}.aq-chat-compose{grid-template-columns:1fr}.aq-chat-compose .aq-btn{width:100%}}
     `;
     document.head.appendChild(style);
@@ -124,16 +138,16 @@
     overlay.setAttribute("aria-hidden", "true");
     overlay.innerHTML = `
       <div class="aq-guide-panel">
-        <div class="aq-kicker">Kullanim kilavuzu</div>
-        <h2 style="margin:14px 0 10px;font-size:clamp(24px,4vw,38px);text-transform:uppercase">Sistemi kisa surede dogru kullan</h2>
-        <p class="aq-guide-copy">Giris, alarm, merkez, operasyon akisi ve Genel Chat ayni gorev omurgasinda birlikte calisir.</p>
+        <div class="aq-kicker">KullanÄ±m kÄ±lavuzu</div>
+        <h2 style="margin:14px 0 10px;font-size:clamp(24px,4vw,38px);text-transform:uppercase">Sistemi kÄ±sa sÃ¼rede doÄŸru kullan</h2>
+        <p class="aq-guide-copy">GiriÅŸ, alarm, merkez, operasyon akÄ±ÅŸÄ± ve Genel Chat aynÄ± gÃ¶rev omurgasÄ±nda birlikte Ã§alÄ±ÅŸÄ±r.</p>
         <div class="aq-guide-grid">
-          <div class="aq-guide-card"><h3>1. Tek merkez dugmesi</h3><p>Sag alttaki Merkez dugmesi tum operasyon panelini acar. Merkez irtibati, acil alarm ve ortak akis ayni yerden yonetilir.</p></div>
-          <div class="aq-guide-card"><h3>2. Gorev modulleri</h3><p>Modul kartina bastiginda secili alan degisir. Panel ve analiz ekrani ayni anda bu alana gore yenilenir.</p></div>
+          <div class="aq-guide-card"><h3>1. Tek merkez dÃ¼ÄŸmesi</h3><p>SaÄŸ alttaki Merkez dÃ¼ÄŸmesi tÃ¼m operasyon panelini aÃ§ar. Merkez irtibatÄ±, acil alarm ve ortak akÄ±ÅŸ aynÄ± yerden yÃ¶netilir.</p></div>
+          <div class="aq-guide-card"><h3>2. GÃ¶rev modÃ¼lleri</h3><p>ModÃ¼l kartÄ±na bastÄ±ÄŸÄ±nda seÃ§ili alan deÄŸiÅŸir. Panel ve analiz ekranÄ± aynÄ± anda bu alana gÃ¶re yenilenir.</p></div>
           <div class="aq-guide-card"><h3>3. Genel Chat</h3><p>Genel Chat modulu tek akista yazisma, takip ve cevap uretimi icin kullanilir.</p></div>
-          <div class="aq-guide-card"><h3>4. Radar ve alarm</h3><p>Turkiye haritasindaki bir noktaya basarak bolgesel alarm karti acabilirsin. Kaydedilen alarm tum kullanicilara ortak listede gorunur.</p></div>
-          <div class="aq-guide-card"><h3>5. Acil alarm</h3><p>Acil alarm gonderildiginde merkez e-posta hattina bilgi duser ve ortak operasyon akisinda ayri mesaj kanali acilir.</p></div>
-          <div class="aq-guide-card"><h3>6. Operasyon akisi</h3><p>Merkez panelindeki ortak akis bolumu tum kullanicilarin gordugu paylasimli operasyon notlarini gosterir.</p></div>
+          <div class="aq-guide-card"><h3>4. Radar ve alarm</h3><p>TÃ¼rkiye haritasÄ±ndaki bir noktaya basarak bÃ¶lgesel alarm kartÄ± aÃ§abilirsin. Kaydedilen alarm tÃ¼m kullanÄ±cÄ±lara ortak listede gÃ¶rÃ¼nÃ¼r.</p></div>
+          <div class="aq-guide-card"><h3>5. Acil alarm</h3><p>Acil alarm gÃ¶nderildiÄŸinde merkez e-posta hattÄ±na bilgi dÃ¼ÅŸer ve ortak operasyon akÄ±ÅŸÄ±nda ayrÄ± mesaj kanalÄ± aÃ§Ä±lÄ±r.</p></div>
+          <div class="aq-guide-card"><h3>6. Operasyon akÄ±ÅŸÄ±</h3><p>Merkez panelindeki ortak akÄ±ÅŸ bÃ¶lÃ¼mÃ¼ tÃ¼m kullanÄ±cÄ±larÄ±n gÃ¶rdÃ¼ÄŸÃ¼ paylaÅŸÄ±mlÄ± operasyon notlarÄ±nÄ± gÃ¶sterir.</p></div>
         </div>
         <div class="aq-btn-row" style="margin-top:18px"><button type="button" class="aq-btn" id="aqGuideClose">Kapat</button></div>
       </div>
@@ -160,7 +174,7 @@
   }
 
   function patchLoginTexts() {
-    setText(".hero-kicker", "Kuantum tabanli ulusal karar destek sistemi");
+    setText(".hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
     q(".hero-copy")?.remove();
     q(".hero-grid")?.remove();
     q(".signal-panel")?.remove();
@@ -172,16 +186,16 @@
   function pruneDashboardNoise() {
     qa(".action-card").forEach((card) => {
       const title = (q("h3", card)?.textContent || "").toLocaleLowerCase("tr-TR");
-      if (title.includes("alan odakli")) card.remove();
-      if (title.includes("merkez yonlendirme")) card.remove();
-      if (title.includes("gorev modulleri")) card.remove();
+      if (title.includes("alan odaklı")) card.remove();
+      if (title.includes("merkez yönlendirme")) card.remove();
+      if (title.includes("görev modülleri")) card.remove();
     });
 
     const buttons = qa("#page-dashboard .page-actions .button, #page-dashboard .page-actions .ghost-button");
     let analyzeSeen = 0;
     buttons.forEach((button) => {
       const text = (button.textContent || "").trim().toLocaleLowerCase("tr-TR");
-      if (text === "yeni analiz baslat") {
+      if (text === "yeni analiz başlat") {
         analyzeSeen += 1;
         if (analyzeSeen > 1) button.remove();
       }
@@ -189,7 +203,7 @@
 
     const radarCards = qa(".panel, .aq-ops-card").filter((card) => {
       const title = q("h2, h3, .section-kicker, .aq-kicker", card)?.textContent || "";
-      return title.toLocaleLowerCase("tr-TR").includes("turkiye alarm radari");
+      return title.toLocaleLowerCase("tr-TR").includes("türkiye alarm radarı");
     });
     radarCards.slice(1).forEach((card) => card.remove());
 
@@ -214,7 +228,7 @@
         button.type = "button";
         button.id = "guideBtnApp";
         button.className = "ghost-button";
-        button.textContent = "Kullanim Kilavuzu";
+        button.textContent = "Kullanım Kılavuzu";
         logoutBtn.insertAdjacentElement("beforebegin", button);
       }
     }
@@ -257,25 +271,26 @@
     panel.dataset.aqCenter = "1";
     panel.innerHTML = `
       <div class="aq-kicker">Merkez operasyon paneli</div>
-      <h2 style="margin:14px 0 8px;font-size:clamp(24px,4vw,36px)">Tek merkez, ortak alarm ve paylasimli akis</h2>
-      <p class="aq-center-copy">Merkez irtibati, acil alarm ve tum kullanicilara acik operasyon mesajlari tek panelden yonetilir.</p>
+      <h2 style="margin:14px 0 8px;font-size:clamp(24px,4vw,36px)">Tek merkez, ortak alarm ve paylaÅŸÄ±mlÄ± akÄ±ÅŸ</h2>
+      <p class="aq-center-copy">Merkez irtibatÄ±, acil alarm ve tÃ¼m kullanÄ±cÄ±lara aÃ§Ä±k operasyon mesajlarÄ± tek panelden yÃ¶netilir.</p>
       <div class="aq-center-tabs">
         <button type="button" class="aq-center-tab active" data-tab="merkez">Merkez</button>
         <button type="button" class="aq-center-tab" data-tab="alarm">Acil Alarm</button>
-        <button type="button" class="aq-center-tab" data-tab="akis">Ortak Akis</button>
+        <button type="button" class="aq-center-tab" data-tab="akis">Ortak AkÄ±ÅŸ</button>
+        <button type="button" class="aq-center-tab" data-tab="gecmis">Analiz Geçmişi</button>
       </div>
       <div class="aq-center-body">
         <section class="aq-center-section active" data-section="merkez">
           <div class="aq-two-col">
             <div class="aq-center-card">
-              <div class="aq-kicker">Merkez irtibati</div>
-              <p class="aq-center-copy" style="margin-top:12px">Yetkili kullanici olarak merkeze not birakabilir, yonetsel destek isteyebilir veya operasyon aciklamasi paylasabilirsin.</p>
+              <div class="aq-kicker">Merkez irtibatÄ±</div>
+              <p class="aq-center-copy" style="margin-top:12px">Yetkili kullanÄ±cÄ± olarak merkeze not bÄ±rakabilir, yÃ¶netsel destek isteyebilir veya operasyon aÃ§Ä±klamasÄ± paylaÅŸabilirsin.</p>
               <div class="field" style="margin-top:16px">
                 <label for="aqCenterNote">Merkeze not</label>
-                <textarea id="aqCenterNote" placeholder="Ornek: Dogu hattinda teyit edilen saha bilgisi merkeze aktarilsin."></textarea>
+                <textarea id="aqCenterNote" placeholder="Ã–rnek: DoÄŸu hattÄ±nda teyit edilen saha bilgisi merkeze aktarÄ±lsÄ±n."></textarea>
               </div>
               <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn" id="aqCenterSend">Merkeze ulas</button>
+                <button type="button" class="aq-btn" id="aqCenterSend">Merkeze ulaÅŸ</button>
                 <button type="button" class="aq-btn ghost" id="aqCenterClose">Kapat</button>
               </div>
               <div class="status-box" id="aqCenterStatus" aria-live="polite" style="margin-top:16px"></div>
@@ -290,153 +305,103 @@
           <div class="aq-two-col">
             <div class="aq-center-card">
               <div class="aq-pulse-banner">
-                <strong style="display:block;color:#eef7ff;margin-bottom:8px">Acil alarm gonder</strong>
-                <span class="aq-center-copy">Alarm kaydi merkez e-posta hattina duser ve tum kullanicilara ortak operasyon akisinda gorunur.</span>
+                <strong style="display:block;color:#eef7ff;margin-bottom:8px">Acil alarm gÃ¶nder</strong>
+                <span class="aq-center-copy">Alarm kaydÄ± merkez e-posta hattÄ±na dÃ¼ÅŸer ve tÃ¼m kullanÄ±cÄ±lara ortak operasyon akÄ±ÅŸÄ±nda gÃ¶rÃ¼nÃ¼r.</span>
               </div>
               <div class="field" style="margin-top:16px">
-                <label for="aqAlarmRegion">Bolge</label>
-                <input id="aqAlarmRegion" type="text" placeholder="Ornek: Hatay">
+                <label for="aqAlarmRegion">BÃ¶lge</label>
+                <input id="aqAlarmRegion" type="text" placeholder="Ã–rnek: Hatay">
               </div>
-              <div class="field">
-                <label for="aqAlarmTitle">Alarm basligi</label>
-                <input id="aqAlarmTitle" type="text" placeholder="Ornek: Kiyi hattinda ani hareketlilik">
+              <div class="field" style="margin-top:14px">
+                <label for="aqAlarmTitle">BaÅŸlÄ±k</label>
+                <input id="aqAlarmTitle" type="text" placeholder="Ã–rnek: SÄ±nÄ±r hattÄ±nda ani hareketlilik">
               </div>
-              <div class="field">
-                <label for="aqAlarmDetail">Alarm detayi</label>
-                <textarea id="aqAlarmDetail" placeholder="Saha teyidi, tahmini etki ve beklenen destek ihtiyacini yaz."></textarea>
+              <div class="field" style="margin-top:14px">
+                <label for="aqAlarmDetail">Detay</label>
+                <textarea id="aqAlarmDetail" placeholder="BÃ¶lgedeki problem tÃ¼m kullanÄ±cÄ±larÄ±n gÃ¶rebileceÄŸi ÅŸekilde burada tutulur."></textarea>
               </div>
               <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn warn" id="aqAlarmSend">Acil Alarm</button>
+                <button type="button" class="aq-btn warn" id="aqAlarmSend">Acil alarm geÃ§</button>
+                <button type="button" class="aq-btn ghost" id="aqAlarmChatOpen">Alarm sohbetini aÃ§</button>
               </div>
               <div class="status-box" id="aqAlarmStatus" aria-live="polite" style="margin-top:16px"></div>
             </div>
-            <div class="aq-alert-card">
-              <div class="aq-kicker">Turkiye alarm radari</div>
-              <div class="aq-map-shell" style="margin-top:16px">
-                <div class="aq-map-stage">
-                  <div class="aq-map-grid"></div>
-                  <svg class="aq-map-svg" viewBox="0 0 820 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path class="aq-map-land" d="M66 236L116 194L174 186L214 146L274 134L330 116L394 102L456 110L514 94L586 104L642 130L692 124L742 154L722 196L676 214L662 250L626 274L574 270L544 292L504 288L470 300L430 286L402 308L350 298L310 306L266 292L228 310L182 286L146 292L116 266L84 262Z"/>
-                    <g class="aq-region" data-region="Istanbul"><circle class="aq-region-dot hot" cx="176" cy="182" r="7"></circle><text class="aq-region-label" x="188" y="176">Istanbul</text></g>
-                    <g class="aq-region" data-region="Izmir"><circle class="aq-region-dot" cx="154" cy="246" r="7"></circle><text class="aq-region-label" x="166" y="240">Izmir</text></g>
-                    <g class="aq-region" data-region="Antalya"><circle class="aq-region-dot" cx="284" cy="286" r="7"></circle><text class="aq-region-label" x="296" y="280">Antalya</text></g>
-                    <g class="aq-region" data-region="Hatay"><circle class="aq-region-dot hot" cx="474" cy="302" r="7"></circle><text class="aq-region-label" x="486" y="296">Hatay</text></g>
-                    <g class="aq-region" data-region="Trabzon"><circle class="aq-region-dot" cx="524" cy="138" r="7"></circle><text class="aq-region-label" x="536" y="132">Trabzon</text></g>
-                    <g class="aq-region" data-region="Mersin"><circle class="aq-region-dot" cx="368" cy="294" r="7"></circle><text class="aq-region-label" x="380" y="288">Mersin</text></g>
-                    <g class="aq-region" data-region="Ankara"><circle class="aq-region-dot" cx="332" cy="210" r="7"></circle><text class="aq-region-label" x="344" y="204">Ankara</text></g>
-                  </svg>
-                </div>
-                <div class="aq-map-side">
-                  <div class="aq-region-focus">
-                    <div class="aq-kicker">Bolge odagi</div>
-                    <h3 class="aq-focus-title" id="aqRegionTitle">Ankara</h3>
-                    <p class="aq-center-copy" id="aqRegionCopy">Secilen bolgeye ait durumlar ve son alarmlar burada gorunur.</p>
-                    <div class="aq-focus-meta">
-                      <span class="aq-pill" id="aqRegionAlertCount">Alarm 0</span>
-                      <span class="aq-pill" id="aqRegionDomainLabel">Alan Savunma</span>
-                    </div>
-                  </div>
-                  <div class="aq-alert-list" id="aqRegionAlertList"></div>
-                </div>
-              </div>
+            <div class="aq-feed-card">
+              <div class="aq-kicker">AÃ§Ä±k alarmlar</div>
+              <div class="aq-alert-list" id="aqAlertList" style="margin-top:16px"></div>
             </div>
           </div>
         </section>
         <section class="aq-center-section" data-section="akis">
           <div class="aq-two-col">
             <div class="aq-feed-card">
-              <div class="aq-kicker">Ortak operasyon akisi</div>
+              <div class="aq-kicker">Ortak operasyon akÄ±ÅŸÄ±</div>
+              <div class="aq-feed-list" id="aqOpsFeed" style="margin-top:16px"></div>
+            </div>
+            <div class="aq-center-card">
+              <div class="aq-kicker">Operasyon mesajÄ±</div>
               <div class="field" style="margin-top:16px">
-                <label for="aqOpsMessage">Paylasimli operasyon mesaji</label>
-                <textarea id="aqOpsMessage" placeholder="Tum kullanicilarin gorecegi operasyon notunu buraya yaz."></textarea>
+                <label for="aqOpsMessage">Mesaj</label>
+                <textarea id="aqOpsMessage" placeholder="Ã–rnek: Merkez teyidi alÄ±ndÄ±, saha ekibi ikinci doÄŸrulama bekliyor."></textarea>
               </div>
               <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn" id="aqOpsSend">Akisa gonder</button>
-                <button type="button" class="aq-btn warn" id="aqOpsEmergency">Acil kanal ac</button>
+                <button type="button" class="aq-btn" id="aqOpsSend">MesajÄ± paylaÅŸ</button>
+                <button type="button" class="aq-btn ghost" id="aqOpsRefresh">Yenile</button>
               </div>
               <div class="status-box" id="aqOpsStatus" aria-live="polite" style="margin-top:16px"></div>
             </div>
-            <div class="aq-feed-card">
-              <div class="aq-kicker">Son mesajlar</div>
-              <div class="aq-feed-list" id="aqOpsFeed" style="margin-top:16px"></div>
-            </div>
+          </div>
+        </section>
+        <section class="aq-center-section" data-section="gecmis">
+          <div class="aq-feed-card">
+            <div class="aq-kicker">Merkez analiz geçmişi</div>
+            <div class="aq-history-grid" id="aqCenterHistoryFeed" style="margin-top:16px"></div>
           </div>
         </section>
       </div>
     `;
+
     qa(".aq-center-tab", panel).forEach((button) => {
       button.addEventListener("click", () => switchCenterTab(button.dataset.tab));
     });
-    byId("aqCenterSend")?.addEventListener("click", submitCenterNote);
-    byId("aqCenterClose")?.addEventListener("click", closeCenterPanel);
-    byId("aqAlarmSend")?.addEventListener("click", submitAlarm);
-    byId("aqOpsSend")?.addEventListener("click", () => submitOpsMessage("ops"));
-    byId("aqOpsEmergency")?.addEventListener("click", () => submitOpsMessage("emergency"));
-    qa(".aq-region", panel).forEach((node) => node.addEventListener("click", () => {
-      selectedRegion = node.dataset.region || selectedRegion;
-      paintRegionFocus();
-    }));
+    byId("aqCenterSend").addEventListener("click", submitCenterNote);
+    byId("aqCenterClose").addEventListener("click", closeCenterPanel);
+    byId("aqAlarmSend").addEventListener("click", submitAlarm);
+    byId("aqAlarmChatOpen").addEventListener("click", () => switchCenterTab("akis"));
+    byId("aqOpsSend").addEventListener("click", submitOpsMessage);
+    byId("aqOpsRefresh").addEventListener("click", refreshSharedData);
+  }
+
+  function switchCenterTab(tab) {
+    centerTab = tab;
+    qa(".aq-center-tab").forEach((button) => {
+      button.classList.toggle("active", button.dataset.tab === tab);
+    });
+    qa(".aq-center-section").forEach((section) => {
+      section.classList.toggle("active", section.dataset.section === tab);
+    });
   }
 
   function openCenterPanel() {
-    if (typeof window.__aqOpenCenter === "function") return window.__aqOpenCenter();
+    ensureUnifiedCenterPanel();
     const overlay = byId("centerOverlay");
     if (!overlay) return;
     overlay.classList.add("open");
     overlay.setAttribute("aria-hidden", "false");
-    switchCenterTab(centerTab);
+    overlay.style.overflowY = "auto";
+    refreshSharedData();
   }
 
   function closeCenterPanel() {
-    if (typeof window.__aqCloseCenter === "function") return window.__aqCloseCenter();
     const overlay = byId("centerOverlay");
     if (!overlay) return;
     overlay.classList.remove("open");
     overlay.setAttribute("aria-hidden", "true");
   }
 
-  function switchCenterTab(tab) {
-    centerTab = tab;
-    qa(".aq-center-tab").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
-    qa(".aq-center-section").forEach((section) => section.classList.toggle("active", section.dataset.section === tab));
-  }
-
   function ensureModuleDeck() {
-    const legacyCard = qa(".panel .subpanel, .panel .card-block").find((node) => {
-      const text = (node.textContent || "").toLocaleLowerCase("tr-TR");
-      return text.includes("gorev modulleri") || text.includes("moduller") || node.id === "moduleList";
-    });
-    if (!legacyCard) return;
-
-    const list = legacyCard.id === "moduleList" ? legacyCard : legacyCard.querySelector("#moduleList") || legacyCard;
-    const host = legacyCard.parentElement || q("#page-dashboard .panel") || list.parentElement;
-    if (!host) return;
-
-    const deck = byId("aqModuleDeck") || document.createElement("section");
-    deck.id = "aqModuleDeck";
-    deck.className = "aq-module-grid aq-minimal";
-    if (!deck.parentElement) host.insertBefore(deck, legacyCard.nextSibling);
-    deck.replaceChildren();
-
-    const entries = typeof DOMAINS !== "undefined" ? Object.entries(DOMAINS).filter(([key]) => key !== "genel_chat") : [];
-    entries.forEach(([key, item]) => {
-      const card = document.createElement("article");
-      card.className = "aq-module-card";
-      card.dataset.domain = key;
-      card.innerHTML = `
-        <div class="aq-kicker">${item.short || item.title || key}</div>
-        <h3 class="aq-module-title">${item.display || item.short || item.title || key}</h3>
-        <p class="aq-module-copy">${item.description || "Secili alani bu modulle gecir ve ayni anda analiz ekranini hazirla."}</p>
-        <div class="aq-btn-row">
-          <button type="button" class="aq-btn" data-action="analyze">Yeni analiz baslat</button>
-          <button type="button" class="aq-btn ghost" data-action="arm">Panelde etkinlestir</button>
-        </div>
-      `;
-      deck.appendChild(card);
-      card.querySelector('[data-action="analyze"]').addEventListener("click", () => activateDomain(key, true));
-      card.querySelector('[data-action="arm"]').addEventListener("click", () => activateDomain(key, false));
-    });
-    syncModuleCards();
+    const wrap = byId("aqModuleDeck");
+    if (wrap) wrap.remove();
   }
 
   function activateDomain(domain, jump) {
@@ -447,10 +412,7 @@
   }
 
   function syncModuleCards() {
-    const domain = typeof state !== "undefined" ? state.domain : "";
-    qa("#aqModuleDeck .aq-module-card").forEach((card) => {
-      card.classList.toggle("active", card.dataset.domain === domain);
-    });
+    return;
   }
 
   function ensureChatShell() {
@@ -464,7 +426,7 @@
     shell.innerHTML = `
       <div class="aq-chat-head">
         <div><strong id="aqChatHeading">Genel Chat</strong></div>
-        <div class="aq-pill">Live Chat</div>
+        
       </div>
       <div class="aq-chat-log" id="aqChatLog"></div>
       <div class="aq-chat-suggestions" id="aqChatSuggestions"></div>
@@ -473,8 +435,8 @@
           <input id="aqChatNameInput" type="text" maxlength="24" placeholder="Hitap adi (istege bagli)">
         </div>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;grid-column:1 / -1">
-          <textarea id="aqChatComposer" placeholder="Mesajini yaz. Enter ile gonder, Shift+Enter ile satir atla."></textarea>
-          <button type="button" class="aq-btn" id="aqChatSend">Gonder</button>
+          <textarea id="aqChatComposer" placeholder="MesajÄ±nÄ± yaz. Enter ile gÃ¶nder, Shift+Enter ile satÄ±r atla."></textarea>
+          <button type="button" class="aq-btn" id="aqChatSend">GÃ¶nder</button>
         </div>
       </div>
     `;
@@ -503,7 +465,7 @@
       bubble.className = "aq-chat-bubble";
       const role = document.createElement("div");
       role.className = "aq-chat-role";
-      role.textContent = turn.role === "user" ? "Kullanici" : "T.C. ANATOLIA-Q";
+      role.textContent = turn.role === "user" ? "KullanÄ±cÄ±" : "T.C. ANATOLIA-Q";
       const text = document.createElement("p");
       text.className = "aq-chat-text";
       text.textContent = turn.text || "";
@@ -558,8 +520,8 @@
     const sub = byId("analysisSubtitle");
 
     if (chatMode()) {
-      if (title) title.textContent = "Genel Chat | gercek mesaj akisi";
-      if (sub) sub.textContent = "Sabit mesaj alani, canli yanit akisi ve rahat tonda sohbet ekrani.";
+      if (title) title.textContent = "Genel Chat";
+      if (sub) sub.textContent = "";
       if (sitField) sitField.classList.add("aq-hidden");
       if (runBtn) runBtn.classList.add("aq-hidden");
       if (clearBtn) clearBtn.classList.add("aq-hidden");
@@ -594,11 +556,11 @@
     const load = byId("analysisLoad");
     const sendBtn = byId("aqChatSend");
     if (!text) {
-      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj alani bos birakilamaz.");
+      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj alanÄ± boÅŸ bÄ±rakÄ±lamaz.");
       return;
     }
     const chatName = chatNameInput ? chatNameInput.value.trim() : "";
-    pushTurn("user", text, chatName ? `Hitap adi: ${chatName}` : "");
+    pushTurn("user", text, chatName ? `Hitap adÄ±: ${chatName}` : "");
     if (sendBtn) sendBtn.disabled = true;
     if (typeof setLoading === "function") setLoading(load, true);
     if (typeof setStatus === "function") setStatus(status, "", "");
@@ -609,17 +571,18 @@
           domain: typeof state !== "undefined" ? state.domain : "genel_chat",
           situation: text,
           chat_name: chatName,
+          chat_history: turns.slice(0, -1).map((item) => ({ role: item.role, content: item.text })),
         }),
       });
       const meta = [result.tehdit_analizi || "", result.sohbet_tonu || ""].filter(Boolean).join(" | ");
-      pushTurn("assistant", result.ozet || "Bir cevap uretildi.", meta);
+      pushTurn("assistant", result.ozet || "Bir cevap Ã¼retildi.", meta);
       setChatSuggestions(result.senaryolar || []);
       if (typeof appendHistoryEntry === "function") appendHistoryEntry(result);
       if (composer) composer.value = "";
-      if (typeof setStatus === "function") setStatus(status, result.fallback_mode ? "warn" : "success", "Sohbet cevabi hazir.");
+      if (typeof setStatus === "function") setStatus(status, result.fallback_mode ? "warn" : "success", "Sohbet cevabÄ± hazÄ±r.");
     } catch (error) {
-      pushTurn("assistant", "Bu turda kucuk bir aksaklik oldu. Ayni mesaji yeniden denersen kaldigimiz yerden devam ederiz.", error.message || "Gecici hata");
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Sohbet cevabi üretilemedi.");
+      pushTurn("assistant", "Bu turda kÃ¼Ã§Ã¼k bir aksaklÄ±k oldu. AynÄ± mesajÄ± yeniden denersen kaldÄ±ÄŸÄ±mÄ±z yerden devam ederiz.", error.message || "GeÃ§ici hata");
+      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Sohbet cevabÄ± Ã¼retilemedi.");
     } finally {
       if (sendBtn) sendBtn.disabled = false;
       if (typeof setLoading === "function") setLoading(load, false);
@@ -658,7 +621,7 @@
     const domainLabel = byId("aqRegionDomainLabel");
     const list = byId("aqRegionAlertList");
     if (title) title.textContent = selectedRegion;
-    if (copy) copy.textContent = `${selectedRegion} icin aktif isaretler, paylasilan notlar ve merkez alarm akisi burada toplanir.`;
+    if (copy) copy.textContent = `${selectedRegion} iÃ§in aktif iÅŸaretler, paylaÅŸÄ±lan notlar ve merkez alarm akÄ±ÅŸÄ± burada toplanÄ±r.`;
     if (domainLabel && typeof state !== "undefined" && typeof DOMAINS !== "undefined") {
       domainLabel.textContent = `Alan ${DOMAINS[state.domain]?.title || state.domain}`;
     }
@@ -669,7 +632,7 @@
       if (!regionAlerts.length) {
         const empty = document.createElement("div");
         empty.className = "aq-ops-message";
-        empty.textContent = "Bu bolge icin kaydedilmis alarm yok. Haritadan noktaya basarak ilk kaydi olusturabilirsin.";
+        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
         list.appendChild(empty);
       } else {
         regionAlerts.slice(0, 4).forEach((item) => {
@@ -694,7 +657,7 @@
       if (!alertsCache.length) {
         const empty = document.createElement("div");
         empty.className = "aq-ops-message";
-        empty.textContent = "Henuz ortak alarm kaydi yok.";
+        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
         alertList.appendChild(empty);
       } else {
         alertsCache.slice(0, 10).forEach((item) => {
@@ -716,7 +679,7 @@
       if (!items.length) {
         const empty = document.createElement("div");
         empty.className = "aq-ops-message";
-        empty.textContent = "Acil akis bekleniyor.";
+        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
         mini.appendChild(empty);
       } else {
         items.forEach((item) => {
@@ -737,7 +700,7 @@
     if (!opsCache.length) {
       const empty = document.createElement("div");
       empty.className = "aq-ops-message";
-      empty.textContent = "Ortak operasyon akisi henuz bos.";
+      empty.textContent = "Sohbete baslamak icin mesaj yaz.";
       feed.appendChild(empty);
       return;
     }
@@ -751,11 +714,20 @@
 
   async function refreshSharedData() {
     try {
-      const [alerts, ops] = await Promise.all([fetchJson("/api/alerts"), fetchJson("/api/ops-feed")]);
+      const requests = [fetchJson("/api/alerts"), fetchJson("/api/ops-feed")];
+      if (state?.sessionToken) {
+        requests.push(fetchJson("/api/history", { method: "GET" }));
+      }
+      const [alerts, ops, history] = await Promise.all(requests);
       alertsCache = Array.isArray(alerts.items) ? alerts.items : [];
       opsCache = Array.isArray(ops.items) ? ops.items : [];
+      if (Array.isArray(history)) {
+        historyCache = history.map(normalizeHistoryEntry);
+        if (state) state.historyList = historyCache;
+      }
       renderAlerts();
       renderOpsFeed();
+      renderHistoryViews();
     } catch (_) {
       // Shared feeds are opportunistic; keep UI responsive if backend is temporarily unavailable.
     }
@@ -770,9 +742,9 @@
         body: JSON.stringify({ token: state?.sessionToken || "", note: note ? note.value.trim() : "" }),
       });
       if (note) note.value = "";
-      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Merkeze not gonderildi.");
+      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Merkeze not gÃ¶nderildi.");
     } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Merkez iletimi basarisiz.");
+      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Merkez iletimi baÅŸarÄ±sÄ±z.");
     }
   }
 
@@ -789,7 +761,7 @@
       priority: "KRITIK",
     };
     if (!payload.title || !payload.detail) {
-      if (typeof setStatus === "function") setStatus(status, "error", "Baslik ve detay zorunludur.");
+      if (typeof setStatus === "function") setStatus(status, "error", "BaÅŸlÄ±k ve detay zorunludur.");
       return;
     }
     try {
@@ -804,7 +776,7 @@
       await refreshSharedData();
       switchCenterTab("akis");
     } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Alarm gonderilemedi.");
+      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Alarm gÃ¶nderilemedi.");
     }
   }
 
@@ -813,7 +785,7 @@
     const status = byId("aqOpsStatus");
     const message = input ? input.value.trim() : "";
     if (!message) {
-      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj bos olamaz.");
+      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj boÅŸ olamaz.");
       return;
     }
     try {
@@ -827,10 +799,10 @@
         }),
       });
       if (input) input.value = "";
-      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Operasyon mesaji paylasildi.");
+      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Operasyon mesajÄ± paylaÅŸÄ±ldÄ±.");
       await refreshSharedData();
     } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Mesaj paylasilamadi.");
+      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Mesaj paylaÅŸÄ±lamadÄ±.");
     }
   }
 
@@ -875,7 +847,7 @@
       if (!chatMode()) return;
       const composer = byId("aqChatComposer");
       if (!composer) return;
-      composer.value = "Bana normal bir yapay zeka sohbeti gibi cevap ver. Konuyu sade anlat, hafif sicak bir ton kullan.";
+      composer.value = "Bana normal bir yapay zeka sohbeti gibi cevap ver. Konuyu sade anlat, hafif sÄ±cak bir ton kullan.";
       composer.focus();
     };
   }
@@ -909,38 +881,245 @@
     });
   }
 
+  function historyThreat(result) {
+    return result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "BILGI";
+  }
+
+  function normalizeHistoryEntry(item) {
+    const result = item?.result && typeof item.result === "object" ? item.result : item || {};
+    return {
+      id: item?.id || result.analysis_id || `AQ-${Date.now()}`,
+      domain: item?.domain || result.domain || state?.domain || "savunma",
+      timestamp: item?.timestamp || item?.time || result.timestamp || result.created_at || "--",
+      ozet: item?.ozet || item?.summary || result.ozet || "",
+      fallback_mode: Boolean(item?.fallback_mode || result.fallback_mode),
+      level: historyThreat(result),
+      user: item?.user || result.actor_username || "bilinmiyor",
+      role: item?.role || result.actor_role || "bilinmiyor",
+      provider: item?.provider || result.provider || "-",
+      model: item?.model || result.model || "-",
+      report_docx_url: item?.report_docx_url || `/api/report/${item?.id || result.analysis_id}/docx`,
+      result,
+    };
+  }
+
+  function ensureHistoryShell() {
+    const historyPage = byId("page-history");
+    if (!historyPage) return null;
+    q(".hero-strip p", historyPage)?.remove();
+    byId("historyTableWrap")?.classList.add("aq-hidden");
+    byId("historyEmpty")?.classList.add("aq-hidden");
+    let shell = byId("aqHistoryShell");
+    if (!shell) {
+      shell = document.createElement("div");
+      shell.id = "aqHistoryShell";
+      shell.className = "aq-history-grid";
+      const panel = q("#page-history .panel:last-of-type");
+      if (panel) panel.appendChild(shell);
+    }
+    return shell;
+  }
+
+  function renderHistoryEmpty(target, message) {
+    if (!target) return;
+    target.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "aq-history-empty";
+    empty.textContent = message;
+    target.appendChild(empty);
+  }
+
+  async function downloadHistoryReport(entry) {
+    const headers = state?.sessionToken
+      ? {
+          Authorization: `Bearer ${state.sessionToken}`,
+          "X-Auth-Token": state.sessionToken,
+        }
+      : {};
+    const response = await fetch((API_BASE || "") + entry.report_docx_url, { headers });
+    if (!response.ok) throw new Error("Rapor dosyasi alinamadi.");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `TC_ANATOLIA_Q_${entry.id}_${entry.domain}.docx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    if (typeof updateStats === "function") {
+      state.reportCount = Number(state.reportCount || 0) + 1;
+      updateStats();
+    }
+    if (typeof saveSession === "function") saveSession();
+  }
+
+  function openHistoryEntry(entry) {
+    if (!entry?.result) return;
+    if (typeof setDomain === "function") setDomain(entry.domain);
+    if (typeof renderResult === "function") renderResult(entry.result);
+    if (typeof switchPage === "function") switchPage("analysis");
+  }
+
+  function detailList(items) {
+    const values = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!values.length) return "<p>-</p>";
+    return `<ul>${values.map((item) => `<li>${escapeHtml(typeof item === "string" ? item : scenarioToText(item))}</li>`).join("")}</ul>`;
+  }
+
+  function buildHistoryCard(entry, compact = false) {
+    const result = entry.result || {};
+    const card = document.createElement("article");
+    card.className = "aq-history-card";
+    card.innerHTML = `
+      <div class="aq-history-head">
+        <div>
+          <h3 class="aq-history-title">${escapeHtml(domainLabel(entry.domain))} | ${escapeHtml(entry.id)}</h3>
+          <div class="aq-history-meta">
+            <span class="aq-pill">${escapeHtml(entry.timestamp)}</span>
+            <span class="aq-pill">${escapeHtml(entry.user)}</span>
+            <span class="aq-pill">${escapeHtml(entry.role)}</span>
+            <span class="aq-pill">${escapeHtml(entry.provider)}</span>
+            <span class="aq-pill">${escapeHtml(historyThreat(result))}</span>
+          </div>
+        </div>
+      </div>
+      <p class="aq-history-summary">${escapeHtml(entry.ozet || "Ozet bulunamadi.")}</p>
+      <div class="aq-history-sections">
+        <div class="aq-history-box">
+          <strong>Tehdit / Degerlendirme</strong>
+          <p>${escapeHtml(result.tehdit_analizi || result.risk_analizi || "Detay bulunamadi.")}</p>
+        </div>
+        <div class="aq-history-box">
+          <strong>Oncelikli Oneri</strong>
+          <p>${escapeHtml(result.oncelikli_oneri || "Oneri bulunamadi.")}</p>
+        </div>
+        <div class="aq-history-box">
+          <strong>Senaryolar</strong>
+          ${detailList(result.senaryolar || result.senaryo_analizi)}
+        </div>
+        <div class="aq-history-box">
+          <strong>Rapor Ozeti</strong>
+          ${detailList([result.report_package?.yonetici_ozeti, result.report_package?.sonuc_ve_eylem_cagrisi])}
+        </div>
+      </div>
+      <div class="aq-history-actions">
+        <button type="button" class="aq-btn" data-action="open">Detayi ac</button>
+        <button type="button" class="aq-btn ghost" data-action="docx">Rapor indir</button>
+      </div>
+    `;
+    if (compact) {
+      q(".aq-history-sections", card)?.style.setProperty("grid-template-columns", "1fr");
+    }
+    q('[data-action="open"]', card)?.addEventListener("click", () => openHistoryEntry(entry));
+    q('[data-action="docx"]', card)?.addEventListener("click", async () => {
+      const statusTarget = byId("analysisStatus") || byId("aqCenterStatus");
+      try {
+        if (typeof setStatus === "function") setStatus(statusTarget, "info", "Rapor dosyasi hazirlaniyor...");
+        await downloadHistoryReport(entry);
+        if (typeof setStatus === "function") setStatus(statusTarget, "success", "Rapor indirildi.");
+      } catch (error) {
+        if (typeof setStatus === "function") setStatus(statusTarget, "error", error.message || "Rapor indirilemedi.");
+      }
+    });
+    return card;
+  }
+
+  function renderHistoryViews() {
+    const shell = ensureHistoryShell();
+    const centerShell = byId("aqCenterHistoryFeed");
+    if (!historyCache.length) {
+      renderHistoryEmpty(shell, "Henüz detaylı analiz kaydı görünmüyor.");
+      renderHistoryEmpty(centerShell, "Merkez için görüntülenecek analiz kaydı bulunmuyor.");
+      return;
+    }
+
+    if (shell) {
+      shell.replaceChildren();
+      historyCache.forEach((entry) => shell.appendChild(buildHistoryCard(entry, false)));
+    }
+    if (centerShell) {
+      centerShell.replaceChildren();
+      historyCache.slice(0, 10).forEach((entry) => centerShell.appendChild(buildHistoryCard(entry, true)));
+    }
+  }
+
+  function patchHistoryFunctions() {
+    if (window.__aqHistoryPatched) return;
+    window.__aqHistoryPatched = true;
+
+    window.renderHistory = function patchedRenderHistory() {
+      historyCache = Array.isArray(state?.historyList) ? state.historyList.map(normalizeHistoryEntry) : [];
+      if (state) state.historyList = historyCache;
+      renderHistoryViews();
+    };
+
+    window.loadHistory = async function patchedLoadHistory(silent = false) {
+      if (!state?.sessionToken) return;
+      const status = byId("analysisStatus");
+      if (!silent && typeof setStatus === "function") setStatus(status, "info", "Gecmis ve rapor kayitlari yukleniyor...");
+      try {
+        const data = await fetchJson("/api/history", { method: "GET" });
+        const items = Array.isArray(data) ? data : Array.isArray(data?.history) ? data.history : [];
+        historyCache = items.map(normalizeHistoryEntry);
+        state.historyList = historyCache;
+        renderHistoryViews();
+        if (typeof updateStats === "function") updateStats();
+        if (typeof saveSession === "function") saveSession();
+        if (!silent && typeof setStatus === "function") setStatus(status, "success", "Gecmis kayitlari guncellendi.");
+      } catch (error) {
+        if (!silent && typeof setStatus === "function") setStatus(status, "warn", error.message || "Gecmis yuklenemedi.");
+      }
+    };
+
+    window.appendHistoryEntry = function patchedAppendHistoryEntry(result) {
+      const entry = normalizeHistoryEntry({
+        id: result?.analysis_id || `AQ-${Date.now()}`,
+        domain: state?.domain || "savunma",
+        timestamp: result?.timestamp || new Date().toLocaleString("tr-TR"),
+        ozet: result?.ozet || "",
+        result,
+      });
+      historyCache = [entry, ...historyCache.filter((item) => item.id !== entry.id)].slice(0, 20);
+      state.historyList = historyCache;
+      renderHistoryViews();
+      if (typeof updateStats === "function") updateStats();
+      if (typeof saveSession === "function") saveSession();
+    };
+  }
+
   function ensureReportPackage(result) {
     if (result?.report_package && typeof result.report_package === "object") return result.report_package;
     return {
       kapak: {
-        kurum: "BOLD Askeri Teknoloji ve Savunma Sanayi A.S.",
-        birim: "Stratejik Analiz ve Politika Gelistirme Birimi",
-        sistem: "T.C. ANATOLIA-Q Kuantum Tabanli Ulusal Karar Destek Sistemi",
+        kurum: "BOLD Askeri Teknoloji ve Savunma Sanayi A.Åž.",
+        birim: "Stratejik Analiz ve Politika GeliÅŸtirme Birimi",
+        sistem: "T.C. ANATOLIA-Q Kuantum TabanlÄ± Ulusal Karar Destek Sistemi",
         proje_kodu: "QTR-202412",
         cikti_no: result?.analysis_id || "--",
         belge_no: result?.analysis_id || "--",
-        baslik: `${domainLabel(state?.domain)} Durum Degerlendirmesi`,
+        baslik: `${domainLabel(state?.domain)} Durum DeÄŸerlendirmesi`,
         tarih: result?.timestamp || result?.created_at || "--",
-        gizlilik: "GIZLILIK DERECESI: GIZLI",
+        gizlilik: "GÄ°ZLÄ°LÄ°K DERECESÄ°: GÄ°ZLÄ°",
         kapsam: domainLabel(state?.domain),
       },
       yonetici_ozeti: result?.ozet || "",
-      kritik_bulgular: [result?.tehdit_analizi || result?.risk_analizi || "Durum degerlendirmesi hazir."],
-      temel_oneriler: [result?.oncelikli_oneri || "Koordinasyon korunmalidir."],
+      kritik_bulgular: [result?.tehdit_analizi || result?.risk_analizi || "Durum deÄŸerlendirmesi hazÄ±r."],
+      temel_oneriler: [result?.oncelikli_oneri || "Koordinasyon korunmalÄ±dÄ±r."],
       tehdit_analizi_bolumu: result?.tehdit_analizi || result?.risk_analizi || "",
-      mevcut_kapasite: "Mevcut gorunum karar destek perspektifinden ozetlenmistir.",
-      onerilen_mimari: result?.kritik_baglanti || "Merkez koordinasyonu ve cok katmanli izleme onerilir.",
+      mevcut_kapasite: "Mevcut gÃ¶rÃ¼nÃ¼m karar destek perspektifinden Ã¶zetlenmiÅŸtir.",
+      onerilen_mimari: result?.kritik_baglanti || "Merkez koordinasyonu ve Ã§ok katmanlÄ± izleme Ã¶nerilir.",
       bolgesel_analiz: result?.ozet || "",
       uygulama_plani: [
-        { faz: "Faz 1", zaman: "Ilk 24 saat", icerik: "Teyit ve acil koordinasyon." },
-        { faz: "Faz 2", zaman: "1-7 gun", icerik: "Kurumlar arasi esgudum ve saha takibi." },
-        { faz: "Faz 3", zaman: "1-4 hafta", icerik: "Kalici tedbir ve ikinci kademe planlama." },
+        { faz: "Faz 1", zaman: "Ä°lk 24 saat", icerik: "Teyit ve acil koordinasyon." },
+        { faz: "Faz 2", zaman: "1-7 gÃ¼n", icerik: "Kurumlar arasÄ± eÅŸgÃ¼dÃ¼m ve saha takibi." },
+        { faz: "Faz 3", zaman: "1-4 hafta", icerik: "KalÄ±cÄ± tedbir ve ikinci kademe planlama." },
       ],
       kurumsal_sorumluluklar: safeArray(result?.etkilenen_kurumlar),
       teknik_standartlar: [
-        "Kayit zinciri korunmalidir.",
-        "Merkez bildirimleri zaman damgasi ile tutulmalidir.",
-        "Rapor ciktisi ortak operasyon masasi ile uyumlu olmalidir.",
+        "KayÄ±t zinciri korunmalÄ±dÄ±r.",
+        "Merkez bildirimleri zaman damgasÄ± ile tutulmalÄ±dÄ±r.",
+        "Rapor Ã§Ä±ktÄ±sÄ± ortak operasyon masasÄ± ile uyumlu olmalÄ±dÄ±r.",
       ],
       riskler_ve_tedbirler: safeArray(result?.senaryolar).filter((item) => typeof item === "object"),
       sonuc_ve_eylem_cagrisi: result?.oncelikli_oneri || "",
@@ -951,7 +1130,7 @@
     const report = ensureReportPackage(result);
     if (typeof isChatMode === "function" && isChatMode()) {
       const transcript = safeArray(state?.chatMessages)
-        .map((item) => `<li><strong>${escapeHtml(item?.role === "user" ? "Kullanici" : "T.C. ANATOLIA-Q")}:</strong> ${escapeHtml(item?.content || "")}</li>`)
+        .map((item) => `<li><strong>${escapeHtml(item?.role === "user" ? "KullanÄ±cÄ±" : "T.C. ANATOLIA-Q")}:</strong> ${escapeHtml(item?.content || "")}</li>`)
         .join("");
       return `
         <html>
@@ -968,13 +1147,13 @@
           <body>
             <h1>T.C. ANATOLIA-Q Genel Chat Notu</h1>
             <div class="meta">
-              <p><strong>Yanit ID:</strong> ${escapeHtml(result?.analysis_id || "--")}</p>
+              <p><strong>YanÄ±t ID:</strong> ${escapeHtml(result?.analysis_id || "--")}</p>
               <p><strong>Alan:</strong> ${escapeHtml(domainLabel(state?.domain))}</p>
-              <p><strong>Ton:</strong> ${escapeHtml(result?.sohbet_tonu || "Rahat ve dogal")}</p>
+              <p><strong>Ton:</strong> ${escapeHtml(result?.sohbet_tonu || "Rahat ve doÄŸal")}</p>
             </div>
-            <h2>Sohbet Dokumu</h2>
+            <h2>Sohbet DÃ¶kÃ¼mÃ¼</h2>
             <ul>${transcript}</ul>
-            <h2>Devam Secenekleri</h2>
+            <h2>Devam SeÃ§enekleri</h2>
             <ul>${scenarioLines(result).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
           </body>
         </html>
@@ -1006,31 +1185,31 @@
             <p class="muted">${escapeHtml(report.kapak?.birim || "")}</p>
             <h1>${escapeHtml(report.kapak?.sistem || "T.C. ANATOLIA-Q")}</h1>
             <p><strong>Proje Kodu:</strong> ${escapeHtml(report.kapak?.proje_kodu || "QTR-202412")}</p>
-            <p><strong>Sistem Ciktisi No:</strong> ${escapeHtml(report.kapak?.cikti_no || result?.analysis_id || "--")}</p>
+            <p><strong>Sistem Ã‡Ä±ktÄ±sÄ± No:</strong> ${escapeHtml(report.kapak?.cikti_no || result?.analysis_id || "--")}</p>
             <h2 style="border:none;padding:0;margin-top:22px">${escapeHtml(report.kapak?.baslik || "Analiz Raporu")}</h2>
             <p><strong>Belge No:</strong> ${escapeHtml(report.kapak?.belge_no || result?.analysis_id || "--")}</p>
             <p><strong>Tarih:</strong> ${escapeHtml(report.kapak?.tarih || result?.timestamp || "--")}</p>
             <p><strong>Kapsam:</strong> ${escapeHtml(report.kapak?.kapsam || domainLabel(state?.domain))}</p>
-            <p><strong>Durum:</strong> ${escapeHtml(report.kapak?.gizlilik || "GIZLI")}</p>
+            <p><strong>Durum:</strong> ${escapeHtml(report.kapak?.gizlilik || "GÄ°ZLÄ°")}</p>
           </section>
           <div class="meta">
             <p><strong>Analiz ID:</strong> ${escapeHtml(result?.analysis_id || "--")}</p>
             <p><strong>Alan:</strong> ${escapeHtml(domainLabel(state?.domain))}</p>
             <p><strong>Tehdit Seviyesi:</strong> ${escapeHtml(result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "--")}</p>
-            <p><strong>Zaman Cercevesi:</strong> ${escapeHtml(result?.zaman_cercevesi || "--")}</p>
+            <p><strong>Zaman Ã‡erÃ§evesi:</strong> ${escapeHtml(result?.zaman_cercevesi || "--")}</p>
           </div>
-          <section class="section"><h2>YONETICI OZETI</h2><p>${escapeHtml(report.yonetici_ozeti || result?.ozet || "")}</p></section>
+          <section class="section"><h2>YÃ–NETÄ°CÄ° Ã–ZETÄ°</h2><p>${escapeHtml(report.yonetici_ozeti || result?.ozet || "")}</p></section>
           <section class="section"><h2>Kritik Bulgular</h2><ul>${safeArray(report.kritik_bulgular).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section class="section"><h2>Temel Oneriler</h2><ul>${safeArray(report.temel_oneriler).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+          <section class="section"><h2>Temel Ã–neriler</h2><ul>${safeArray(report.temel_oneriler).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
           <section class="section"><h2>1. Tehdit Analizi</h2><p>${escapeHtml(report.tehdit_analizi_bolumu || result?.tehdit_analizi || result?.risk_analizi || "")}</p></section>
-          <section class="section"><h2>2. Mevcut Kapasite Degerlendirmesi</h2><p>${escapeHtml(report.mevcut_kapasite || "")}</p></section>
-          <section class="section"><h2>3. Onerilen Tespit / Operasyon Mimarisi</h2><p>${escapeHtml(report.onerilen_mimari || result?.kritik_baglanti || "")}</p></section>
-          <section class="section"><h2>4. Bolge / Alan Bazli Degerlendirme</h2><p>${escapeHtml(report.bolgesel_analiz || result?.ozet || "")}</p></section>
-          <section class="section"><h2>5. Uygulama Plani ve Zaman Cizelgesi</h2><table><thead><tr><th>Faz</th><th>Zaman</th><th>Icerik</th></tr></thead><tbody>${safeArray(report.uygulama_plani).map((item) => `<tr><td>${escapeHtml(item.faz)}</td><td>${escapeHtml(item.zaman)}</td><td>${escapeHtml(item.icerik)}</td></tr>`).join("")}</tbody></table></section>
-          <section class="section"><h2>6. Kurumsal Yapi ve Sorumluluklar</h2><div>${safeArray(report.kurumsal_sorumluluklar).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}</div></section>
+          <section class="section"><h2>2. Mevcut Kapasite DeÄŸerlendirmesi</h2><p>${escapeHtml(report.mevcut_kapasite || "")}</p></section>
+          <section class="section"><h2>3. Ã–nerilen Tespit / Operasyon Mimarisi</h2><p>${escapeHtml(report.onerilen_mimari || result?.kritik_baglanti || "")}</p></section>
+          <section class="section"><h2>4. BÃ¶lge / Alan BazlÄ± DeÄŸerlendirme</h2><p>${escapeHtml(report.bolgesel_analiz || result?.ozet || "")}</p></section>
+          <section class="section"><h2>5. Uygulama PlanÄ± ve Zaman Ã‡izelgesi</h2><table><thead><tr><th>Faz</th><th>Zaman</th><th>Ä°Ã§erik</th></tr></thead><tbody>${safeArray(report.uygulama_plani).map((item) => `<tr><td>${escapeHtml(item.faz)}</td><td>${escapeHtml(item.zaman)}</td><td>${escapeHtml(item.icerik)}</td></tr>`).join("")}</tbody></table></section>
+          <section class="section"><h2>6. Kurumsal YapÄ± ve Sorumluluklar</h2><div>${safeArray(report.kurumsal_sorumluluklar).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}</div></section>
           <section class="section"><h2>7. Teknik Standartlar ve Minimum Gereksinimler</h2><ul>${safeArray(report.teknik_standartlar).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section class="section"><h2>8. Riskler ve Azaltici Tedbirler</h2><ul>${safeArray(report.riskler_ve_tedbirler).map((item) => `<li><strong>${escapeHtml(item.baslik || "Risk")}:</strong> ${escapeHtml(item.aciklama || "")} <em>Tedbir:</em> ${escapeHtml(item.tedbir || "")}</li>`).join("")}</ul></section>
-          <section class="section"><h2>9. Sonuc ve Eylem Cagrisi</h2><p>${escapeHtml(report.sonuc_ve_eylem_cagrisi || result?.oncelikli_oneri || "")}</p></section>
+          <section class="section"><h2>8. Riskler ve AzaltÄ±cÄ± Tedbirler</h2><ul>${safeArray(report.riskler_ve_tedbirler).map((item) => `<li><strong>${escapeHtml(item.baslik || "Risk")}:</strong> ${escapeHtml(item.aciklama || "")} <em>Tedbir:</em> ${escapeHtml(item.tedbir || "")}</li>`).join("")}</ul></section>
+          <section class="section"><h2>9. SonuÃ§ ve Eylem Ã‡aÄŸrÄ±sÄ±</h2><p>${escapeHtml(report.sonuc_ve_eylem_cagrisi || result?.oncelikli_oneri || "")}</p></section>
           <section class="section"><h2>Ek Senaryo Seti</h2><ul>${scenarioLines(result).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
         </body>
       </html>
@@ -1059,6 +1238,7 @@
     patchDomainChange();
     patchPreset();
     patchNavigation();
+    patchHistoryFunctions();
     pruneDashboardNoise();
     patchReportBuilder();
     bindChatComposer();
@@ -1068,6 +1248,7 @@
     startPolling();
     refreshSharedData();
     renderChatTurns();
+    renderHistoryViews();
     paintRegionFocus();
     [300, 900, 1800].forEach((delay) => window.setTimeout(pruneDashboardNoise, delay));
   }
