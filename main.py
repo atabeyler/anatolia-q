@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
     Anthropic = None
 
 
-APP_VERSION = "1.7.12"
+APP_VERSION = "1.7.14"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -38,6 +38,10 @@ OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini").strip()
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5").strip()
+
+XAI_API_KEY = os.environ.get("XAI_API_KEY", "").strip()
+XAI_MODEL = os.environ.get("XAI_MODEL", "grok-4-1-fast-non-reasoning").strip()
+XAI_BASE_URL = os.environ.get("XAI_BASE_URL", "https://api.x.ai/v1").strip()
 
 LLAMA_BASE_URL = os.environ.get("LLAMA_BASE_URL", "").strip()
 LLAMA_MODEL = os.environ.get("LLAMA_MODEL", "").strip()
@@ -65,13 +69,13 @@ DOMAINS = {
 }
 
 PROVIDER_ROUTE = {
-    "genel_chat": ["llama", "openai", "anthropic", "fallback"],
-    "savunma": ["openai", "anthropic", "llama", "fallback"],
-    "ekonomi": ["openai", "anthropic", "llama", "fallback"],
-    "enerji": ["openai", "anthropic", "llama", "fallback"],
-    "dis_politika": ["openai", "anthropic", "llama", "fallback"],
-    "toplumsal_olaylar": ["openai", "anthropic", "llama", "fallback"],
-    "cross": ["openai", "anthropic", "llama", "fallback"],
+    "genel_chat": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "savunma": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "ekonomi": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "enerji": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "dis_politika": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "toplumsal_olaylar": ["anthropic", "openai", "grok", "llama", "fallback"],
+    "cross": ["anthropic", "openai", "grok", "llama", "fallback"],
 }
 
 pending_codes = {}
@@ -79,6 +83,7 @@ active_sessions = {}
 analysis_store = {}
 alerts_store = []
 ops_feed_store = []
+provider_cooldowns = {}
 
 
 def stamp():
@@ -156,11 +161,21 @@ def is_soft_provider_failure(error: Exception) -> bool:
     return any(marker in message for marker in quota_markers)
 
 
+def provider_available(name: str) -> bool:
+    until = provider_cooldowns.get(name)
+    return not until or datetime.now() >= until
+
+
+def cool_down_provider(name: str, minutes: int = 10):
+    provider_cooldowns[name] = datetime.now() + timedelta(minutes=minutes)
+
+
 def provider_status():
     return {
-        "openai": bool(OpenAI and OPENAI_API_KEY),
-        "anthropic": bool(Anthropic and ANTHROPIC_API_KEY),
-        "llama": bool(OpenAI and LLAMA_BASE_URL and LLAMA_MODEL),
+        "openai": bool(OpenAI and OPENAI_API_KEY) and provider_available("openai"),
+        "anthropic": bool(Anthropic and ANTHROPIC_API_KEY) and provider_available("anthropic"),
+        "grok": bool(OpenAI and XAI_API_KEY and XAI_MODEL and XAI_BASE_URL) and provider_available("grok"),
+        "llama": bool(OpenAI and LLAMA_BASE_URL and LLAMA_MODEL) and provider_available("llama"),
         "fallback": True,
     }
 
@@ -644,7 +659,7 @@ def call_anthropic(domain: str, situation: str, chat_name: str = ""):
 
 
 def analyze_with_router(domain: str, situation: str, chat_name: str = ""):
-    route = PROVIDER_ROUTE.get(domain, ["openai", "anthropic", "llama", "fallback"])
+    route = PROVIDER_ROUTE.get(domain, ["anthropic", "openai", "grok", "llama", "fallback"])
     errors = []
     availability = provider_status()
 
@@ -658,6 +673,8 @@ def analyze_with_router(domain: str, situation: str, chat_name: str = ""):
                 result, meta = call_openai_like("openai", OPENAI_API_KEY, OPENAI_MODEL, domain, situation, chat_name)
             elif provider == "anthropic":
                 result, meta = call_anthropic(domain, situation, chat_name)
+            elif provider == "grok":
+                result, meta = call_openai_like("grok", XAI_API_KEY, XAI_MODEL, domain, situation, chat_name, base_url=XAI_BASE_URL)
             elif provider == "llama":
                 result, meta = call_openai_like("llama", LLAMA_API_KEY, LLAMA_MODEL, domain, situation, chat_name, base_url=LLAMA_BASE_URL)
             else:
@@ -674,6 +691,8 @@ def analyze_with_router(domain: str, situation: str, chat_name: str = ""):
             return result
         except Exception as error:
             errors.append(f"{provider}:{error.__class__.__name__}")
+            if is_soft_provider_failure(error) and provider in {"openai", "anthropic", "grok", "llama"}:
+                cool_down_provider(provider)
             if not is_soft_provider_failure(error) and provider == "fallback":
                 raise
             continue
