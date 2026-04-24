@@ -1,4 +1,6 @@
 (() => {
+  const q = (selector, root = document) => root.querySelector(selector);
+
   function safeArray(value) {
     return Array.isArray(value) ? value : [];
   }
@@ -16,11 +18,22 @@
     });
   }
 
-  function ensureReportPackage(result) {
-    if (result?.report_package && typeof result.report_package === "object") {
-      return result.report_package;
-    }
+  function renderMetaGrid(items, escape) {
+    return items
+      .filter((item) => item && item.label && item.value)
+      .map(
+        (item) => `
+          <div class="meta-item">
+            <div class="meta-label">${escape(item.label)}</div>
+            <div class="meta-value">${escape(item.value)}</div>
+          </div>
+        `,
+      )
+      .join("");
+  }
 
+  function ensureReportPackage(result) {
+    if (result?.report_package && typeof result.report_package === "object") return result.report_package;
     return {
       kapak: {
         kurum: "BOLD Askeri Teknoloji ve Savunma Sanayi A.S.",
@@ -72,14 +85,47 @@
             <meta charset="utf-8">
             <title>T.C. ANATOLIA-Q Sohbet Notu</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 28px; color: #111827; }
-              h1, h2 { margin-bottom: 10px; }
-              p, li { line-height: 1.6; }
-              .meta { margin-bottom: 18px; padding: 16px; background: #f3f6fb; border-radius: 12px; }
+              :root {
+                --aq-navy: #1A3A5C;
+                --aq-red: #C0392B;
+                --aq-muted: #6C7A89;
+                --aq-line: #D7DEE6;
+                --aq-paper: #F6F8FB;
+              }
+              body {
+                font-family: Cambria, "Times New Roman", serif;
+                padding: 30pt 34pt;
+                color: #111827;
+                line-height: 1.55;
+              }
+              h1, h2 { margin: 0 0 10pt; }
+              .brand { font-size: 15pt; font-weight: 700; color: var(--aq-navy); text-transform: uppercase; }
+              .unit { font-size: 10pt; color: var(--aq-muted); margin-bottom: 18pt; }
+              .chat-title { font-size: 19pt; color: var(--aq-navy); font-weight: 700; text-transform: uppercase; }
+              .chat-subtitle { font-size: 14pt; color: var(--aq-red); font-weight: 700; text-transform: uppercase; margin-bottom: 16pt; }
+              .meta {
+                margin-bottom: 18pt;
+                padding: 14pt 16pt;
+                background: var(--aq-paper);
+                border-top: 3px solid var(--aq-navy);
+              }
+              .meta p, li { font-size: 11pt; line-height: 1.6; }
+              h2 {
+                font-size: 14pt;
+                color: var(--aq-navy);
+                font-weight: 700;
+                text-transform: uppercase;
+                border-bottom: 1px solid var(--aq-line);
+                padding-bottom: 6pt;
+                margin-top: 18pt;
+              }
             </style>
           </head>
           <body>
-            <h1>T.C. ANATOLIA-Q Genel Chat Notu</h1>
+            <div class="brand">BOLD Askeri Teknoloji ve Savunma Sanayi A.S.</div>
+            <div class="unit">Stratejik Analiz ve Politika Gelistirme Birimi</div>
+            <h1 class="chat-title">T.C. ANATOLIA-Q Genel Chat Notu</h1>
+            <div class="chat-subtitle">Serbest Yazisma ve Degerlendirme Ciktisi</div>
             <div class="meta">
               <p><strong>Yanit ID:</strong> ${escape(result?.analysis_id || "--")}</p>
               <p><strong>Alan:</strong> ${escape(domainLabel(state?.domain))}</p>
@@ -100,38 +146,166 @@
           <meta charset="utf-8">
           <title>T.C. ANATOLIA-Q Raporu</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 34px; color: #111827; }
-            h1, h2, h3 { margin-bottom: 10px; }
-            p, li { line-height: 1.7; }
-            .cover { border: 2px solid #111827; padding: 34px; margin-bottom: 28px; }
-            .meta { margin-bottom: 18px; padding: 16px; background: #f3f6fb; border-radius: 12px; }
-            .muted { color: #4b5563; }
-            .section { margin-top: 26px; }
-            .section h2 { border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
-            .pill { display: inline-block; margin-right: 8px; margin-bottom: 8px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 999px; background: #f8fafc; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #cbd5e1; text-align: left; vertical-align: top; padding: 10px; }
+            :root {
+              --aq-navy: #1A3A5C;
+              --aq-red: #C0392B;
+              --aq-muted: #6C7A89;
+              --aq-line: #D7DEE6;
+              --aq-paper: #F6F8FB;
+            }
+            body {
+              font-family: Cambria, "Times New Roman", serif;
+              padding: 30pt 34pt;
+              color: #111827;
+              background: #ffffff;
+            }
+            h1, h2, h3, p { margin-top: 0; }
+            p, li, td, th, div { font-size: 11pt; line-height: 1.55; }
+            .cover {
+              margin-bottom: 28pt;
+              padding-bottom: 18pt;
+              border-bottom: 1.5pt solid var(--aq-navy);
+            }
+            .brand {
+              font-size: 15pt;
+              color: var(--aq-navy);
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-bottom: 4pt;
+            }
+            .unit {
+              color: var(--aq-muted);
+              margin-bottom: 16pt;
+            }
+            .system {
+              font-size: 15pt;
+              color: var(--aq-navy);
+              font-weight: 700;
+              margin-bottom: 8pt;
+            }
+            .cover-title {
+              font-size: 19pt;
+              color: var(--aq-navy);
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-bottom: 6pt;
+            }
+            .cover-subtitle {
+              font-size: 15pt;
+              color: var(--aq-red);
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-bottom: 4pt;
+            }
+            .cover-strip {
+              font-size: 14pt;
+              color: var(--aq-red);
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-bottom: 16pt;
+            }
+            .intro {
+              color: #1f2937;
+              margin-bottom: 16pt;
+            }
+            .meta-grid {
+              display: table;
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 18pt;
+            }
+            .meta-item {
+              display: table-row;
+            }
+            .meta-label, .meta-value {
+              display: table-cell;
+              padding: 6pt 0;
+              border-bottom: 1px solid var(--aq-line);
+              vertical-align: top;
+            }
+            .meta-label {
+              width: 24%;
+              color: var(--aq-navy);
+              font-weight: 700;
+              padding-right: 14pt;
+            }
+            .meta-value {
+              color: #111827;
+            }
+            .summary-box {
+              margin: 16pt 0 20pt;
+              padding: 12pt 14pt;
+              background: var(--aq-paper);
+              border-top: 3px solid var(--aq-navy);
+            }
+            .section {
+              margin-top: 20pt;
+            }
+            .section h2 {
+              font-size: 14pt;
+              color: var(--aq-navy);
+              font-weight: 700;
+              text-transform: uppercase;
+              border-bottom: 1px solid var(--aq-line);
+              padding-bottom: 6pt;
+              margin-bottom: 10pt;
+            }
+            .pill {
+              display: inline-block;
+              margin-right: 8px;
+              margin-bottom: 8px;
+              padding: 6px 10px;
+              border: 1px solid var(--aq-line);
+              background: #f8fafc;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 8pt;
+            }
+            th, td {
+              border: 1px solid var(--aq-line);
+              text-align: left;
+              vertical-align: top;
+              padding: 8pt 9pt;
+            }
+            th {
+              background: var(--aq-paper);
+              color: var(--aq-navy);
+              font-weight: 700;
+            }
+            .muted { color: var(--aq-muted); }
           </style>
         </head>
         <body>
           <section class="cover">
-            <p><strong>${escape(report.kapak?.kurum || "")}</strong></p>
-            <p class="muted">${escape(report.kapak?.birim || "")}</p>
-            <h1>${escape(report.kapak?.sistem || "T.C. ANATOLIA-Q")}</h1>
-            <p><strong>Proje Kodu:</strong> ${escape(report.kapak?.proje_kodu || "QTR-202412")}</p>
-            <p><strong>Sistem Ciktisi No:</strong> ${escape(report.kapak?.cikti_no || result?.analysis_id || "--")}</p>
-            <h2 style="border:none;padding:0;margin-top:22px">${escape(report.kapak?.baslik || "Analiz Raporu")}</h2>
-            <p><strong>Belge No:</strong> ${escape(report.kapak?.belge_no || result?.analysis_id || "--")}</p>
-            <p><strong>Tarih:</strong> ${escape(report.kapak?.tarih || result?.timestamp || "--")}</p>
-            <p><strong>Kapsam:</strong> ${escape(report.kapak?.kapsam || domainLabel(state?.domain))}</p>
-            <p><strong>Durum:</strong> ${escape(report.kapak?.gizlilik || "GIZLI")}</p>
+            <div class="brand">${escape(report.kapak?.kurum || "")}</div>
+            <div class="unit">${escape(report.kapak?.birim || "")}</div>
+            <div class="system">${escape(report.kapak?.sistem || "T.C. ANATOLIA-Q")}</div>
+            <div class="muted">Proje Kodu: ${escape(report.kapak?.proje_kodu || "QTR-202412")}</div>
+            <div class="muted">Sistem Ciktisi No: ${escape(report.kapak?.cikti_no || result?.analysis_id || "--")}</div>
+            <div class="cover-title">${escape(report.kapak?.baslik || "Analiz Raporu")}</div>
+            <div class="cover-subtitle">${escape(domainLabel(state?.domain))}</div>
+            <div class="cover-strip">${escape(report.kapak?.gizlilik || "GIZLI")}</div>
+            <p class="intro">${escape(report.yonetici_ozeti || result?.ozet || "")}</p>
+            <div class="meta-grid">
+              ${renderMetaGrid(
+                [
+                  { label: "Belge No", value: report.kapak?.belge_no || result?.analysis_id || "--" },
+                  { label: "Tarih", value: report.kapak?.tarih || result?.timestamp || "--" },
+                  { label: "Hazirlayan", value: report.kapak?.kurum || "" },
+                  { label: "Kapsam", value: report.kapak?.kapsam || domainLabel(state?.domain) },
+                  { label: "Siniflandirma", value: report.kapak?.gizlilik || "GIZLI" },
+                  { label: "Oncelik", value: result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "--" },
+                ],
+                escape,
+              )}
+            </div>
           </section>
-          <div class="meta">
-            <p><strong>Analiz ID:</strong> ${escape(result?.analysis_id || "--")}</p>
-            <p><strong>Alan:</strong> ${escape(domainLabel(state?.domain))}</p>
-            <p><strong>Tehdit Seviyesi:</strong> ${escape(result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "--")}</p>
-            <p><strong>Zaman Cercevesi:</strong> ${escape(result?.zaman_cercevesi || "--")}</p>
-            <p><strong>Saglayici:</strong> ${escape(result?.provider || "fallback")}</p>
+          <div class="summary-box">
+            <div><strong>Analiz ID:</strong> ${escape(result?.analysis_id || "--")}</div>
+            <div><strong>Alan:</strong> ${escape(domainLabel(state?.domain))}</div>
+            <div><strong>Zaman Cercevesi:</strong> ${escape(result?.zaman_cercevesi || "--")}</div>
           </div>
           <section class="section"><h2>YONETICI OZETI</h2><p>${escape(report.yonetici_ozeti || result?.ozet || "")}</p></section>
           <section class="section"><h2>Kritik Bulgular</h2><ul>${safeArray(report.kritik_bulgular).map((item) => `<li>${escape(item)}</li>`).join("")}</ul></section>
