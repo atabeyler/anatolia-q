@@ -179,6 +179,9 @@
   function runCleanup() {
     fixLoginScreen();
     tidyDashboard();
+    removeNode("#aqChatMeta");
+    qa(".aq-chat-empty").forEach((node) => node.remove());
+    qa(".aq-chat-ident .aq-chat-tip").forEach((node) => node.remove());
     cleanNodes([
       ".hero-copy",
       ".body-copy",
