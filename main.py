@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from io import BytesIO
 import json
 import os
 import random
@@ -12,7 +13,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
 try:
     from openai import OpenAI
@@ -24,8 +25,22 @@ try:
 except Exception:  # pragma: no cover
     Anthropic = None
 
+try:
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Pt, RGBColor
+except Exception:  # pragma: no cover
+    Document = None
+    WD_ALIGN_PARAGRAPH = None
+    OxmlElement = None
+    qn = None
+    Pt = None
+    RGBColor = None
 
-APP_VERSION = "1.7.14"
+
+APP_VERSION = "1.7.15"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -103,6 +118,14 @@ def send_mail(subject: str, html: str):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(GMAIL_USER, GMAIL_PASS)
         smtp.sendmail(GMAIL_USER, [PRIMARY_EMAIL], msg.as_string())
+
+
+def safe_send_mail(subject: str, html: str):
+    try:
+        send_mail(subject, html)
+    except HTTPException:
+        return False
+    return True
 
 
 def token_from(request: Request, body=None):
@@ -482,17 +505,17 @@ def report_profile_for(domain: str) -> dict:
         },
         "enerji": {
             "cover_title": "ENERJI GUVENLIGI, SUREKLILIK VE DAYANIKLILIK RAPORU",
-            "scope": "Arz guvenligi, altyap surekliligi, bolgesel enerji etkisi ve mudahale kapasitesi",
-            "capacity": "Enerji gorunumu; tedarik surekliligi, altyap krlganlg ve kurumlar aras mudahale kapasitesi dikkate alnarak ozetlenmistir.",
-            "architecture": "Arz hatt izlemesi, altyap alarm esikleri, merkez teyidi ve yedek kapasite planlamas birlikte isletilmelidir.",
+            "scope": "Kritik enerji arz, iletim, altyap guvenligi ve sureklilik gorunumu",
+            "capacity": "Enerji gorunumu; kritik hatlar, kesinti riski, arz guvenligi ve teknik mudahale kapasitesi bakmndan ele alnmlstr.",
+            "architecture": "Saha sinyalleri, iletim altyapisi, enerji tedari ve merkez teyit mekanizmas ayn panelde isletilmelidir.",
             "standards": [
-                "Enerji surekliligi verileri gercek zamanl alarm mantgyla izlenmelidir.",
-                "Tedarik, iletim ve tuketim etkileri ayn karar ekrannda eslestirilmelidir.",
-                "Yedek kapasite ve acil mudahale plan rapor cktsna baglanmaldr.",
+                "Enerji alarm kaytlar bolgesel izleme ve merkez teyidi ile birlikte tutulmaldr.",
+                "Kesinti, siber bask ve fiziksel risk ayn sureclerin parcas olarak degerlendirilmelidir.",
+                "Kurumsal mudahale plan faz bazl ayrstrlmaldr.",
             ],
         },
         "dis_politika": {
-            "cover_title": "DIS POLITIKA, BOLGESEL ETKI VE DIPLOMATIK RISK RAPORU",
+            "cover_title": "DIS POLITIKA, DIPLOMATIK ETKI VE MUHATAP ANALIZI RAPORU",
             "scope": "Bolgesel siyasi etki, diplomatik temas yogunlugu ve ds yansma gorunumu",
             "capacity": "Ds politika gorunumu; aktor davrans, diplomatik soylem ve ksa vadeli gerilim uretme kapasitesi uzerinden degerlendirilmistir.",
             "architecture": "Aktor analizi, diplomatik trafik, kamu soylemi ve kurumlar aras koordinasyon tek cercevede ele alnmaldr.",
@@ -603,6 +626,253 @@ def build_report_package(analysis_id: str, domain: str, situation: str, payload:
     }
 
 
+def build_analysis_mail_html(actor: dict | None, domain: str, situation: str, payload: dict) -> str:
+    user_code = (actor or {}).get("username") or "bilinmiyor"
+    user_role = (actor or {}).get("role") or "bilinmiyor"
+    report = payload.get("report_package") or {}
+    scenarios = payload.get("senaryolar") or []
+    scenario_html = "".join(
+        f"<li><strong>{item.get('baslik', 'Senaryo')}</strong> | {item.get('olasilik', '-') } | {item.get('aciklama', '')}<br><em>Aksiyon:</em> {item.get('aksiyon', '')}</li>"
+        for item in scenarios
+        if isinstance(item, dict)
+    )
+    institutions = "".join(f"<li>{item}</li>" for item in (payload.get("etkilenen_kurumlar") or []))
+    findings = "".join(f"<li>{item}</li>" for item in (report.get("kritik_bulgular") or []))
+    recommendations = "".join(f"<li>{item}</li>" for item in (report.get("temel_oneriler") or []))
+    return f"""
+    <h2>T.C. ANATOLIA-Q Analiz Bildirimi</h2>
+    <p><strong>Kullanici kodu:</strong> {user_code}</p>
+    <p><strong>Rol:</strong> {user_role}</p>
+    <p><strong>Analiz ID:</strong> {payload.get('analysis_id', '--')}</p>
+    <p><strong>Alan:</strong> {DOMAINS.get(domain, {}).get('display', domain)}</p>
+    <p><strong>Tarih:</strong> {payload.get('timestamp', '--')}</p>
+    <p><strong>Saglayici:</strong> {payload.get('provider', '--')} / {payload.get('model', '--')}</p>
+    <p><strong>Girdi notu:</strong><br>{situation}</p>
+    <hr>
+    <h3>Yonetici Ozeti</h3>
+    <p>{payload.get('ozet', '')}</p>
+    <h3>Tehdit Analizi</h3>
+    <p>{payload.get('tehdit_analizi', '')}</p>
+    <h3>Kritik Bulgular</h3>
+    <ul>{findings}</ul>
+    <h3>Temel Oneriler</h3>
+    <ul>{recommendations}</ul>
+    <h3>Senaryolar</h3>
+    <ul>{scenario_html}</ul>
+    <h3>Etkilenen Kurumlar</h3>
+    <ul>{institutions}</ul>
+    <h3>Rapor Sonuc ve Eylem Cagrisi</h3>
+    <p>{report.get('sonuc_ve_eylem_cagrisi', payload.get('oncelikli_oneri', ''))}</p>
+    """
+
+
+def set_cell_shading(cell, fill: str):
+    if OxmlElement is None:
+        return
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:fill"), fill)
+    tc_pr.append(shd)
+
+
+def set_doc_language(document):
+    if qn is None:
+        return
+    styles = document.styles
+    for style_name in ["Normal", "Heading 1", "Heading 2", "Title"]:
+        try:
+            style = styles[style_name]
+        except KeyError:
+            continue
+        style.font.name = "Cambria"
+        if style._element.rPr is None:
+            style._element.get_or_add_rPr()
+        rpr = style._element.rPr
+        lang = rpr.find(qn("w:lang"))
+        if lang is None:
+            lang = OxmlElement("w:lang")
+            rpr.append(lang)
+        lang.set(qn("w:val"), "tr-TR")
+
+
+def add_run(paragraph, text: str, *, size=None, bold=False, color=None, uppercase=False):
+    run = paragraph.add_run((text or "").upper() if uppercase else (text or ""))
+    if Pt is not None and size:
+        run.font.size = Pt(size)
+    run.bold = bold
+    run.font.name = "Cambria"
+    if RGBColor is not None and color:
+        run.font.color.rgb = RGBColor.from_string(color)
+    return run
+
+
+def add_section_heading(document, text: str):
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_before = Pt(14)
+    paragraph.paragraph_format.space_after = Pt(6)
+    run = add_run(paragraph, text, size=14, bold=True, color="1A3A5C", uppercase=True)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    if OxmlElement is not None:
+        p_pr = paragraph._p.get_or_add_pPr()
+        border = OxmlElement("w:pBdr")
+        bottom = OxmlElement("w:bottom")
+        bottom.set(qn("w:val"), "single")
+        bottom.set(qn("w:sz"), "6")
+        bottom.set(qn("w:space"), "1")
+        bottom.set(qn("w:color"), "D7DEE6")
+        border.append(bottom)
+        p_pr.append(border)
+    return run
+
+
+def add_label_value(document, label: str, value: str):
+    paragraph = document.add_paragraph()
+    paragraph.paragraph_format.space_after = Pt(2)
+    add_run(paragraph, f"{label}: ", size=10, bold=True, color="1A3A5C")
+    add_run(paragraph, value or "-", size=10)
+
+
+def add_bullets(document, items):
+    for item in items or []:
+        paragraph = document.add_paragraph(style="List Bullet")
+        paragraph.paragraph_format.space_after = Pt(2)
+        add_run(paragraph, str(item), size=11)
+
+
+def add_phase_table(document, plan_items):
+    table = document.add_table(rows=1, cols=3)
+    table.style = "Table Grid"
+    headers = ["Faz", "Zaman", "Icerik"]
+    for index, header in enumerate(headers):
+        cell = table.rows[0].cells[index]
+        cell.text = ""
+        set_cell_shading(cell, "F6F8FB")
+        paragraph = cell.paragraphs[0]
+        add_run(paragraph, header, size=10, bold=True, color="1A3A5C")
+
+    for item in plan_items or []:
+        row = table.add_row().cells
+        row[0].text = str(item.get("faz") or "-")
+        row[1].text = str(item.get("zaman") or "-")
+        row[2].text = str(item.get("icerik") or "-")
+
+
+def build_docx_report(report: dict, result: dict, domain: str) -> BytesIO:
+    if Document is None:
+        raise HTTPException(500, "Word rapor motoru hazir degil.")
+
+    document = Document()
+    set_doc_language(document)
+
+    section = document.sections[0]
+    section.top_margin = Pt(42)
+    section.bottom_margin = Pt(42)
+    section.left_margin = Pt(52)
+    section.right_margin = Pt(52)
+
+    kapak = report.get("kapak") or {}
+    title = kapak.get("baslik") or "Analiz Raporu"
+    domain_name = DOMAINS.get(domain, {}).get("display") or domain
+    summary = report.get("yonetici_ozeti") or result.get("ozet") or ""
+
+    p = document.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    add_run(p, kapak.get("kurum") or "BOLD Askeri Teknoloji ve Savunma Sanayi A.S.", size=15, bold=True, color="1A3A5C", uppercase=True)
+
+    p = document.add_paragraph()
+    p.paragraph_format.space_after = Pt(14)
+    add_run(p, kapak.get("birim") or "Stratejik Analiz ve Politika Gelistirme Birimi", size=10, color="6C7A89")
+
+    p = document.add_paragraph()
+    add_run(p, kapak.get("sistem") or "T.C. ANATOLIA-Q", size=15, bold=True, color="1A3A5C")
+
+    p = document.add_paragraph()
+    add_run(p, f"Proje Kodu: {kapak.get('proje_kodu') or 'QTR-202412'}", size=10, color="6C7A89")
+
+    p = document.add_paragraph()
+    add_run(p, f"Sistem Ciktisi No: {kapak.get('cikti_no') or result.get('analysis_id') or '--'}", size=10, color="6C7A89")
+
+    p = document.add_paragraph()
+    p.paragraph_format.space_before = Pt(8)
+    add_run(p, title, size=19, bold=True, color="1A3A5C", uppercase=True)
+
+    p = document.add_paragraph()
+    add_run(p, domain_name, size=15, bold=True, color="C0392B", uppercase=True)
+
+    p = document.add_paragraph()
+    p.paragraph_format.space_after = Pt(12)
+    add_run(p, kapak.get("gizlilik") or "GIZLILIK DERECESI: GIZLI", size=14, bold=True, color="C0392B", uppercase=True)
+
+    if summary:
+        p = document.add_paragraph()
+        p.paragraph_format.space_after = Pt(12)
+        add_run(p, summary, size=11)
+
+    meta_table = document.add_table(rows=0, cols=2)
+    meta_table.style = "Table Grid"
+    meta_items = [
+        ("Belge No", kapak.get("belge_no") or result.get("analysis_id") or "--"),
+        ("Tarih", kapak.get("tarih") or result.get("timestamp") or "--"),
+        ("Hazirlayan", kapak.get("kurum") or ""),
+        ("Kapsam", kapak.get("kapsam") or domain_name),
+        ("Siniflandirma", kapak.get("gizlilik") or "GIZLI"),
+        ("Oncelik", result.get("tehdit_seviyesi") or result.get("genel_tehdit_seviyesi") or "--"),
+    ]
+    for label, value in meta_items:
+        row = meta_table.add_row().cells
+        row[0].text = ""
+        row[1].text = ""
+        set_cell_shading(row[0], "F6F8FB")
+        add_run(row[0].paragraphs[0], label, size=10, bold=True, color="1A3A5C")
+        add_run(row[1].paragraphs[0], value or "-", size=10)
+
+    add_section_heading(document, "Yonetici Ozeti")
+    document.add_paragraph(report.get("yonetici_ozeti") or result.get("ozet") or "")
+
+    add_section_heading(document, "Kritik Bulgular")
+    add_bullets(document, report.get("kritik_bulgular") or [])
+
+    add_section_heading(document, "Temel Oneriler")
+    add_bullets(document, report.get("temel_oneriler") or [])
+
+    add_section_heading(document, "1. Tehdit Analizi")
+    document.add_paragraph(report.get("tehdit_analizi_bolumu") or result.get("tehdit_analizi") or "")
+
+    add_section_heading(document, "2. Mevcut Kapasite Degerlendirmesi")
+    document.add_paragraph(report.get("mevcut_kapasite") or "")
+
+    add_section_heading(document, "3. Onerilen Tespit Mimarisi")
+    document.add_paragraph(report.get("onerilen_mimari") or result.get("kritik_baglanti") or "")
+
+    add_section_heading(document, "4. Bolge / Alan Bazli Degerlendirme")
+    document.add_paragraph(report.get("bolgesel_analiz") or result.get("ozet") or "")
+
+    add_section_heading(document, "5. Uygulama Plani ve Zaman Cizelgesi")
+    add_phase_table(document, report.get("uygulama_plani") or [])
+
+    add_section_heading(document, "6. Kurumsal Yapi ve Sorumluluklar")
+    add_bullets(document, report.get("kurumsal_sorumluluklar") or [])
+
+    add_section_heading(document, "7. Teknik Standartlar ve Minimum Gereksinimler")
+    add_bullets(document, report.get("teknik_standartlar") or [])
+
+    add_section_heading(document, "8. Riskler ve Azaltici Tedbirler")
+    for item in report.get("riskler_ve_tedbirler") or []:
+        paragraph = document.add_paragraph(style="List Bullet")
+        add_run(paragraph, f"{item.get('baslik') or 'Risk'}: ", size=11, bold=True, color="1A3A5C")
+        add_run(paragraph, item.get("aciklama") or "", size=11)
+        if item.get("tedbir"):
+            add_run(paragraph, f" Tedbir: {item.get('tedbir')}", size=11, color="C0392B")
+
+    add_section_heading(document, "9. Sonuc ve Eylem Cagrisi")
+    document.add_paragraph(report.get("sonuc_ve_eylem_cagrisi") or result.get("oncelikli_oneri") or "")
+
+    buffer = BytesIO()
+    document.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
 def parse_provider_json(raw_text: str) -> dict:
     text = extract_json_text(raw_text)
     data = json.loads(text)
@@ -708,11 +978,12 @@ def analyze_with_router(domain: str, situation: str, chat_name: str = ""):
     return result
 
 
-def save_analysis(domain, situation, result):
+def save_analysis(domain, situation, result, actor=None):
     analysis_id = "AQ-" + uuid.uuid4().hex[:6].upper()
     created = stamp()
     payload = dict(result)
     meta = dict(payload.get("_meta") or {})
+    actor = actor or {}
     payload.update(
         {
             "analysis_id": analysis_id,
@@ -723,6 +994,8 @@ def save_analysis(domain, situation, result):
             "provider": meta.get("provider", "fallback"),
             "model": meta.get("model", "fallback-core"),
             "risk_analizi": payload.get("tehdit_analizi", ""),
+            "actor_username": actor.get("username", "bilinmiyor"),
+            "actor_role": actor.get("role", "bilinmiyor"),
         }
     )
     payload["senaryo_analizi"] = [
@@ -735,8 +1008,14 @@ def save_analysis(domain, situation, result):
         "id": analysis_id,
         "domain": domain,
         "timestamp": created,
+        "user": payload["actor_username"],
+        "role": payload["actor_role"],
         "result": payload,
     }
+    safe_send_mail(
+        f"T.C. ANATOLIA-Q Analiz | {DOMAINS.get(domain, {}).get('display', domain)} | {analysis_id}",
+        build_analysis_mail_html(actor, domain, situation, payload),
+    )
     return payload
 
 
@@ -948,7 +1227,7 @@ async def push_ops_feed(request: Request, req: dict):
 
 
 @app.post("/api/analyze")
-async def analyze(req: dict):
+async def analyze(request: Request, req: dict):
     domain = str(req.get("domain", "")).strip()
     situation = str(req.get("situation", "")).strip()
     chat_name = str(req.get("chat_name", "")).strip()
@@ -958,7 +1237,8 @@ async def analyze(req: dict):
     if not situation:
         raise HTTPException(400, "Durum bildirimi bos.")
 
-    return save_analysis(domain, situation, analyze_with_router(domain, situation, chat_name))
+    actor = active_sessions.get(token_from(request, req), {})
+    return save_analysis(domain, situation, analyze_with_router(domain, situation, chat_name), actor=actor)
 
 
 @app.get("/api/history")
@@ -976,7 +1256,30 @@ async def history():
             "fallback_mode": bool(item["result"].get("fallback_mode")),
             "provider": item["result"].get("provider", "fallback"),
             "model": item["result"].get("model", "fallback-core"),
+            "user": item.get("user") or item["result"].get("actor_username", "bilinmiyor"),
+            "role": item.get("role") or item["result"].get("actor_role", "bilinmiyor"),
+            "report_docx_url": f"/api/report/{item['id']}/docx",
             "result": item["result"],
         }
         for item in items[:20]
     ]
+
+
+@app.get("/api/report/{analysis_id}/docx")
+async def report_docx(analysis_id: str, request: Request):
+    require_session(request)
+    item = analysis_store.get(analysis_id)
+    if not item:
+        raise HTTPException(404, "Rapor bulunamadi.")
+
+    result = item["result"]
+    report = result.get("report_package") or build_report_package(analysis_id, item["domain"], "", result)
+    filename = f"TC_ANATOLIA_Q_{analysis_id}_{item['domain']}.docx"
+    buffer = build_docx_report(report, result, item["domain"])
+    buffer.seek(0)
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers=headers,
+    )
