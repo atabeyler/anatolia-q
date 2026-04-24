@@ -140,6 +140,30 @@
       mapShell.style.gridTemplateColumns = "minmax(0,1fr) 260px";
       mapShell.style.alignItems = "stretch";
     }
+
+    const dashTitle = q("#page-dashboard .hero-strip h2");
+    if (dashTitle) dashTitle.textContent = "";
+
+    const dashCopy = q("#page-dashboard .hero-strip p");
+    if (dashCopy) dashCopy.remove();
+  }
+
+  function patchLoginFooter() {
+    qa("#loginScreen .auth-footer .company-line").forEach((line, index) => {
+      if (index > 0) line.remove();
+    });
+  }
+
+  function patchSidebarModules() {
+    qa("#moduleList .module-button").forEach((button) => {
+      if (button.dataset.aqAnalysisBound === "1") return;
+      button.dataset.aqAnalysisBound = "1";
+      button.addEventListener("click", () => {
+        if (typeof window.switchPage === "function") {
+          window.setTimeout(() => window.switchPage("analysis"), 0);
+        }
+      });
+    });
   }
 
   function patchStatus() {
@@ -178,7 +202,9 @@
 
   function runCleanup() {
     fixLoginScreen();
+    patchLoginFooter();
     tidyDashboard();
+    patchSidebarModules();
     removeNode("#aqChatMeta");
     qa(".aq-chat-empty").forEach((node) => node.remove());
     qa(".aq-chat-ident .aq-chat-tip").forEach((node) => node.remove());
