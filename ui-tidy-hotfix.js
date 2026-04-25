@@ -7,6 +7,10 @@
     { id: "diyarbakir", label: "Diyarbak\u0131r", cx: 252, cy: 112, level: "alarm" },
     { id: "kibris", label: "K\u0131br\u0131s", cx: 246, cy: 182, level: "izleme" },
   ];
+  const RADAR_MAP_PATHS = [
+    "M21 92 L35 77 L56 64 L81 55 L109 48 L137 45 L164 48 L190 55 L215 59 L240 56 L266 65 L287 78 L301 93 L299 106 L286 116 L266 120 L247 126 L233 138 L214 146 L192 149 L168 153 L143 154 L119 147 L96 141 L76 134 L58 123 L42 113 L28 103 Z",
+    "M221 176 L232 171 L246 170 L261 173 L257 179 L244 183 L229 181 Z",
+  ];
   const CHAT_TEXTS = [
     "Genel Chat aktif",
     "Live Chat",
@@ -72,7 +76,7 @@
       .aq-map-svg{position:absolute;inset:18px;width:calc(100% - 36px);height:calc(100% - 36px)}
       .aq-map-land{fill:rgba(105,224,255,.12);stroke:rgba(105,224,255,.34);stroke-width:2}
       .aq-region{cursor:pointer}
-      .aq-region-dot{fill:#69e0ff;filter:drop-shadow(0 0 8px rgba(105,224,255,.72))}
+      .aq-region-dot{fill:#69e0ff;filter:drop-shadow(0 0 8px rgba(105,224,255,.72));animation:none!important}
       .aq-region-dot.hot{fill:#ff6b6b;filter:drop-shadow(0 0 10px rgba(255,107,107,.78))}
       .aq-region-label{fill:#d9ecff;font:12px "IBM Plex Mono",monospace}
       .aq-radar-sweep{position:absolute;inset:-28%;background:conic-gradient(from 0deg,rgba(99,221,255,.22),transparent 18%,transparent 100%);transform-origin:center;animation:aqRadarSweep 5.5s linear infinite;mix-blend-mode:screen}
@@ -208,14 +212,6 @@
     });
   }
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
   function apiBase() {
     return typeof window.API_BASE === "string" ? window.API_BASE : "";
   }
@@ -264,6 +260,7 @@
   }
 
   function buildRadarMarkup() {
+    const mapPaths = RADAR_MAP_PATHS.map((path) => `<path class="aq-map-land" d="${path}"></path>`).join("");
     const points = RADAR_POINTS.map((item) => {
       const hot = item.level === "alarm" ? " hot" : "";
       return `
@@ -281,8 +278,7 @@
           <div class="aq-map-stage">
             <div class="aq-map-grid"></div>
             <svg class="aq-map-svg" viewBox="0 0 320 190" aria-hidden="true">
-              <path class="aq-map-land" d="M20 90 L42 78 L64 62 L104 58 L135 48 L160 54 L184 50 L212 60 L242 58 L270 70 L292 88 L302 106 L294 120 L270 126 L248 142 L224 148 L202 144 L184 156 L156 154 L126 148 L112 134 L88 134 L72 120 L46 118 L28 108 Z"></path>
-              <path class="aq-map-land" d="M226 176 L236 171 L248 170 L261 173 L255 180 L240 182 L228 180 Z"></path>
+              ${mapPaths}
               ${points}
             </svg>
             <div class="aq-radar-sweep" aria-hidden="true"></div>
@@ -314,6 +310,27 @@
     else dashboard.appendChild(card);
   }
 
+  function patchExistingRadarStage() {
+    const svg = q("#aqOpsStrip .aq-map-svg");
+    const stage = q("#aqOpsStrip .aq-map-stage");
+    if (!svg || !stage) return;
+    const mapPaths = RADAR_MAP_PATHS.map((path) => `<path class="aq-map-land" d="${path}"></path>`).join("");
+    const points = RADAR_POINTS.map((item) => {
+      const hot = item.level === "alarm" ? " hot" : "";
+      return `<g class="aq-region" data-region="${item.label}"><circle class="aq-region-dot${hot}" cx="${item.cx}" cy="${item.cy}" r="5"></circle><text class="aq-region-label" x="${item.cx + 8}" y="${item.cy - 8}">${item.label}</text></g>`;
+    }).join("");
+    svg.innerHTML = `${mapPaths}${points}`;
+    if (!q(".aq-radar-sweep", stage)) {
+      const sweep = document.createElement("div");
+      sweep.className = "aq-radar-sweep";
+      sweep.setAttribute("aria-hidden", "true");
+      stage.appendChild(sweep);
+    }
+    qa(".aq-region-dot", stage).forEach((dot) => {
+      dot.style.animation = "none";
+    });
+  }
+
   function paintRegionFocus() {
     const selected = selectedRegionState();
     const title = byId("aqRegionTitle");
@@ -322,7 +339,7 @@
     const domain = byId("aqRegionDomainLabel");
     const list = byId("aqRegionAlertList");
     if (title) title.textContent = selected;
-    if (copy) copy.textContent = `${selected} icin aktif isaretler ve merkez notlari bu panelde toplanir.`;
+    if (copy) copy.textContent = `${selected} i\u00e7in aktif i\u015faretler ve merkez notlar\u0131 bu panelde toplan\u0131r.`;
     if (domain && window.DOMAINS && window.state) {
       const label = window.DOMAINS[window.state.domain]?.title || window.DOMAINS[window.state.domain]?.display || window.state.domain;
       domain.textContent = cleanText(`Alan ${label}`);
@@ -336,8 +353,8 @@
       const item = document.createElement("div");
       item.className = "aq-ops-message";
       item.textContent = selected === "Hatay" || selected === "Diyarbak\u0131r"
-        ? `${selected} icin alarm izlemesi aktif. Merkez teyidi ve saha notlari birlikte izleniyor.`
-        : `${selected} icin radar izlemesi suruyor. Yeni alarm olusursa panel aninda guncellenir.`;
+        ? `${selected} i\u00e7in alarm izlemesi aktif. Merkez teyidi ve saha notlar\u0131 birlikte izleniyor.`
+        : `${selected} i\u00e7in radar izlemesi s\u00fcr\u00fcyor. Yeni alarm olu\u015fursa panel an\u0131nda g\u00fcncellenir.`;
       list.appendChild(item);
     }
     qa(".aq-region").forEach((node) => {
@@ -530,6 +547,25 @@
     renderPatchedChatTurns();
   }
 
+  function bindGlobalChatTriggers() {
+    if (window.__aqGlobalChatBound) return;
+    window.__aqGlobalChatBound = true;
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("#aqChatSend");
+      if (!button) return;
+      event.preventDefault();
+      sendPatchedChat();
+    });
+    document.addEventListener("keydown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLTextAreaElement) || target.id !== "aqChatComposer") return;
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendPatchedChat();
+      }
+    });
+  }
+
   function patchRunAnalysis() {
     if (typeof window.runAnalysis !== "function" || window.__aqRunAnalysisPatched) return;
     window.__aqRunAnalysisPatched = true;
@@ -544,26 +580,26 @@
 
   function patchCenterTexts() {
     setText("#centerOverlay .aq-kicker", "Merkez operasyon paneli");
-    setText("#centerOverlay h2", "Tek merkez, ortak alarm ve paylasimli akis");
-    setText("#centerOverlay .aq-center-copy", "Merkez irtibati, acil alarm ve operasyon mesajlari tek panelden yonetilir.");
+    setText("#centerOverlay h2", "Tek merkez, ortak alarm ve payla\u015f\u0131ml\u0131 ak\u0131\u015f");
+    setText("#centerOverlay .aq-center-copy", "Merkez irtibat\u0131, acil alarm ve operasyon mesajlar\u0131 tek panelden y\u00f6netilir.");
     setText("label[for='aqCenterNote']", "Merkeze not");
-    setAttr("#aqCenterNote", "placeholder", "Ornek: Dogu hattinda teyit edilen saha bilgisi merkeze aktarilsin.");
-    setText("#aqCenterSend", "Merkeze ulas");
+    setAttr("#aqCenterNote", "placeholder", "\u00d6rnek: Do\u011fu hatt\u0131nda teyit edilen saha bilgisi merkeze aktar\u0131ls\u0131n.");
+    setText("#aqCenterSend", "Merkeze ula\u015f");
     setText("#aqCenterClose", "Kapat");
     setText("#centerOverlay [data-tab='merkez']", "Merkez");
     setText("#centerOverlay [data-tab='alarm']", "Acil Alarm");
-    setText("#centerOverlay [data-tab='akis']", "Ortak Akis");
-    setText("#centerOverlay [data-tab='gecmis']", "Analiz Gecmisi");
+    setText("#centerOverlay [data-tab='akis']", "Ortak Ak\u0131\u015f");
+    setText("#centerOverlay [data-tab='gecmis']", "Analiz Ge\u00e7mi\u015fi");
     setText("#centerOverlay .aq-feed-card .aq-kicker", "Son merkez hareketleri");
-    setText("#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz gecmisi");
-    setText("label[for='aqAlarmRegion']", "Bolge");
-    setText("label[for='aqAlarmTitle']", "Baslik");
+    setText("#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz ge\u00e7mi\u015fi");
+    setText("label[for='aqAlarmRegion']", "B\u00f6lge");
+    setText("label[for='aqAlarmTitle']", "Ba\u015fl\u0131k");
     setText("label[for='aqAlarmDetail']", "Detay");
-    setText("#aqAlarmSend", "Alarmi gonder");
-    setText("#aqAlarmChatOpen", "Ortak akisa gec");
+    setText("#aqAlarmSend", "Alarm\u0131 g\u00f6nder");
+    setText("#aqAlarmChatOpen", "Ortak ak\u0131\u015fa ge\u00e7");
     setText("label[for='aqOpsMessage']", "Mesaj");
-    setAttr("#aqOpsMessage", "placeholder", "Ornek: Merkez teyidi alindi, saha ekibi ikinci dogrulamayi bekliyor.");
-    setText("#aqOpsSend", "Mesaji paylas");
+    setAttr("#aqOpsMessage", "placeholder", "\u00d6rnek: Merkez teyidi al\u0131nd\u0131, saha ekibi ikinci do\u011frulamay\u0131 bekliyor.");
+    setText("#aqOpsSend", "Mesaj\u0131 payla\u015f");
     setText("#aqOpsRefresh", "Yenile");
   }
 
@@ -681,9 +717,11 @@
     fixLoginScreen();
     patchLoginFooter();
     ensureRadarFallback();
+    patchExistingRadarStage();
     tidyDashboard();
     patchSidebarModules();
     patchRunAnalysis();
+    bindGlobalChatTriggers();
     stabilizeRadarPanel();
     bindRadar();
     paintRegionFocus();
