@@ -5,6 +5,7 @@
     { id: "izmir", label: "\u0130zmir", cx: 76, cy: 106, level: "izleme" },
     { id: "hatay", label: "Hatay", cx: 232, cy: 154, level: "alarm" },
     { id: "diyarbakir", label: "Diyarbak\u0131r", cx: 252, cy: 112, level: "alarm" },
+    { id: "kibris", label: "K\u0131br\u0131s", cx: 246, cy: 182, level: "izleme" },
   ];
   const CHAT_TEXTS = [
     "Genel Chat aktif",
@@ -26,8 +27,8 @@
   ];
 
   const REMOVE_TEXTS = [
-    "Merkez kanal\u0131",
-    "Do\u011frudan merkez ile irtibat, oturum ve do\u011frulama ak\u0131\u015flar\u0131n\u0131 tek panelde takip etmek i\u00e7in merkez d\u00fc\u011fmesini kullan.",
+    "Merkez kanalÄ±",
+    "DoÄŸrudan merkez ile irtibat, oturum ve doÄŸrulama akÄ±ÅŸlarÄ±nÄ± tek panelde takip etmek iÃ§in merkez dÃ¼ÄŸmesini kullan.",
     "Dogrudan merkez ile irtibat, oturum ve dogrulama akislarini tek panelde takip etmek icin merkez dugmesini kullan.",
   ];
 
@@ -71,9 +72,10 @@
       .aq-map-svg{position:absolute;inset:18px;width:calc(100% - 36px);height:calc(100% - 36px)}
       .aq-map-land{fill:rgba(105,224,255,.12);stroke:rgba(105,224,255,.34);stroke-width:2}
       .aq-region{cursor:pointer}
-      .aq-region-dot{fill:#69e0ff;filter:drop-shadow(0 0 8px rgba(105,224,255,.72));animation:aqBeacon 2.6s ease-in-out infinite}
+      .aq-region-dot{fill:#69e0ff;filter:drop-shadow(0 0 8px rgba(105,224,255,.72))}
       .aq-region-dot.hot{fill:#ff6b6b;filter:drop-shadow(0 0 10px rgba(255,107,107,.78))}
       .aq-region-label{fill:#d9ecff;font:12px "IBM Plex Mono",monospace}
+      .aq-radar-sweep{position:absolute;inset:-28%;background:conic-gradient(from 0deg,rgba(99,221,255,.22),transparent 18%,transparent 100%);transform-origin:center;animation:aqRadarSweep 5.5s linear infinite;mix-blend-mode:screen}
       .aq-region-focus{padding:16px;border-radius:18px;border:1px solid rgba(105,224,255,.14);background:rgba(4,11,20,.72)}
       .aq-focus-title{margin:0 0 8px;color:#eef7ff;font-size:18px}
       .aq-focus-copy{margin:0;color:#9bb5d2;line-height:1.7;font-size:13px}
@@ -90,7 +92,7 @@
       .aq-chat-role{margin:0 0 8px;color:#6de3ff;font:11px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
       .aq-chat-text{margin:0;color:#eef7ff;line-height:1.8;white-space:pre-wrap;font-family:"IBM Plex Mono",monospace}
       .aq-chat-meta{margin-top:10px;color:#8fb2d4;font:12px "IBM Plex Mono",monospace;line-height:1.6}
-      @keyframes aqBeacon{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.15)}}
+      @keyframes aqRadarSweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
       @media (max-width:1180px){.aq-map-shell{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
@@ -206,6 +208,14 @@
     });
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function apiBase() {
     return typeof window.API_BASE === "string" ? window.API_BASE : "";
   }
@@ -272,12 +282,14 @@
             <div class="aq-map-grid"></div>
             <svg class="aq-map-svg" viewBox="0 0 320 190" aria-hidden="true">
               <path class="aq-map-land" d="M20 90 L42 78 L64 62 L104 58 L135 48 L160 54 L184 50 L212 60 L242 58 L270 70 L292 88 L302 106 L294 120 L270 126 L248 142 L224 148 L202 144 L184 156 L156 154 L126 148 L112 134 L88 134 L72 120 L46 118 L28 108 Z"></path>
+              <path class="aq-map-land" d="M226 176 L236 171 L248 170 L261 173 L255 180 L240 182 L228 180 Z"></path>
               ${points}
             </svg>
+            <div class="aq-radar-sweep" aria-hidden="true"></div>
           </div>
           <div class="aq-region-focus">
             <h3 class="aq-focus-title" id="aqRegionTitle">Ankara</h3>
-            <p class="aq-focus-copy" id="aqRegionCopy">Ankara i\u00e7in merkez takip notlari ve alarm isaretleri burada gorunur.</p>
+            <p class="aq-focus-copy" id="aqRegionCopy">Ankara i\u00e7in merkez takip notlar\u0131 ve alarm i\u015faretleri burada g\u00f6r\u00fcn\u00fcr.</p>
             <div class="aq-focus-meta">
               <span class="aq-pill" id="aqRegionAlertCount">Alarm 0</span>
               <span class="aq-pill" id="aqRegionDomainLabel">Alan Savunma</span>
@@ -323,7 +335,7 @@
       list.replaceChildren();
       const item = document.createElement("div");
       item.className = "aq-ops-message";
-      item.textContent = selected === "Hatay" || selected === "Diyarbakir"
+      item.textContent = selected === "Hatay" || selected === "Diyarbak\u0131r"
         ? `${selected} icin alarm izlemesi aktif. Merkez teyidi ve saha notlari birlikte izleniyor.`
         : `${selected} icin radar izlemesi suruyor. Yeni alarm olusursa panel aninda guncellenir.`;
       list.appendChild(item);
@@ -530,35 +542,60 @@
     };
   }
 
+  function patchCenterTexts() {
+    setText("#centerOverlay .aq-kicker", "Merkez operasyon paneli");
+    setText("#centerOverlay h2", "Tek merkez, ortak alarm ve paylasimli akis");
+    setText("#centerOverlay .aq-center-copy", "Merkez irtibati, acil alarm ve operasyon mesajlari tek panelden yonetilir.");
+    setText("label[for='aqCenterNote']", "Merkeze not");
+    setAttr("#aqCenterNote", "placeholder", "Ornek: Dogu hattinda teyit edilen saha bilgisi merkeze aktarilsin.");
+    setText("#aqCenterSend", "Merkeze ulas");
+    setText("#aqCenterClose", "Kapat");
+    setText("#centerOverlay [data-tab='merkez']", "Merkez");
+    setText("#centerOverlay [data-tab='alarm']", "Acil Alarm");
+    setText("#centerOverlay [data-tab='akis']", "Ortak Akis");
+    setText("#centerOverlay [data-tab='gecmis']", "Analiz Gecmisi");
+    setText("#centerOverlay .aq-feed-card .aq-kicker", "Son merkez hareketleri");
+    setText("#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz gecmisi");
+    setText("label[for='aqAlarmRegion']", "Bolge");
+    setText("label[for='aqAlarmTitle']", "Baslik");
+    setText("label[for='aqAlarmDetail']", "Detay");
+    setText("#aqAlarmSend", "Alarmi gonder");
+    setText("#aqAlarmChatOpen", "Ortak akisa gec");
+    setText("label[for='aqOpsMessage']", "Mesaj");
+    setAttr("#aqOpsMessage", "placeholder", "Ornek: Merkez teyidi alindi, saha ekibi ikinci dogrulamayi bekliyor.");
+    setText("#aqOpsSend", "Mesaji paylas");
+    setText("#aqOpsRefresh", "Yenile");
+  }
+
   function fixLoginScreen() {
-    setText("#loginScreen .hero-kicker", "Kuantum tabanli ulusal karar destek sistemi");
+    setText("#loginScreen .hero-kicker", "Kuantum tabanl\u0131 ulusal karar destek sistemi");
     removeNode("#loginScreen .hero-copy");
     removeNode("#loginScreen .hero-grid");
     removeNode("#loginScreen .signal-panel");
     removeNode("#loginScreen .capsule-row");
     removeNode("#loginScreen .brand-sub");
     removeNode("#step1 .field-note");
-    setText("#step1 .section-kicker", "Kimlik dogrulama | adim 1/2");
-    setText("#step2 .section-kicker", "Ikinci dogrulama | adim 2/2");
-    setText("label[for='loginUser']", "Kullanici kodu");
-    setText("label[for='loginPass']", "Sifre");
-    setText("label[for='loginCode']", "Dogrulama kodu");
-    setAttr("#loginUser", "placeholder", "6 haneli kullanici kodunu girin");
-    setAttr("#loginPass", "placeholder", "Sifrenizi girin");
+    setText("#step1 .section-kicker", "Kimlik do\u011frulama | ad\u0131m 1/2");
+    setText("#step2 .section-kicker", "\u0130kinci do\u011frulama | ad\u0131m 2/2");
+    setText("label[for='loginUser']", "Kullan\u0131c\u0131 kodu");
+    setText("label[for='loginPass']", "\u015eifre");
+    setText("label[for='loginCode']", "Do\u011frulama kodu");
+    setAttr("#loginUser", "placeholder", "6 haneli kullan\u0131c\u0131 kodunu girin");
+    setAttr("#loginPass", "placeholder", "\u015eifrenizi girin");
     setAttr("#loginCode", "placeholder", "6 haneli kod");
-    setText("#loginBtn", "Giris yap");
-    setText("#verifyBtn", "Dogrula ve ac");
-    setText("#backBtn", "Geri don");
+    setText("#loginBtn", "Giri\u015f yap");
+    setText("#verifyBtn", "Do\u011frula ve a\u00e7");
+    setText("#backBtn", "Geri d\u00f6n");
   }
 
   function tidyDashboard() {
     removeBlocksByCopy(REMOVE_TEXTS);
-    removeCardsByTitle("Merkez kanali");
-    removeCardsByTitle("Gorev modulleri");
-    removeCardsByTitle("Moduller", { skipSelector: "#moduleList" });
-    removeCardsByTitle("Merkez yonlendirme");
-    removeCardsByTitle("Alan odakli giris");
-    removeDuplicateButtons("Yeni analiz baslat", 1);
+    removeCardsByTitle("Merkez kanal\u0131");
+    removeCardsByTitle("G\u00f6rev mod\u00fclleri");
+    removeCardsByTitle("Mod\u00fcller", { skipSelector: "#moduleList" });
+    removeCardsByTitle("Merkez y\u00f6nlendirme");
+    removeCardsByTitle("Alan odakl\u0131 giri\u015f");
+    removeDuplicateButtons("Yeni analiz ba\u015flat", 1);
 
     const moduleList = q("#moduleList");
     if (moduleList) {
@@ -651,6 +688,7 @@
     bindRadar();
     paintRegionFocus();
     patchGeneralChatShell();
+    patchCenterTexts();
     cleanNodes([
       ".hero-copy",
       ".body-copy",
