@@ -131,15 +131,15 @@
     const list = byId("aqRegionAlertList");
     const point = RADAR_POINTS.find((item) => item.label === selected);
     if (title) title.textContent = selected;
-    if (copy) copy.textContent = `${selected} için aktif işaretler ve merkez notları bu panelde toplanır.`;
+    if (copy) copy.textContent = `${selected} i\u00e7in aktif i\u015faretler ve merkez notlar\u0131 bu panelde toplan\u0131r.`;
     if (count) count.textContent = point?.level === "alarm" ? "Alarm 2" : "Alarm 1";
     if (list) {
       list.replaceChildren();
       const row = document.createElement("div");
       row.className = "aq-ops-message";
       row.textContent = point?.level === "alarm"
-        ? `${selected} için alarm izlemesi aktif. Merkez teyidi ve saha notları birlikte izleniyor.`
-        : `${selected} için radar izlemesi sürüyor. Yeni alarm oluşursa panel anında güncellenir.`;
+        ? `${selected} i\u00e7in alarm izlemesi aktif. Merkez teyidi ve saha notlar\u0131 birlikte izleniyor.`
+        : `${selected} i\u00e7in radar izlemesi s\u00fcr\u00fcyor. Yeni alarm olu\u015fursa panel an\u0131nda g\u00fcncellenir.`;
       list.appendChild(row);
     }
   }
@@ -177,7 +177,7 @@
       row.innerHTML = `
         <div class="aq-chat-avatar">${turn.role === "user" ? "SEN" : "AQ"}</div>
         <div class="aq-chat-bubble">
-          <div class="aq-chat-role">${turn.role === "user" ? "Kullanıcı" : "T.C. ANATOLIA-Q"}</div>
+          <div class="aq-chat-role">${turn.role === "user" ? "Kullan\u0131c\u0131" : "T.C. ANATOLIA-Q"}</div>
           <p class="aq-chat-text"></p>
         </div>
       `;
@@ -227,18 +227,18 @@
         chat_name: (byId("aqChatNameInput")?.value || "").trim(),
         chat_history: chatTurns().map((item) => ({ role: item.role, content: item.text })),
       });
-      chatTurns().push({ role: "assistant", text: cleanText(result?.ozet || "Sohbet cevabı hazır.") });
+      chatTurns().push({ role: "assistant", text: cleanText(result?.ozet || "Sohbet cevab\u0131 haz\u0131r.") });
       renderChat();
       if (window.state) window.state.currentResult = result;
       if (typeof window.appendHistoryEntry === "function") window.appendHistoryEntry(result);
       if (typeof window.updateStats === "function") window.updateStats();
       if (typeof window.saveSession === "function") window.saveSession();
       if (typeof window.setStatus === "function") {
-        window.setStatus(byId("analysisStatus"), "success", "Sohbet cevabı hazır.");
+        window.setStatus(byId("analysisStatus"), "success", "Sohbet cevab\u0131 haz\u0131r.");
       }
     } catch (error) {
       if (typeof window.setStatus === "function") {
-        window.setStatus(byId("analysisStatus"), "error", cleanText(error?.message || "Sohbet cevabı üretilemedi."));
+        window.setStatus(byId("analysisStatus"), "error", cleanText(error?.message || "Sohbet cevab\u0131 \u00fcretilemedi."));
       }
     } finally {
       window.__aqChatSending = false;
@@ -278,24 +278,24 @@
   function patchCenterTexts() {
     const updates = [
       ["#centerOverlay .aq-kicker", "Merkez operasyon paneli"],
-      ["#centerOverlay h2", "Tek merkez, ortak alarm ve paylaşımlı akış"],
-      ["#centerOverlay .aq-center-copy", "Merkez irtibatı, acil alarm ve operasyon mesajları tek panelden yönetilir."],
+      ["#centerOverlay h2", "Tek merkez, ortak alarm ve payla\u015f\u0131ml\u0131 ak\u0131\u015f"],
+      ["#centerOverlay .aq-center-copy", "Merkez irtibat\u0131, acil alarm ve operasyon mesajlar\u0131 tek panelden y\u00f6netilir."],
       ["label[for='aqCenterNote']", "Merkeze not"],
-      ["#aqCenterSend", "Merkeze ulaş"],
+      ["#aqCenterSend", "Merkeze ula\u015f"],
       ["#aqCenterClose", "Kapat"],
       ["#centerOverlay [data-tab='merkez']", "Merkez"],
       ["#centerOverlay [data-tab='alarm']", "Acil Alarm"],
-      ["#centerOverlay [data-tab='akis']", "Ortak Akış"],
-      ["#centerOverlay [data-tab='gecmis']", "Analiz Geçmişi"],
+      ["#centerOverlay [data-tab='akis']", "Ortak Ak\u0131\u015f"],
+      ["#centerOverlay [data-tab='gecmis']", "Analiz Ge\u00e7mi\u015fi"],
       ["#centerOverlay .aq-feed-card .aq-kicker", "Son merkez hareketleri"],
-      ["#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz geçmişi"],
-      ["label[for='aqAlarmRegion']", "Bölge"],
-      ["label[for='aqAlarmTitle']", "Başlık"],
+      ["#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz ge\u00e7mi\u015fi"],
+      ["label[for='aqAlarmRegion']", "B\u00f6lge"],
+      ["label[for='aqAlarmTitle']", "Ba\u015fl\u0131k"],
       ["label[for='aqAlarmDetail']", "Detay"],
-      ["#aqAlarmSend", "Alarmı gönder"],
-      ["#aqAlarmChatOpen", "Ortak akışa geç"],
+      ["#aqAlarmSend", "Alarm\u0131 g\u00f6nder"],
+      ["#aqAlarmChatOpen", "Ortak ak\u0131\u015fa ge\u00e7"],
       ["label[for='aqOpsMessage']", "Mesaj"],
-      ["#aqOpsSend", "Mesajı paylaş"],
+      ["#aqOpsSend", "Mesaj\u0131 payla\u015f"],
       ["#aqOpsRefresh", "Yenile"],
     ];
     updates.forEach(([selector, text]) => {
@@ -303,9 +303,9 @@
       if (node) node.textContent = text;
     });
     const centerNote = byId("aqCenterNote");
-    if (centerNote) centerNote.placeholder = "Örnek: Doğu hattında teyit edilen saha bilgisi merkeze aktarılsın.";
+    if (centerNote) centerNote.placeholder = "\u00d6rnek: Do\u011fu hatt\u0131nda teyit edilen saha bilgisi merkeze aktar\u0131ls\u0131n.";
     const opsMessage = byId("aqOpsMessage");
-    if (opsMessage) opsMessage.placeholder = "Örnek: Merkez teyidi alındı, saha ekibi ikinci doğrulamayı bekliyor.";
+    if (opsMessage) opsMessage.placeholder = "\u00d6rnek: Merkez teyidi al\u0131nd\u0131, saha ekibi ikinci do\u011frulamay\u0131 bekliyor.";
   }
 
   function run() {
