@@ -1,334 +1,276 @@
 (() => {
-  const RADAR_POINTS = [
-    { label: "\u0130stanbul", cx: 92, cy: 72, level: "izleme" },
-    { label: "Ankara", cx: 154, cy: 88, level: "izleme" },
-    { label: "\u0130zmir", cx: 76, cy: 106, level: "izleme" },
-    { label: "Hatay", cx: 232, cy: 154, level: "alarm" },
-    { label: "Diyarbak\u0131r", cx: 252, cy: 112, level: "alarm" },
-    { label: "K\u0131br\u0131s", cx: 246, cy: 182, level: "izleme" },
-  ];
+  if (window.__aqUiPatchActive) return;
+  window.__aqUiPatchActive = true;
 
-  const RADAR_PATHS = [
-    "M21 92 L35 77 L56 64 L81 55 L109 48 L137 45 L164 48 L190 55 L215 59 L240 56 L266 65 L287 78 L301 93 L299 106 L286 116 L266 120 L247 126 L233 138 L214 146 L192 149 L168 153 L143 154 L119 147 L96 141 L76 134 L58 123 L42 113 L28 103 Z",
-    "M221 176 L232 171 L246 170 L261 173 L257 179 L244 183 L229 181 Z",
+  const FIXES = [
+    ["\u00c4\u00b1", "\u0131"],
+    ["\u00c4\u00b0", "\u0130"],
+    ["\u00c4\u0178", "\u011f"],
+    ["\u00c4\u017e", "\u011e"],
+    ["\u00c5\u0178", "\u015f"],
+    ["\u00c5\u017e", "\u015e"],
+    ["\u00c3\u00bc", "\u00fc"],
+    ["\u00c3\u0153", "\u00dc"],
+    ["\u00c3\u00b6", "\u00f6"],
+    ["\u00c3\u2013", "\u00d6"],
+    ["\u00c3\u00a7", "\u00e7"],
+    ["\u00c3\u2021", "\u00c7"],
+    ["\u00e2\u20ac\u2122", "'"],
+    ["\u00e2\u20ac\u0153", '"'],
+    ["\u00e2\u20ac\u009d", '"'],
+    ["\u00e2\u20ac\u00a6", "..."],
   ];
 
   const REMOVE_TEXTS = [
-    "Genel Chat aktif",
-    "Live Chat",
-    "Yaz\u0131\u015fma ak\u0131\u015f\u0131 tek pencerede s\u00fcrer. Yeni mesaj\u0131n\u0131 a\u015fa\u011f\u0131daki sabit alana yazabilirsin.",
-    "Mesaj\u0131n\u0131 yaz ve g\u00f6nder. Cevab\u0131 okumak i\u00e7in a\u015fa\u011f\u0131 inmek zorunda kalmadan ayn\u0131 ekranda sohbeti s\u00fcrd\u00fcrebilirsin.",
-    "Buraya ad\u0131n\u0131 yazarsan sistem daha do\u011fal hitap eder.",
+    "Merkez doğrulama ve oturum yonetimi kurumsal e-posta hatti uzerinden ilerler.",
+    "Merkez kanalı",
+    "Dogrudan merkez ile irtibat, oturum ve dogrulama akislarini tek panelde takip etmek icin merkez dugmesini kullan.",
+    "Operasyon notu",
+    "Aktor, zaman, lokasyon, tetikleyici, muhtemel hedef ve belirsizlik seviyesini ayni olay akisinda vermek sonuc kalitesini ciddi bicimde artirir.",
+    "Mesajini yaz ve gonder.",
   ];
 
-  const MOJIBAKE = [
-    ["\u00c3\u201e\u00c2\u00b1", "\u0131"],
-    ["\u00c3\u201e\u00c2\u00b0", "\u0130"],
-    ["\u00c3\u201e\u00c5\u00b8", "\u011f"],
-    ["\u00c3\u201e\u00c5\u00be", "\u011e"],
-    ["\u00c3\u2026\u00c5\u00b8", "\u015f"],
-    ["\u00c3\u2026\u00c5\u017e", "\u015e"],
-    ["\u00c3\u0192\u00c2\u00bc", "\u00fc"],
-    ["\u00c3\u0192\u00c5\u201c", "\u00dc"],
-    ["\u00c3\u0192\u00c2\u00b6", "\u00f6"],
-    ["\u00c3\u0192\u00e2\u20ac\u201c", "\u00d6"],
-    ["\u00c3\u0192\u00c2\u00a7", "\u00e7"],
-    ["\u00c3\u0192\u00e2\u20ac\u00a1", "\u00c7"],
-    ["\u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u201e\u00a2", "'"],
-    ["\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u201c", '"'],
-    ["\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u009d", '"'],
-    ["\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u00a6", "..."],
-  ];
+  const RADAR_META = {
+    Ankara: { level: "IZLEME", count: "Alarm 1", text: "Ankara icin radar izlemesi suruyor. Yeni alarm olusursa panel guncellenir." },
+    Istanbul: { level: "IZLEME", count: "Alarm 1", text: "Istanbul icin radar izlemesi suruyor. Yeni alarm olusursa panel guncellenir." },
+    Izmir: { level: "IZLEME", count: "Alarm 1", text: "Izmir icin radar izlemesi suruyor. Yeni alarm olusursa panel guncellenir." },
+    Hatay: { level: "ALARM", count: "Alarm 2", text: "Hatay icin alarm izlemesi aktif. Merkez teyidi ve saha notlari birlikte izleniyor." },
+    Diyarbakir: { level: "ALARM", count: "Alarm 2", text: "Diyarbakir icin alarm izlemesi aktif. Merkez teyidi ve saha notlari birlikte izleniyor." },
+    Kibris: { level: "IZLEME", count: "Alarm 1", text: "Kibris icin radar izlemesi suruyor. Yeni alarm olusursa panel guncellenir." },
+  };
+
+  const norm = (value) => {
+    let text = String(value ?? "");
+    FIXES.forEach(([from, to]) => {
+      text = text.replaceAll(from, to);
+    });
+    return text;
+  };
 
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-  const byId = (id) => document.getElementById(id);
 
-  function cleanText(value) {
-    let text = String(value ?? "");
-    MOJIBAKE.forEach(([from, to]) => {
-      text = text.split(from).join(to);
-    });
-    REMOVE_TEXTS.forEach((item) => {
-      text = text.split(item).join("");
-    });
-    return text
-      .replace(/\u00dcretli model kotas\u0131.*?g\u00fcvenli mod devreye girdi\./gi, "Mevcut bulgular \u00e7er\u00e7evesinde durum de\u011ferlendirmesi sunulmu\u015ftur.")
-      .replace(/Ucretli model kotasi.*?guvenli mod devreye girdi\./gi, "Mevcut bulgular \u00e7er\u00e7evesinde durum de\u011ferlendirmesi sunulmu\u015ftur.")
-      .replace(/\s+\|\s*Mod:\s*[A-Za-z_ -]+/g, "")
-      .replace(/\s{2,}/g, " ")
-      .trim();
-  }
-
-  function normalizeTree(root = document.body) {
+  const normalizeNodeTree = (root = document.body) => {
     if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach((node) => {
-      const next = cleanText(node.nodeValue);
-      if (next && next !== node.nodeValue) node.nodeValue = next;
+      const next = norm(node.nodeValue);
+      if (next !== node.nodeValue) node.nodeValue = next;
     });
-  }
-
-  function normalizePlaceholders() {
-    ["#aqCenterNote", "#aqOpsMessage", "#aqAlarmTitle", "#aqAlarmDetail", "#aqChatComposer"].forEach((selector) => {
-      const node = q(selector);
-      if (node?.placeholder) node.placeholder = cleanText(node.placeholder);
+    qa("input[placeholder], textarea[placeholder]", root).forEach((node) => {
+      node.placeholder = norm(node.placeholder);
     });
-  }
+  };
 
-  function ensureStyle() {
-    if (byId("aqUiRepairStyle")) return;
+  const ensureStyle = () => {
+    if (q("#aqUiCleanStyle")) return;
     const style = document.createElement("style");
-    style.id = "aqUiRepairStyle";
+    style.id = "aqUiCleanStyle";
     style.textContent = `
-      .aq-region{cursor:pointer}
-      .aq-region-dot{animation:none!important}
-      .aq-region-label{pointer-events:none;fill:#d9ecff;font:12px "IBM Plex Mono",monospace}
-      .aq-radar-sweep{pointer-events:none;position:absolute;inset:-28%;background:conic-gradient(from 0deg,rgba(99,221,255,.22),transparent 18%,transparent 100%);transform-origin:center;animation:aqRadarSweep 5.5s linear infinite;mix-blend-mode:screen}
-      .aq-map-stage{overflow:hidden}
-      .aq-map-shell{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:stretch}
-      .aq-map-svg{position:absolute;inset:18px;width:calc(100% - 36px);height:calc(100% - 36px)}
-      .aq-map-land{fill:rgba(105,224,255,.12);stroke:rgba(105,224,255,.34);stroke-width:2}
-      .aq-ops-message{padding:14px 16px;border-radius:16px;border:1px solid rgba(105,224,255,.14);background:rgba(5,12,22,.88);color:#dcecff;font:13px "IBM Plex Mono",monospace;line-height:1.6}
-      @keyframes aqRadarSweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-      @media (max-width:1180px){.aq-map-shell{grid-template-columns:1fr}}
+      .aq-radar-panel .tr-radar-shell {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.85fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+      .aq-radar-stage {
+        position: relative;
+        min-height: 280px;
+        border-radius: 20px;
+        border: 1px solid rgba(117, 182, 255, 0.14);
+        background:
+          radial-gradient(circle at center, rgba(99, 221, 255, 0.14), transparent 52%),
+          linear-gradient(180deg, rgba(6, 16, 28, 0.95), rgba(4, 10, 18, 0.98));
+        overflow: hidden;
+      }
+      .aq-radar-stage::before {
+        content: "";
+        position: absolute;
+        inset: 24px;
+        border-radius: 50%;
+        border: 1px solid rgba(99, 221, 255, 0.12);
+      }
+      .aq-radar-stage::after {
+        content: "";
+        position: absolute;
+        inset: 12% 18%;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, rgba(99, 221, 255, 0.2), transparent 20%, transparent 100%);
+        mix-blend-mode: screen;
+        pointer-events: none;
+        animation: aqRadarSpin 6s linear infinite;
+      }
+      .aq-radar-map {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        padding: 18px;
+      }
+      .aq-radar-land {
+        fill: rgba(54, 110, 160, 0.25);
+        stroke: rgba(117, 222, 255, 0.46);
+        stroke-width: 2;
+      }
+      .aq-radar-point {
+        cursor: pointer;
+      }
+      .aq-radar-point circle {
+        fill: #63ddff;
+        filter: drop-shadow(0 0 10px rgba(99, 221, 255, 0.7));
+      }
+      .aq-radar-point.active circle {
+        fill: #ffcd73;
+      }
+      .aq-radar-point text {
+        fill: #dff6ff;
+        font: 12px "IBM Plex Mono", monospace;
+        pointer-events: none;
+      }
+      .aq-radar-detail {
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid rgba(117, 182, 255, 0.14);
+        background: linear-gradient(180deg, rgba(7, 18, 31, 0.95), rgba(4, 11, 20, 0.99));
+      }
+      .aq-radar-list {
+        display: grid;
+        gap: 10px;
+      }
+      @keyframes aqRadarSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @media (max-width: 980px) {
+        .aq-radar-panel .tr-radar-shell {
+          grid-template-columns: 1fr;
+        }
+      }
     `;
     document.head.appendChild(style);
-  }
+  };
 
-  function buildRadarContent() {
-    const paths = RADAR_PATHS.map((path) => `<path class="aq-map-land" d="${path}"></path>`).join("");
-    const points = RADAR_POINTS.map((item) => {
-      const hot = item.level === "alarm" ? " hot" : "";
-      return `<g class="aq-region" data-region="${item.label}"><circle class="aq-region-dot${hot}" cx="${item.cx}" cy="${item.cy}" r="5"></circle><text class="aq-region-label" x="${item.cx + 8}" y="${item.cy - 8}">${item.label}</text></g>`;
-    }).join("");
-    return `${paths}${points}`;
-  }
+  const cleanForMatch = (value) =>
+    norm(value)
+      .toLocaleLowerCase("tr-TR")
+      .replace(/[^\p{L}\p{N}\s]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  function ensureRadar() {
-    const stage = q("#aqOpsStrip .aq-map-stage");
-    const svg = q("#aqOpsStrip .aq-map-svg");
-    if (!stage || !svg) return;
-    svg.innerHTML = buildRadarContent();
-    if (!q(".aq-radar-sweep", stage)) {
-      const sweep = document.createElement("div");
-      sweep.className = "aq-radar-sweep";
-      sweep.setAttribute("aria-hidden", "true");
-      stage.appendChild(sweep);
-    }
-    qa(".aq-region-dot", stage).forEach((dot) => {
-      dot.style.animation = "none";
+  const stripLegacyBlocks = () => {
+    const needles = REMOVE_TEXTS.map(cleanForMatch);
+    qa("p, h2, h3, .section-kicker, .card-copy, .contact-line").forEach((node) => {
+      const clean = cleanForMatch(node.textContent);
+      if (!clean) return;
+      if (!needles.some((needle) => clean.includes(needle))) return;
+      const box = node.closest(".action-card, .panel, .sidebar-card, .result-card, .hero-card, .contact-card");
+      if (box) box.remove();
+      else node.remove();
     });
-  }
+  };
 
-  function paintRegion(region) {
-    const selected = region || "Ankara";
-    const title = byId("aqRegionTitle");
-    const copy = byId("aqRegionCopy");
-    const count = byId("aqRegionAlertCount");
-    const list = byId("aqRegionAlertList");
-    const point = RADAR_POINTS.find((item) => item.label === selected);
-    if (title) title.textContent = selected;
-    if (copy) copy.textContent = `${selected} i\u00e7in aktif i\u015faretler ve merkez notlar\u0131 bu panelde toplan\u0131r.`;
-    if (count) count.textContent = point?.level === "alarm" ? "Alarm 2" : "Alarm 1";
+  const dedupeByText = (selector, text) => {
+    const matches = qa(selector).filter((node) => cleanForMatch(node.textContent) === cleanForMatch(text));
+    matches.slice(1).forEach((node) => {
+      const box = node.closest(".action-card, .panel, .sidebar-card, .result-card");
+      if (box) box.remove();
+      else node.remove();
+    });
+  };
+
+  const radarMarkup = () => [
+    '<div class="section-kicker">Turkiye alarm radari</div>',
+    '<div class="tr-radar-shell" style="margin-top:14px;">',
+    '  <div class="aq-radar-stage">',
+    '    <svg id="trRadarMap" class="aq-radar-map" viewBox="0 0 320 220" aria-label="Turkiye alarm haritasi" role="img">',
+    '      <path class="aq-radar-land" d="M26 113 L48 95 L73 92 L101 79 L126 82 L150 72 L173 80 L198 74 L220 82 L247 78 L272 93 L289 111 L301 128 L288 143 L262 149 L236 145 L215 150 L188 146 L160 156 L133 149 L110 156 L81 150 L57 141 L34 126 Z"></path>',
+    '      <path class="aq-radar-land" d="M228 176 L246 172 L256 178 L247 188 L231 186 Z"></path>',
+    '      <g class="aq-radar-point" data-region="Istanbul" tabindex="0"><circle cx="70" cy="98" r="5"></circle><text x="78" y="92">Istanbul</text></g>',
+    '      <g class="aq-radar-point" data-region="Ankara" tabindex="0"><circle cx="144" cy="106" r="5"></circle><text x="152" y="100">Ankara</text></g>',
+    '      <g class="aq-radar-point" data-region="Izmir" tabindex="0"><circle cx="64" cy="126" r="5"></circle><text x="72" y="120">Izmir</text></g>',
+    '      <g class="aq-radar-point" data-region="Hatay" tabindex="0"><circle cx="232" cy="144" r="5"></circle><text x="240" y="138">Hatay</text></g>',
+    '      <g class="aq-radar-point" data-region="Diyarbakir" tabindex="0"><circle cx="208" cy="118" r="5"></circle><text x="216" y="112">Diyarbakir</text></g>',
+    '      <g class="aq-radar-point" data-region="Kibris" tabindex="0"><circle cx="244" cy="181" r="5"></circle><text x="252" y="175">Kibris</text></g>',
+    "    </svg>",
+    "  </div>",
+    '  <div class="aq-radar-detail">',
+    '    <div class="section-kicker">Canli izleme</div>',
+    '    <h3 id="trRadarTitle">Ankara</h3>',
+    '    <div class="threat-chip" id="trRadarCount" data-level="ORTA">Alarm 1</div>',
+    '    <p id="trRadarCopy" class="card-copy">Ankara icin radar izlemesi suruyor. Yeni alarm olusursa panel guncellenir.</p>',
+    '    <div class="aq-radar-list" id="trRadarList"></div>',
+    "  </div>",
+    "</div>",
+  ].join("");
+
+  const renderRadarInfo = (region) => {
+    const meta = RADAR_META[region] || RADAR_META.Ankara;
+    const title = q("#trRadarTitle");
+    const count = q("#trRadarCount");
+    const copy = q("#trRadarCopy");
+    const list = q("#trRadarList");
+    if (title) title.textContent = region;
+    if (count) {
+      count.textContent = meta.count;
+      count.dataset.level = meta.level;
+    }
+    if (copy) copy.textContent = meta.text;
     if (list) {
       list.replaceChildren();
-      const row = document.createElement("div");
-      row.className = "aq-ops-message";
-      row.textContent = point?.level === "alarm"
-        ? `${selected} i\u00e7in alarm izlemesi aktif. Merkez teyidi ve saha notlar\u0131 birlikte izleniyor.`
-        : `${selected} i\u00e7in radar izlemesi s\u00fcr\u00fcyor. Yeni alarm olu\u015fursa panel an\u0131nda g\u00fcncellenir.`;
-      list.appendChild(row);
+      const line = document.createElement("div");
+      line.className = "ops-line";
+      line.textContent = meta.text;
+      list.appendChild(line);
     }
-  }
-
-  function bindRadar() {
-    if (window.__aqRadarClickBound) return;
-    window.__aqRadarClickBound = true;
-    document.addEventListener("click", (event) => {
-      const region = event.target.closest(".aq-region");
-      if (!region) return;
-      event.preventDefault();
-      window.__aqSelectedRegion = region.dataset.region || "Ankara";
-      paintRegion(window.__aqSelectedRegion);
+    qa(".aq-radar-point").forEach((point) => {
+      point.classList.toggle("active", point.dataset.region === region);
     });
-  }
+  };
 
-  function removeChatHints() {
-    ["#aqChatMeta", ".aq-chat-empty", ".aq-chat-ident .aq-chat-tip"].forEach((selector) => {
-      qa(selector).forEach((node) => node.remove());
-    });
-  }
-
-  function chatTurns() {
-    if (!Array.isArray(window.__aqChatTurns)) window.__aqChatTurns = [];
-    return window.__aqChatTurns;
-  }
-
-  function renderChat() {
-    const log = byId("aqChatLog");
-    if (!log) return;
-    log.replaceChildren();
-    chatTurns().forEach((turn) => {
-      const row = document.createElement("div");
-      row.className = `aq-chat-row ${turn.role === "user" ? "user" : "assistant"}`;
-      row.innerHTML = `
-        <div class="aq-chat-avatar">${turn.role === "user" ? "SEN" : "AQ"}</div>
-        <div class="aq-chat-bubble">
-          <div class="aq-chat-role">${turn.role === "user" ? "Kullan\u0131c\u0131" : "T.C. ANATOLIA-Q"}</div>
-          <p class="aq-chat-text"></p>
-        </div>
-      `;
-      q(".aq-chat-text", row).textContent = cleanText(turn.text || "");
-      log.appendChild(row);
-    });
-    log.scrollTop = log.scrollHeight;
-  }
-
-  async function apiFetch(path, payload) {
-    const headers = new Headers({ "Content-Type": "application/json" });
-    if (window.state?.sessionToken) {
-      headers.set("Authorization", `Bearer ${window.state.sessionToken}`);
-      headers.set("X-Auth-Token", window.state.sessionToken);
-    }
-    const base = typeof window.API_BASE === "string" ? window.API_BASE : "";
-    const response = await fetch(`${base}${path}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(cleanText(data?.detail || data?.message || `HTTP ${response.status}`));
-    return data;
-  }
-
-  async function sendChat() {
-    if (window.__aqChatSending) return;
-    const composer = byId("aqChatComposer");
-    const button = byId("aqChatSend");
-    if (!composer || !button) return;
-    const message = composer.value.trim();
-    if (!message) return;
-
-    window.__aqChatSending = true;
-    if (window.state) window.state.domain = "genel_chat";
-
-    chatTurns().push({ role: "user", text: message });
-    renderChat();
-    composer.value = "";
-    button.disabled = true;
-
-    try {
-      const result = await apiFetch("/api/analyze", {
-        domain: "genel_chat",
-        situation: message,
-        chat_name: (byId("aqChatNameInput")?.value || "").trim(),
-        chat_history: chatTurns().map((item) => ({ role: item.role, content: item.text })),
-      });
-      chatTurns().push({ role: "assistant", text: cleanText(result?.ozet || "Sohbet cevab\u0131 haz\u0131r.") });
-      renderChat();
-      if (window.state) window.state.currentResult = result;
-      if (typeof window.appendHistoryEntry === "function") window.appendHistoryEntry(result);
-      if (typeof window.updateStats === "function") window.updateStats();
-      if (typeof window.saveSession === "function") window.saveSession();
-      if (typeof window.setStatus === "function") {
-        window.setStatus(byId("analysisStatus"), "success", "Sohbet cevab\u0131 haz\u0131r.");
-      }
-    } catch (error) {
-      if (typeof window.setStatus === "function") {
-        window.setStatus(byId("analysisStatus"), "error", cleanText(error?.message || "Sohbet cevab\u0131 \u00fcretilemedi."));
-      }
-    } finally {
-      window.__aqChatSending = false;
-      button.disabled = false;
-    }
-  }
-
-  function bindChat() {
-    if (window.__aqChatUiBound) return;
-    window.__aqChatUiBound = true;
-    document.addEventListener("click", (event) => {
-      const button = event.target.closest("#aqChatSend");
-      if (!button) return;
-      event.preventDefault();
-      sendChat();
-    });
-    document.addEventListener("keydown", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLTextAreaElement) || target.id !== "aqChatComposer") return;
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendChat();
-      }
-    });
-  }
-
-  function patchRunAnalysis() {
-    if (typeof window.runAnalysis !== "function" || window.__aqRunAnalysisPatched) return;
-    window.__aqRunAnalysisPatched = true;
-    const original = window.runAnalysis;
-    window.runAnalysis = function patchedRunAnalysis() {
-      if (window.state?.domain === "genel_chat") return sendChat();
-      return original.apply(this, arguments);
+  const bindRadar = () => {
+    const map = q("#trRadarMap");
+    if (!map || map.dataset.bound === "1") return;
+    map.dataset.bound = "1";
+    const pick = (target) => {
+      const point = target.closest(".aq-radar-point");
+      if (!point) return;
+      renderRadarInfo(point.dataset.region);
     };
-  }
-
-  function patchCenterTexts() {
-    const updates = [
-      ["#centerOverlay .aq-kicker", "Merkez operasyon paneli"],
-      ["#centerOverlay h2", "Tek merkez, ortak alarm ve payla\u015f\u0131ml\u0131 ak\u0131\u015f"],
-      ["#centerOverlay .aq-center-copy", "Merkez irtibat\u0131, acil alarm ve operasyon mesajlar\u0131 tek panelden y\u00f6netilir."],
-      ["label[for='aqCenterNote']", "Merkeze not"],
-      ["#aqCenterSend", "Merkeze ula\u015f"],
-      ["#aqCenterClose", "Kapat"],
-      ["#centerOverlay [data-tab='merkez']", "Merkez"],
-      ["#centerOverlay [data-tab='alarm']", "Acil Alarm"],
-      ["#centerOverlay [data-tab='akis']", "Ortak Ak\u0131\u015f"],
-      ["#centerOverlay [data-tab='gecmis']", "Analiz Ge\u00e7mi\u015fi"],
-      ["#centerOverlay .aq-feed-card .aq-kicker", "Son merkez hareketleri"],
-      ["#centerOverlay .aq-center-section[data-section='gecmis'] .aq-kicker", "Merkez analiz ge\u00e7mi\u015fi"],
-      ["label[for='aqAlarmRegion']", "B\u00f6lge"],
-      ["label[for='aqAlarmTitle']", "Ba\u015fl\u0131k"],
-      ["label[for='aqAlarmDetail']", "Detay"],
-      ["#aqAlarmSend", "Alarm\u0131 g\u00f6nder"],
-      ["#aqAlarmChatOpen", "Ortak ak\u0131\u015fa ge\u00e7"],
-      ["label[for='aqOpsMessage']", "Mesaj"],
-      ["#aqOpsSend", "Mesaj\u0131 payla\u015f"],
-      ["#aqOpsRefresh", "Yenile"],
-    ];
-    updates.forEach(([selector, text]) => {
-      const node = q(selector);
-      if (node) node.textContent = text;
+    map.addEventListener("click", (event) => pick(event.target));
+    map.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      pick(event.target);
     });
-    const centerNote = byId("aqCenterNote");
-    if (centerNote) centerNote.placeholder = "\u00d6rnek: Do\u011fu hatt\u0131nda teyit edilen saha bilgisi merkeze aktar\u0131ls\u0131n.";
-    const opsMessage = byId("aqOpsMessage");
-    if (opsMessage) opsMessage.placeholder = "\u00d6rnek: Merkez teyidi al\u0131nd\u0131, saha ekibi ikinci do\u011frulamay\u0131 bekliyor.";
-  }
+    renderRadarInfo("Ankara");
+  };
 
-  function run() {
-    ensureStyle();
-    ensureRadar();
+  const ensureRadar = () => {
+    let host = q("#page-dashboard .ops-radar-card");
+    if (!host) {
+      const dashboard = q("#page-dashboard .hero-grid") || q("#page-dashboard .page-actions")?.parentElement;
+      if (!dashboard) return;
+      host = document.createElement("div");
+      host.className = "panel ops-radar-card aq-radar-panel";
+      dashboard.appendChild(host);
+    }
+    host.classList.add("aq-radar-panel");
+    host.innerHTML = radarMarkup();
     bindRadar();
-    paintRegion(window.__aqSelectedRegion || "Ankara");
-    bindChat();
-    patchRunAnalysis();
-    removeChatHints();
-    patchCenterTexts();
-    normalizeTree();
-    normalizePlaceholders();
-  }
+  };
 
-  function init() {
-    run();
-    [250, 800, 1600, 2600].forEach((delay) => window.setTimeout(run, delay));
-  }
+  const run = () => {
+    ensureStyle();
+    normalizeNodeTree();
+    stripLegacyBlocks();
+    dedupeByText("button, .button, .ghost-button", "Yeni analiz baslat");
+    dedupeByText(".section-kicker", "Turkiye alarm radari");
+    ensureRadar();
+    normalizeNodeTree();
+  };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  document.addEventListener("DOMContentLoaded", run);
+  window.addEventListener("load", run);
+  setInterval(run, 1800);
 })();
