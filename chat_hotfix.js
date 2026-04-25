@@ -1,1257 +1,267 @@
 (() => {
-  const turns = (window.__aqChatTurns = window.__aqChatTurns || []);
-  const POLL_MS = 15000;
-  let pollTimer = null;
-  let selectedRegion = "Ankara";
-  let centerTab = "merkez";
-  let alertsCache = [];
-  let opsCache = [];
-  let historyCache = [];
+  if (window.__aqChatPatchActive) return;
+  window.__aqChatPatchActive = true;
+
+  const state = {
+    busy: false,
+    messages: [],
+  };
+
+  const textFixes = [
+    ["b1", "31"],
+    ["b0", "30"],
+    ["8", "f"],
+    ["e", "e"],
+    ["8", "f"],
+    ["e", "e"],
+    ["bc", "c"],
+    ["3", "c"],
+    ["b6", "6"],
+    ["", "6"],
+    ["a7", "7"],
+    ["", "7"],
+    [" ", "'"],
+    [" 3", '"'],
+    [" 	d", '"'],
+    [" 
+6", "..."],
+  ];
+
+  const norm = (value) => {
+    let text = String(value ?? "");
+    textFixes.forEach(([from, to]) => {
+      text = text.replaceAll(from, to);
+    });
+    return text;
+  };
 
   const byId = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);
-  const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-  const chatMode = () => typeof state !== "undefined" && state.domain === "genel_chat";
 
-  function ensureStyles() {
-    if (byId("aq-ui-hotfix-style")) return;
-    const style = document.createElement("style");
-    style.id = "aq-ui-hotfix-style";
-    style.textContent = `
-      .aq-fab{position:fixed;right:20px;bottom:20px;z-index:45;display:inline-flex;align-items:center;gap:10px;padding:14px 18px;border-radius:999px;border:1px solid rgba(105,224,255,.28);background:linear-gradient(135deg,rgba(12,26,44,.96),rgba(6,14,24,.96));box-shadow:0 18px 40px rgba(0,0,0,.34),0 0 28px rgba(105,224,255,.12);color:#eef7ff;font:12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-      .aq-fab::before{content:"";width:12px;height:12px;border-radius:50%;background:#69e0ff;box-shadow:0 0 16px rgba(105,224,255,.8);animation:aqBeacon 2.4s ease-in-out infinite}
-      .aq-hide-center{display:none!important}
-      .aq-guide-overlay{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(2,6,12,.76);backdrop-filter:blur(10px)}
-      .aq-guide-overlay.open{display:flex}
-      .aq-guide-panel{width:min(860px,100%);max-height:min(calc(100vh - 48px),900px);overflow:auto;padding:28px;border-radius:28px;border:1px solid rgba(105,224,255,.16);background:rgba(7,18,31,.94);box-shadow:0 28px 70px rgba(0,0,0,.38)}
-      .aq-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
-      .aq-guide-card{padding:18px;border-radius:18px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(8,20,34,.94),rgba(5,12,22,.97))}
-      .aq-guide-card h3{margin:0 0 10px;color:#eef7ff;font-size:16px}
-      .aq-guide-card p,.aq-guide-copy,.aq-chat-text,.aq-chat-meta,.aq-chat-tip,.aq-chat-empty,.aq-ops-line,.aq-center-copy,.aq-module-copy,.aq-alert-card p,.aq-ops-message{font-family:"IBM Plex Mono",monospace}
-      .aq-guide-card p,.aq-guide-copy,.aq-chat-tip,.aq-chat-empty,.aq-ops-line,.aq-center-copy,.aq-module-copy,.aq-alert-card p,.aq-ops-message{margin:0;color:#9bb5d2;line-height:1.7;font-size:13px}
-      .aq-btn-row{display:flex;flex-wrap:wrap;gap:10px}
-      .aq-btn{border-radius:14px;padding:13px 16px;border:1px solid rgba(105,224,255,.18);background:linear-gradient(135deg,rgba(105,224,255,.22),rgba(94,144,255,.18));color:#eef7ff;cursor:pointer;font:12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
-      .aq-btn.ghost{background:rgba(8,16,28,.76);color:#9bb5d2}
-      .aq-btn.warn{border-color:rgba(255,92,92,.35);background:linear-gradient(135deg,rgba(255,92,92,.26),rgba(255,162,86,.18))}
-      .aq-ops-strip{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin:16px 0}
-      .aq-ops-card,.aq-module-card,.aq-alert-card,.aq-feed-card,.aq-center-card{position:relative;overflow:hidden;padding:20px;border-radius:22px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(8,20,34,.94),rgba(5,12,22,.97))}
-      .aq-ops-card::after,.aq-module-card::after,.aq-alert-card::after,.aq-feed-card::after,.aq-center-card::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(105,224,255,.04),transparent 34%,rgba(94,144,255,.03))}
-      .aq-kicker{display:inline-flex;align-items:center;gap:10px;color:#69e0ff;font:12px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase}
-      .aq-kicker::before{content:"";width:42px;height:1px;background:linear-gradient(90deg,#69e0ff,transparent)}
-      .aq-map-shell{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:16px;align-items:stretch}
-      .aq-map-stage{position:relative;min-height:320px;border-radius:20px;border:1px solid rgba(105,224,255,.14);background:radial-gradient(circle at 20% 20%,rgba(105,224,255,.08),transparent 34%),linear-gradient(180deg,rgba(6,15,26,.94),rgba(4,10,18,.98));overflow:hidden}
-      .aq-map-grid,.aq-map-stage::before{content:"";position:absolute;inset:0;pointer-events:none}
-      .aq-map-grid{background:linear-gradient(rgba(105,224,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(105,224,255,.06) 1px,transparent 1px);background-size:26px 26px;opacity:.35}
-      .aq-map-stage::before{background:radial-gradient(circle at center,rgba(105,224,255,.12),transparent 55%)}
-      .aq-map-svg{position:absolute;inset:18px;width:calc(100% - 36px);height:calc(100% - 36px)}
-      .aq-map-land{fill:rgba(105,224,255,.12);stroke:rgba(105,224,255,.34);stroke-width:2}
-      .aq-region{cursor:pointer}
-      .aq-region-dot{fill:#69e0ff;filter:drop-shadow(0 0 8px rgba(105,224,255,.72));animation:aqBeacon 2.6s ease-in-out infinite}
-      .aq-region-dot.hot{fill:#ff6b6b;filter:drop-shadow(0 0 10px rgba(255,107,107,.78))}
-      .aq-region-label{fill:#d9ecff;font:12px "IBM Plex Mono",monospace}
-      .aq-map-side{display:grid;gap:12px}
-      .aq-region-focus{padding:16px;border-radius:18px;border:1px solid rgba(105,224,255,.14);background:rgba(4,11,20,.72)}
-      .aq-focus-title{margin:0 0 8px;color:#eef7ff;font-size:18px}
-      .aq-focus-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-      .aq-pill{padding:8px 10px;border-radius:999px;border:1px solid rgba(105,224,255,.16);background:rgba(8,16,28,.76);color:#9bb5d2;font:11px "IBM Plex Mono",monospace;text-transform:uppercase}
-      .aq-module-grid{display:none!important}
-      .aq-module-card{display:grid;gap:12px;cursor:pointer}
-      .aq-module-card.active{border-color:rgba(105,224,255,.34);box-shadow:0 0 28px rgba(105,224,255,.08)}
-      .aq-module-title{margin:0;color:#eef7ff;font-size:16px}
-      .aq-chat-shell{display:none;grid-template-rows:auto minmax(0,1fr) auto auto;gap:12px;min-height:72vh;margin-top:18px}
-      .aq-chat-shell.active{display:grid}
-      .aq-chat-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:18px 20px;border-radius:20px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(7,18,31,.92),rgba(4,11,20,.98))}
-      .aq-chat-log{display:grid;align-content:start;gap:14px;min-height:0;overflow:auto;padding:18px;border-radius:20px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(7,18,31,.92),rgba(4,11,20,.98))}
-      .aq-chat-empty{padding:20px;border:1px dashed rgba(105,224,255,.18);border-radius:18px;background:rgba(6,14,24,.55)}
-      .aq-chat-row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;align-items:start}
-      .aq-chat-row.user{grid-template-columns:minmax(0,1fr) 42px}
-      .aq-chat-avatar{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;border:1px solid rgba(105,224,255,.16);background:rgba(8,20,34,.9);color:#69e0ff;font:12px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
-      .aq-chat-row.user .aq-chat-avatar{order:2;color:#ffd27a}
-      .aq-chat-bubble{padding:16px 18px;border-radius:18px;border:1px solid rgba(105,224,255,.14);background:rgba(5,12,22,.9);box-shadow:0 10px 24px rgba(0,0,0,.24)}
-      .aq-chat-row.user .aq-chat-bubble{order:1;background:linear-gradient(180deg,rgba(16,38,60,.96),rgba(8,20,34,.96));border-color:rgba(255,210,122,.2)}
-      .aq-chat-role,.aq-chat-meta{font-family:"IBM Plex Mono",monospace}
-      .aq-chat-role{margin:0 0 8px;color:#6de3ff;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-      .aq-chat-text{margin:0;color:#eef7ff;line-height:1.8;white-space:pre-wrap}
-      .aq-chat-meta{margin-top:10px;color:#8fb2d4;font-size:12px;line-height:1.6}
-      .aq-chat-suggestions{display:flex;flex-wrap:wrap;gap:10px}
-      .aq-chat-chip{padding:10px 14px;border-radius:999px;border:1px solid rgba(105,224,255,.18);background:rgba(8,20,34,.82);color:#9bb5d2;cursor:pointer;font:12px "IBM Plex Mono",monospace}
-      .aq-chat-chip:hover{border-color:rgba(105,224,255,.34);background:rgba(10,24,40,.92)}
-      .aq-chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;padding:16px;border-radius:20px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(7,18,31,.92),rgba(4,11,20,.98));position:sticky;bottom:0}
-      .aq-chat-compose textarea{min-height:86px;max-height:200px;resize:vertical}
-      .aq-chat-compose .aq-btn{height:56px}
-      .aq-chat-ident{display:grid;grid-template-columns:220px 1fr;gap:12px}
-      .aq-hidden{display:none!important}
-      .aq-minimal{display:none!important}
-      .aq-center-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 18px}
-      .aq-center-tab{padding:10px 14px;border-radius:999px;border:1px solid rgba(105,224,255,.16);background:rgba(8,16,28,.76);color:#9bb5d2;font:12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-      .aq-center-tab.active{background:linear-gradient(135deg,rgba(105,224,255,.22),rgba(94,144,255,.18));color:#eef7ff;border-color:rgba(105,224,255,.3)}
-      .aq-center-body{display:grid;gap:16px}
-      .aq-center-section{display:none;gap:16px}
-      .aq-center-section.active{display:grid}
-      .aq-two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.9fr);gap:16px}
-      .aq-feed-list,.aq-alert-list{display:grid;gap:10px;max-height:320px;overflow:auto}
-      .aq-alert-card strong,.aq-feed-card strong{display:block;color:#eef7ff;margin-bottom:6px}
-      .aq-alert-meta,.aq-feed-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-      .aq-history-grid{display:grid;gap:14px}
-      .aq-history-card{padding:20px;border-radius:22px;border:1px solid rgba(105,224,255,.14);background:linear-gradient(180deg,rgba(8,20,34,.94),rgba(5,12,22,.97));box-shadow:0 18px 36px rgba(0,0,0,.22)}
-      .aq-history-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-      .aq-history-title{margin:0;color:#eef7ff;font-size:16px}
-      .aq-history-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-      .aq-history-summary{margin:14px 0;color:#dcecff;line-height:1.75;font-size:14px}
-      .aq-history-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
-      .aq-history-box{padding:14px 16px;border-radius:16px;border:1px solid rgba(105,224,255,.12);background:rgba(5,12,22,.74)}
-      .aq-history-box strong{display:block;margin-bottom:8px;color:#69e0ff;font:11px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
-      .aq-history-box p,.aq-history-box li{margin:0;color:#dcecff;line-height:1.7;font-size:13px}
-      .aq-history-box ul{margin:0;padding-left:18px}
-      .aq-history-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
-      .aq-history-empty{padding:18px;border-radius:18px;border:1px dashed rgba(105,224,255,.18);background:rgba(5,12,22,.62);color:#9bb5d2;font:13px "IBM Plex Mono",monospace}
-      .aq-ops-message{padding:14px 16px;border-radius:16px;border:1px solid rgba(105,224,255,.14);background:rgba(5,12,22,.88)}
-      .aq-ops-message.emergency{border-color:rgba(255,107,107,.26);background:rgba(40,12,12,.74)}
-      .aq-pulse-banner{position:relative;overflow:hidden;padding:14px 16px;border-radius:18px;border:1px solid rgba(105,224,255,.16);background:linear-gradient(135deg,rgba(105,224,255,.14),rgba(94,144,255,.08))}
-      .aq-pulse-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.08) 48%,transparent 100%);animation:aqSweep 6s linear infinite}
-      @keyframes aqOrbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-      @keyframes aqBeacon{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.15)}}
-      @keyframes aqPing{0%{transform:scale(.72);opacity:.7}100%{transform:scale(1.8);opacity:0}}
-      @keyframes aqSweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
-      @media (max-width:1180px){.aq-ops-strip,.aq-two-col,.aq-map-shell,.aq-chat-ident,.aq-history-sections{grid-template-columns:1fr}}
-      @media (max-width:720px){.aq-guide-overlay{align-items:flex-start;padding:12px}.aq-guide-panel{padding:22px;max-height:calc(100vh - 24px)}.aq-fab{right:12px;bottom:12px}.aq-chat-compose{grid-template-columns:1fr}.aq-chat-compose .aq-btn{width:100%}}
-    `;
-    document.head.appendChild(style);
-  }
+  const isChatMode = () => {
+    if (window.state?.domain) return window.state.domain === "genel_chat";
+    return Boolean(q('[data-domain="genel_chat"].active'));
+  };
 
-  async function fetchJson(path, options = {}) {
-    if (typeof apiFetch === "function") return apiFetch(path, options);
-    const response = await fetch(path, options);
-    return response.json();
-  }
+  const getApiBase = () => {
+    if (window.API_BASE) return window.API_BASE;
+    const fallback = "https://anatolia-q.onrender.com";
+    const host = window.location.hostname;
+    const local = host === "localhost" || host === "127.0.0.1";
+    return window.location.protocol.startsWith("http") && !local ? window.location.origin : fallback;
+  };
 
-  function setText(selector, text) {
-    const node = q(selector);
-    if (node) node.textContent = text;
-  }
-
-  function ensureGuideOverlay() {
-    if (byId("aqGuideOverlay")) return;
-    const overlay = document.createElement("div");
-    overlay.id = "aqGuideOverlay";
-    overlay.className = "aq-guide-overlay";
-    overlay.setAttribute("aria-hidden", "true");
-    overlay.innerHTML = `
-      <div class="aq-guide-panel">
-        <div class="aq-kicker">KullanÄ±m kÄ±lavuzu</div>
-        <h2 style="margin:14px 0 10px;font-size:clamp(24px,4vw,38px);text-transform:uppercase">Sistemi kÄ±sa sÃ¼rede doÄŸru kullan</h2>
-        <p class="aq-guide-copy">GiriÅŸ, alarm, merkez, operasyon akÄ±ÅŸÄ± ve Genel Chat aynÄ± gÃ¶rev omurgasÄ±nda birlikte Ã§alÄ±ÅŸÄ±r.</p>
-        <div class="aq-guide-grid">
-          <div class="aq-guide-card"><h3>1. Tek merkez dÃ¼ÄŸmesi</h3><p>SaÄŸ alttaki Merkez dÃ¼ÄŸmesi tÃ¼m operasyon panelini aÃ§ar. Merkez irtibatÄ±, acil alarm ve ortak akÄ±ÅŸ aynÄ± yerden yÃ¶netilir.</p></div>
-          <div class="aq-guide-card"><h3>2. GÃ¶rev modÃ¼lleri</h3><p>ModÃ¼l kartÄ±na bastÄ±ÄŸÄ±nda seÃ§ili alan deÄŸiÅŸir. Panel ve analiz ekranÄ± aynÄ± anda bu alana gÃ¶re yenilenir.</p></div>
-          <div class="aq-guide-card"><h3>3. Genel Chat</h3><p>Genel Chat modulu tek akista yazisma, takip ve cevap uretimi icin kullanilir.</p></div>
-          <div class="aq-guide-card"><h3>4. Radar ve alarm</h3><p>TÃ¼rkiye haritasÄ±ndaki bir noktaya basarak bÃ¶lgesel alarm kartÄ± aÃ§abilirsin. Kaydedilen alarm tÃ¼m kullanÄ±cÄ±lara ortak listede gÃ¶rÃ¼nÃ¼r.</p></div>
-          <div class="aq-guide-card"><h3>5. Acil alarm</h3><p>Acil alarm gÃ¶nderildiÄŸinde merkez e-posta hattÄ±na bilgi dÃ¼ÅŸer ve ortak operasyon akÄ±ÅŸÄ±nda ayrÄ± mesaj kanalÄ± aÃ§Ä±lÄ±r.</p></div>
-          <div class="aq-guide-card"><h3>6. Operasyon akÄ±ÅŸÄ±</h3><p>Merkez panelindeki ortak akÄ±ÅŸ bÃ¶lÃ¼mÃ¼ tÃ¼m kullanÄ±cÄ±larÄ±n gÃ¶rdÃ¼ÄŸÃ¼ paylaÅŸÄ±mlÄ± operasyon notlarÄ±nÄ± gÃ¶sterir.</p></div>
-        </div>
-        <div class="aq-btn-row" style="margin-top:18px"><button type="button" class="aq-btn" id="aqGuideClose">Kapat</button></div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    byId("aqGuideClose").addEventListener("click", closeGuide);
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) closeGuide();
-    });
-  }
-
-  function openGuide() {
-    const overlay = byId("aqGuideOverlay");
-    if (!overlay) return;
-    overlay.classList.add("open");
-    overlay.setAttribute("aria-hidden", "false");
-  }
-
-  function closeGuide() {
-    const overlay = byId("aqGuideOverlay");
-    if (!overlay) return;
-    overlay.classList.remove("open");
-    overlay.setAttribute("aria-hidden", "true");
-  }
-
-  function patchLoginTexts() {
-    setText(".hero-kicker", "Kuantum tabanlı ulusal karar destek sistemi");
-    q(".hero-copy")?.remove();
-    q(".hero-grid")?.remove();
-    q(".signal-panel")?.remove();
-    q(".capsule-row")?.remove();
-    q(".brand-sub")?.remove();
-    q("#step1 .field-note")?.remove();
-  }
-
-  function pruneDashboardNoise() {
-    qa(".action-card").forEach((card) => {
-      const title = (q("h3", card)?.textContent || "").toLocaleLowerCase("tr-TR");
-      if (title.includes("alan odaklı")) card.remove();
-      if (title.includes("merkez yönlendirme")) card.remove();
-      if (title.includes("görev modülleri")) card.remove();
-    });
-
-    const buttons = qa("#page-dashboard .page-actions .button, #page-dashboard .page-actions .ghost-button");
-    let analyzeSeen = 0;
-    buttons.forEach((button) => {
-      const text = (button.textContent || "").trim().toLocaleLowerCase("tr-TR");
-      if (text === "yeni analiz başlat") {
-        analyzeSeen += 1;
-        if (analyzeSeen > 1) button.remove();
-      }
-    });
-
-    const radarCards = qa(".panel, .aq-ops-card").filter((card) => {
-      const title = q("h2, h3, .section-kicker, .aq-kicker", card)?.textContent || "";
-      return title.toLocaleLowerCase("tr-TR").includes("türkiye alarm radarı");
-    });
-    radarCards.slice(1).forEach((card) => card.remove());
-
-    const strip = q("#aqOpsStrip");
-    if (strip) {
-      strip.style.gridTemplateColumns = "minmax(0,1fr)";
-      strip.style.alignItems = "start";
+  const getToken = () => {
+    if (window.state?.sessionToken) return window.state.sessionToken;
+    try {
+      const raw = localStorage.getItem("anatolia_q_session_v3") || localStorage.getItem("anatolia_q_session_v4");
+      if (!raw) return "";
+      const parsed = JSON.parse(raw);
+      return parsed.token || parsed.sessionToken || "";
+    } catch (_) {
+      return "";
     }
-    const mapShell = q(".aq-map-shell");
-    if (mapShell) {
-      mapShell.style.gridTemplateColumns = "minmax(0,1fr) 260px";
-      mapShell.style.alignItems = "stretch";
-    }
-  }
+  };
 
-  function ensureGuideButtons() {
-    if (!byId("guideBtnApp")) {
-      const topbarRight = q(".topbar-right");
-      const logoutBtn = byId("logoutBtn");
-      if (topbarRight && logoutBtn) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.id = "guideBtnApp";
-        button.className = "ghost-button";
-        button.textContent = "Kullanım Kılavuzu";
-        logoutBtn.insertAdjacentElement("beforebegin", button);
-      }
-    }
-    ["guideBtnApp", "guideBtnDash", "guideBtnInline"].forEach((id) => {
-      const button = byId(id);
-      if (!button || button.dataset.guideBound === "1") return;
-      button.dataset.guideBound = "1";
-      button.addEventListener("click", openGuide);
-    });
-  }
-
-  function hideLegacyCenterButtons() {
-    [
-      "centerBtnLogin",
-      "centerBtnInline",
-      "centerBtnApp",
-      "centerBtnSide",
-      "centerBtnDash",
-      "centerBtnAnalysis",
-    ].forEach((id) => {
-      const node = byId(id);
-      if (node) node.classList.add("aq-hide-center");
-    });
-  }
-
-  function ensureCenterFab() {
-    if (byId("aqCenterFab")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.id = "aqCenterFab";
-    button.className = "aq-fab";
-    button.textContent = "Merkez";
-    button.addEventListener("click", openCenterPanel);
-    document.body.appendChild(button);
-  }
-
-  function ensureUnifiedCenterPanel() {
-    const panel = q("#centerOverlay .center-panel");
-    if (!panel || panel.dataset.aqCenter === "1") return;
-    panel.dataset.aqCenter = "1";
-    panel.innerHTML = `
-      <div class="aq-kicker">Merkez operasyon paneli</div>
-      <h2 style="margin:14px 0 8px;font-size:clamp(24px,4vw,36px)">Tek merkez, ortak alarm ve paylaÅŸÄ±mlÄ± akÄ±ÅŸ</h2>
-      <p class="aq-center-copy">Merkez irtibatÄ±, acil alarm ve tÃ¼m kullanÄ±cÄ±lara aÃ§Ä±k operasyon mesajlarÄ± tek panelden yÃ¶netilir.</p>
-      <div class="aq-center-tabs">
-        <button type="button" class="aq-center-tab active" data-tab="merkez">Merkez</button>
-        <button type="button" class="aq-center-tab" data-tab="alarm">Acil Alarm</button>
-        <button type="button" class="aq-center-tab" data-tab="akis">Ortak AkÄ±ÅŸ</button>
-        <button type="button" class="aq-center-tab" data-tab="gecmis">Analiz Geçmişi</button>
-      </div>
-      <div class="aq-center-body">
-        <section class="aq-center-section active" data-section="merkez">
-          <div class="aq-two-col">
-            <div class="aq-center-card">
-              <div class="aq-kicker">Merkez irtibatÄ±</div>
-              <p class="aq-center-copy" style="margin-top:12px">Yetkili kullanÄ±cÄ± olarak merkeze not bÄ±rakabilir, yÃ¶netsel destek isteyebilir veya operasyon aÃ§Ä±klamasÄ± paylaÅŸabilirsin.</p>
-              <div class="field" style="margin-top:16px">
-                <label for="aqCenterNote">Merkeze not</label>
-                <textarea id="aqCenterNote" placeholder="Ã–rnek: DoÄŸu hattÄ±nda teyit edilen saha bilgisi merkeze aktarÄ±lsÄ±n."></textarea>
-              </div>
-              <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn" id="aqCenterSend">Merkeze ulaÅŸ</button>
-                <button type="button" class="aq-btn ghost" id="aqCenterClose">Kapat</button>
-              </div>
-              <div class="status-box" id="aqCenterStatus" aria-live="polite" style="margin-top:16px"></div>
-            </div>
-            <div class="aq-feed-card">
-              <div class="aq-kicker">Son merkez hareketleri</div>
-              <div class="aq-feed-list" id="aqOpsMini" style="margin-top:16px"></div>
-            </div>
-          </div>
-        </section>
-        <section class="aq-center-section" data-section="alarm">
-          <div class="aq-two-col">
-            <div class="aq-center-card">
-              <div class="aq-pulse-banner">
-                <strong style="display:block;color:#eef7ff;margin-bottom:8px">Acil alarm gÃ¶nder</strong>
-                <span class="aq-center-copy">Alarm kaydÄ± merkez e-posta hattÄ±na dÃ¼ÅŸer ve tÃ¼m kullanÄ±cÄ±lara ortak operasyon akÄ±ÅŸÄ±nda gÃ¶rÃ¼nÃ¼r.</span>
-              </div>
-              <div class="field" style="margin-top:16px">
-                <label for="aqAlarmRegion">BÃ¶lge</label>
-                <input id="aqAlarmRegion" type="text" placeholder="Ã–rnek: Hatay">
-              </div>
-              <div class="field" style="margin-top:14px">
-                <label for="aqAlarmTitle">BaÅŸlÄ±k</label>
-                <input id="aqAlarmTitle" type="text" placeholder="Ã–rnek: SÄ±nÄ±r hattÄ±nda ani hareketlilik">
-              </div>
-              <div class="field" style="margin-top:14px">
-                <label for="aqAlarmDetail">Detay</label>
-                <textarea id="aqAlarmDetail" placeholder="BÃ¶lgedeki problem tÃ¼m kullanÄ±cÄ±larÄ±n gÃ¶rebileceÄŸi ÅŸekilde burada tutulur."></textarea>
-              </div>
-              <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn warn" id="aqAlarmSend">Acil alarm geÃ§</button>
-                <button type="button" class="aq-btn ghost" id="aqAlarmChatOpen">Alarm sohbetini aÃ§</button>
-              </div>
-              <div class="status-box" id="aqAlarmStatus" aria-live="polite" style="margin-top:16px"></div>
-            </div>
-            <div class="aq-feed-card">
-              <div class="aq-kicker">AÃ§Ä±k alarmlar</div>
-              <div class="aq-alert-list" id="aqAlertList" style="margin-top:16px"></div>
-            </div>
-          </div>
-        </section>
-        <section class="aq-center-section" data-section="akis">
-          <div class="aq-two-col">
-            <div class="aq-feed-card">
-              <div class="aq-kicker">Ortak operasyon akÄ±ÅŸÄ±</div>
-              <div class="aq-feed-list" id="aqOpsFeed" style="margin-top:16px"></div>
-            </div>
-            <div class="aq-center-card">
-              <div class="aq-kicker">Operasyon mesajÄ±</div>
-              <div class="field" style="margin-top:16px">
-                <label for="aqOpsMessage">Mesaj</label>
-                <textarea id="aqOpsMessage" placeholder="Ã–rnek: Merkez teyidi alÄ±ndÄ±, saha ekibi ikinci doÄŸrulama bekliyor."></textarea>
-              </div>
-              <div class="aq-btn-row" style="margin-top:16px">
-                <button type="button" class="aq-btn" id="aqOpsSend">MesajÄ± paylaÅŸ</button>
-                <button type="button" class="aq-btn ghost" id="aqOpsRefresh">Yenile</button>
-              </div>
-              <div class="status-box" id="aqOpsStatus" aria-live="polite" style="margin-top:16px"></div>
-            </div>
-          </div>
-        </section>
-        <section class="aq-center-section" data-section="gecmis">
-          <div class="aq-feed-card">
-            <div class="aq-kicker">Merkez analiz geçmişi</div>
-            <div class="aq-history-grid" id="aqCenterHistoryFeed" style="margin-top:16px"></div>
-          </div>
-        </section>
-      </div>
-    `;
-
-    qa(".aq-center-tab", panel).forEach((button) => {
-      button.addEventListener("click", () => switchCenterTab(button.dataset.tab));
-    });
-    byId("aqCenterSend").addEventListener("click", submitCenterNote);
-    byId("aqCenterClose").addEventListener("click", closeCenterPanel);
-    byId("aqAlarmSend").addEventListener("click", submitAlarm);
-    byId("aqAlarmChatOpen").addEventListener("click", () => switchCenterTab("akis"));
-    byId("aqOpsSend").addEventListener("click", submitOpsMessage);
-    byId("aqOpsRefresh").addEventListener("click", refreshSharedData);
-  }
-
-  function switchCenterTab(tab) {
-    centerTab = tab;
-    qa(".aq-center-tab").forEach((button) => {
-      button.classList.toggle("active", button.dataset.tab === tab);
-    });
-    qa(".aq-center-section").forEach((section) => {
-      section.classList.toggle("active", section.dataset.section === tab);
-    });
-  }
-
-  function openCenterPanel() {
-    ensureUnifiedCenterPanel();
-    const overlay = byId("centerOverlay");
-    if (!overlay) return;
-    overlay.classList.add("open");
-    overlay.setAttribute("aria-hidden", "false");
-    overlay.style.overflowY = "auto";
-    refreshSharedData();
-  }
-
-  function closeCenterPanel() {
-    const overlay = byId("centerOverlay");
-    if (!overlay) return;
-    overlay.classList.remove("open");
-    overlay.setAttribute("aria-hidden", "true");
-  }
-
-  function ensureModuleDeck() {
-    const wrap = byId("aqModuleDeck");
-    if (wrap) wrap.remove();
-  }
-
-  function activateDomain(domain, jump) {
-    if (typeof setDomain === "function") setDomain(domain, jump);
-    if (typeof switchPage === "function") switchPage(jump ? "analysis" : "dashboard");
-    syncModuleCards();
-    paintRegionFocus();
-  }
-
-  function syncModuleCards() {
-    return;
-  }
-
-  function ensureChatShell() {
-    if (byId("aqChatShell")) return;
-    const analysisPanel = byId("page-analysis");
-    const panel = q("#page-analysis .panel");
-    if (!analysisPanel || !panel) return;
-    const shell = document.createElement("section");
-    shell.id = "aqChatShell";
-    shell.className = "aq-chat-shell";
-    shell.innerHTML = `
-      <div class="aq-chat-head">
-        <div><strong id="aqChatHeading">Genel Chat</strong></div>
-        
-      </div>
-      <div class="aq-chat-log" id="aqChatLog"></div>
-      <div class="aq-chat-suggestions" id="aqChatSuggestions"></div>
-      <div class="aq-chat-compose">
-        <div class="aq-chat-ident">
-          <input id="aqChatNameInput" type="text" maxlength="24" placeholder="Hitap adi (istege bagli)">
-        </div>
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;grid-column:1 / -1">
-          <textarea id="aqChatComposer" placeholder="MesajÄ±nÄ± yaz. Enter ile gÃ¶nder, Shift+Enter ile satÄ±r atla."></textarea>
-          <button type="button" class="aq-btn" id="aqChatSend">GÃ¶nder</button>
-        </div>
-      </div>
-    `;
-    panel.appendChild(shell);
-  }
-
-  function renderChatTurns() {
-    ensureChatShell();
-    const log = byId("aqChatLog");
-    if (!log) return;
-    log.replaceChildren();
-    if (!turns.length) {
-      const empty = document.createElement("div");
-      empty.className = "aq-chat-empty";
-      empty.textContent = "";
-      log.appendChild(empty);
+  const setStatus = (kind, message) => {
+    const node = byId("analysisStatus");
+    if (!node) return;
+    node.className = "status-box";
+    if (!message) {
+      node.textContent = "";
+      node.removeAttribute("data-kind");
       return;
     }
-    turns.forEach((turn) => {
+    node.dataset.kind = kind;
+    node.textContent = norm(message);
+  };
+
+  const setLoading = (active) => {
+    const load = byId("analysisLoad");
+    if (load) load.classList.toggle("active", active);
+    const runBtn = byId("runBtn");
+    if (runBtn) runBtn.disabled = active;
+  };
+
+  const ensureThread = () => {
+    const shell = byId("chatShell") || q(".chat-shell");
+    const resultArea = byId("resultArea");
+    if (shell) {
+      shell.classList.add("active");
+      if (resultArea) resultArea.classList.add("hidden");
+      return shell;
+    }
+
+    const anchor = q("#page-analysis .analysis-grid") || q("#page-analysis .panel");
+    if (!anchor) return null;
+
+    const wrap = document.createElement("div");
+    wrap.id = "chatShell";
+    wrap.className = "chat-shell active";
+    wrap.innerHTML = `
+      <div class="result-card full">
+        <div class="section-kicker">Genel Chat</div>
+        <h3 id="chatHeading">Genel Chat</h3>
+        <p id="chatMeta" class="card-copy"></p>
+        <div id="chatThread" class="chat-thread"></div>
+      </div>
+    `;
+    anchor.insertBefore(wrap, anchor.firstChild);
+    if (resultArea) resultArea.classList.add("hidden");
+    return wrap;
+  };
+
+  const render = () => {
+    const shell = ensureThread();
+    if (!shell) return;
+
+    const thread = byId("chatThread");
+    if (!thread) return;
+    thread.replaceChildren();
+
+    state.messages.forEach((message) => {
       const row = document.createElement("div");
-      row.className = `aq-chat-row ${turn.role}`;
+      row.className = `chat-row ${message.role === "user" ? "user" : "assistant"}`;
+
       const avatar = document.createElement("div");
-      avatar.className = "aq-chat-avatar";
-      avatar.textContent = turn.role === "user" ? "SEN" : "AQ";
+      avatar.className = "chat-avatar";
+      avatar.textContent = message.role === "user" ? "SEN" : "AQ";
+
       const bubble = document.createElement("div");
-      bubble.className = "aq-chat-bubble";
-      const role = document.createElement("div");
-      role.className = "aq-chat-role";
-      role.textContent = turn.role === "user" ? "KullanÄ±cÄ±" : "T.C. ANATOLIA-Q";
+      bubble.className = "chat-bubble";
+
+      const meta = document.createElement("p");
+      meta.className = "chat-meta";
+      meta.textContent = norm(message.meta || (message.role === "user" ? "Kullan1c1 mesaj1" : "T.C. ANATOLIA-Q"));
+
       const text = document.createElement("p");
-      text.className = "aq-chat-text";
-      text.textContent = turn.text || "";
-      bubble.appendChild(role);
+      text.className = "chat-text";
+      text.textContent = norm(message.content || "");
+
+      bubble.appendChild(meta);
       bubble.appendChild(text);
-      if (turn.meta) {
-        const meta = document.createElement("div");
-        meta.className = "aq-chat-meta";
-        meta.textContent = turn.meta;
-        bubble.appendChild(meta);
-      }
       row.appendChild(avatar);
       row.appendChild(bubble);
-      log.appendChild(row);
+      thread.appendChild(row);
     });
+
     requestAnimationFrame(() => {
-      log.scrollTop = log.scrollHeight;
+      thread.scrollTop = thread.scrollHeight;
     });
-  }
+  };
 
-  function setChatSuggestions(items) {
-    const wrap = byId("aqChatSuggestions");
-    if (!wrap) return;
-    wrap.replaceChildren();
-    (Array.isArray(items) ? items : []).forEach((item) => {
-      if (!item) return;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "aq-chat-chip";
-      button.textContent = item;
-      button.addEventListener("click", () => {
-        const composer = byId("aqChatComposer");
-        if (!composer) return;
-        composer.value = item;
-        composer.focus();
-      });
-      wrap.appendChild(button);
+  const pushMessage = (role, content, meta) => {
+    const message = { role, content: norm(content), meta: norm(meta) };
+    const last = state.messages[state.messages.length - 1];
+    if (last && last.role === message.role && last.content === message.content && last.meta === message.meta) return;
+    state.messages.push(message);
+    render();
+  };
+
+  const syncFromExisting = () => {
+    if (state.messages.length) return;
+    const rows = document.querySelectorAll("#chatThread .chat-row");
+    rows.forEach((row) => {
+      const role = row.classList.contains("user") ? "user" : "assistant";
+      const content = norm(q(".chat-text", row)?.textContent || "");
+      const meta = norm(q(".chat-meta", row)?.textContent || "");
+      if (content) pushMessage(role, content, meta);
     });
-  }
+  };
 
-  function syncChatMode() {
-    ensureChatShell();
-    const shell = byId("aqChatShell");
-    const resultArea = byId("resultArea");
-    const sitInput = byId("sitInput");
-    const sitField = sitInput ? sitInput.closest(".field") : null;
-    const runBtn = byId("runBtn");
-    const clearBtn = byId("clearBtn");
-    const injectBtn = byId("injectBtn");
-    const downloadBtn = byId("downloadBtn");
-    const title = byId("analysisTitle");
-    const sub = byId("analysisSubtitle");
+  const sendChat = async () => {
+    if (!isChatMode() || state.busy) return;
 
-    if (chatMode()) {
-      if (title) title.textContent = "Genel Chat";
-      if (sub) sub.textContent = "";
-      if (sitField) sitField.classList.add("aq-hidden");
-      if (runBtn) runBtn.classList.add("aq-hidden");
-      if (clearBtn) clearBtn.classList.add("aq-hidden");
-      if (injectBtn) injectBtn.classList.add("aq-hidden");
-      if (downloadBtn) downloadBtn.classList.add("aq-hidden");
-      if (resultArea) resultArea.classList.add("aq-hidden");
-      if (shell) shell.classList.add("active");
-      renderChatTurns();
+    const input = byId("sitInput");
+    const chatName = byId("chatNameInput");
+    if (!input) return;
+
+    const situation = input.value.trim();
+    if (!situation) {
+      setStatus("error", "Mesaj alan1 bo b1rak1lamaz.");
       return;
     }
 
-    if (title && typeof DOMAINS !== "undefined" && state?.domain && DOMAINS[state.domain]) {
-      title.textContent = DOMAINS[state.domain].short || DOMAINS[state.domain].title;
-    }
-    if (sub && typeof DOMAINS !== "undefined" && state?.domain && DOMAINS[state.domain]) {
-      sub.textContent = DOMAINS[state.domain].description || sub.textContent;
-    }
-    if (sitField) sitField.classList.remove("aq-hidden");
-    if (runBtn) runBtn.classList.remove("aq-hidden");
-    if (clearBtn) clearBtn.classList.remove("aq-hidden");
-    if (injectBtn) injectBtn.classList.remove("aq-hidden");
-    if (downloadBtn) downloadBtn.classList.remove("aq-hidden");
-    if (resultArea) resultArea.classList.remove("aq-hidden");
-    if (shell) shell.classList.remove("active");
-  }
+    syncFromExisting();
 
-  async function runChat() {
-    const composer = byId("aqChatComposer");
-    const chatNameInput = byId("aqChatNameInput");
-    const text = composer ? composer.value.trim() : "";
-    const status = byId("analysisStatus");
-    const load = byId("analysisLoad");
-    const sendBtn = byId("aqChatSend");
-    if (!text) {
-      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj alanÄ± boÅŸ bÄ±rakÄ±lamaz.");
-      return;
-    }
-    const chatName = chatNameInput ? chatNameInput.value.trim() : "";
-    pushTurn("user", text, chatName ? `Hitap adÄ±: ${chatName}` : "");
-    if (sendBtn) sendBtn.disabled = true;
-    if (typeof setLoading === "function") setLoading(load, true);
-    if (typeof setStatus === "function") setStatus(status, "", "");
+    state.busy = true;
+    setLoading(true);
+    setStatus("", "");
+    pushMessage("user", situation, chatName?.value?.trim() ? `${chatName.value.trim()} | kullan1c1 mesaj1` : "Kullan1c1 mesaj1");
+
     try {
-      const result = await fetchJson("/api/analyze", {
+      const token = getToken();
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+        headers["X-Auth-Token"] = token;
+      }
+
+      const response = await fetch(`${getApiBase()}/api/analyze`, {
         method: "POST",
+        headers,
         body: JSON.stringify({
-          domain: typeof state !== "undefined" ? state.domain : "genel_chat",
-          situation: text,
-          chat_name: chatName,
-          chat_history: turns.slice(0, -1).map((item) => ({ role: item.role, content: item.text })),
+          domain: "genel_chat",
+          situation,
+          chat_name: chatName?.value?.trim() || "",
+          chat_history: state.messages
+            .filter((item) => item.role === "user" || item.role === "assistant")
+            .slice(0, -1)
+            .map((item) => ({ role: item.role, content: item.content })),
         }),
       });
-      const meta = [result.tehdit_analizi || "", result.sohbet_tonu || ""].filter(Boolean).join(" | ");
-      pushTurn("assistant", result.ozet || "Bir cevap Ã¼retildi.", meta);
-      setChatSuggestions(result.senaryolar || []);
-      if (typeof appendHistoryEntry === "function") appendHistoryEntry(result);
-      if (composer) composer.value = "";
-      if (typeof setStatus === "function") setStatus(status, result.fallback_mode ? "warn" : "success", "Sohbet cevabÄ± hazÄ±r.");
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || data.message || `0stek baar1s1z (${response.status})`);
+
+      pushMessage("assistant", data.ozet || "K1sa sohbet cevab1 haz1r.", data.sohbet_tonu || "Rahat sohbet");
+
+      const lastSummary = byId("lastSummary");
+      if (lastSummary) lastSummary.textContent = norm(data.ozet || "");
+      const downloadBtn = byId("downloadBtn");
+      if (downloadBtn) downloadBtn.disabled = false;
+      input.value = "";
+      setStatus("success", "Sohbet cevab1 haz1r.");
     } catch (error) {
-      pushTurn("assistant", "Bu turda kÃ¼Ã§Ã¼k bir aksaklÄ±k oldu. AynÄ± mesajÄ± yeniden denersen kaldÄ±ÄŸÄ±mÄ±z yerden devam ederiz.", error.message || "GeÃ§ici hata");
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Sohbet cevabÄ± Ã¼retilemedi.");
+      state.messages.pop();
+      render();
+      setStatus("error", error.message || "Sohbet cevab1 cretilemedi.");
     } finally {
-      if (sendBtn) sendBtn.disabled = false;
-      if (typeof setLoading === "function") setLoading(load, false);
-      renderChatTurns();
+      state.busy = false;
+      setLoading(false);
     }
-  }
+  };
 
-  function pushTurn(role, text, meta = "") {
-    turns.push({ role, text, meta });
-    renderChatTurns();
-  }
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (!isChatMode()) return;
+      const runBtn = event.target.closest("#runBtn");
+      if (!runBtn) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      sendChat();
+    },
+    true,
+  );
 
-  function bindChatComposer() {
-    const sendBtn = byId("aqChatSend");
-    if (sendBtn && sendBtn.dataset.bound !== "1") {
-      sendBtn.dataset.bound = "1";
-      sendBtn.addEventListener("click", runChat);
-    }
-    const composer = byId("aqChatComposer");
-    if (composer && composer.dataset.bound !== "1") {
-      composer.dataset.bound = "1";
-      composer.addEventListener("keydown", (event) => {
-        if (!chatMode()) return;
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          runChat();
-        }
-      });
-    }
-  }
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (!isChatMode()) return;
+      const input = event.target.closest("#sitInput, #chatNameInput");
+      if (!input) return;
+      if (event.key !== "Enter") return;
+      if (input.id === "sitInput" && event.shiftKey) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      sendChat();
+    },
+    true,
+  );
 
-  function paintRegionFocus() {
-    const title = byId("aqRegionTitle");
-    const copy = byId("aqRegionCopy");
-    const count = byId("aqRegionAlertCount");
-    const domainLabel = byId("aqRegionDomainLabel");
-    const list = byId("aqRegionAlertList");
-    if (title) title.textContent = selectedRegion;
-    if (copy) copy.textContent = `${selectedRegion} iÃ§in aktif iÅŸaretler, paylaÅŸÄ±lan notlar ve merkez alarm akÄ±ÅŸÄ± burada toplanÄ±r.`;
-    if (domainLabel && typeof state !== "undefined" && typeof DOMAINS !== "undefined") {
-      domainLabel.textContent = `Alan ${DOMAINS[state.domain]?.title || state.domain}`;
-    }
-    const regionAlerts = alertsCache.filter((item) => item.region === selectedRegion);
-    if (count) count.textContent = `Alarm ${regionAlerts.length}`;
-    if (list) {
-      list.replaceChildren();
-      if (!regionAlerts.length) {
-        const empty = document.createElement("div");
-        empty.className = "aq-ops-message";
-        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
-        list.appendChild(empty);
-      } else {
-        regionAlerts.slice(0, 4).forEach((item) => {
-          const card = document.createElement("div");
-          card.className = "aq-alert-card";
-          card.innerHTML = `<strong>${item.title}</strong><p>${item.detail}</p><div class="aq-alert-meta"><span class="aq-pill">${item.priority}</span><span class="aq-pill">${item.timestamp}</span><span class="aq-pill">${item.user}</span></div>`;
-          list.appendChild(card);
-        });
-      }
-    }
-    qa(".aq-region").forEach((node) => {
-      const dot = q(".aq-region-dot", node);
-      if (dot) dot.classList.toggle("hot", node.dataset.region === selectedRegion || alertsCache.some((item) => item.region === node.dataset.region));
-    });
-  }
-
-  function renderAlerts() {
-    const alertList = byId("aqAlertList");
-    const mini = byId("aqOpsMini");
-    if (alertList) {
-      alertList.replaceChildren();
-      if (!alertsCache.length) {
-        const empty = document.createElement("div");
-        empty.className = "aq-ops-message";
-        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
-        alertList.appendChild(empty);
-      } else {
-        alertsCache.slice(0, 10).forEach((item) => {
-          const card = document.createElement("div");
-          card.className = "aq-alert-card";
-          card.innerHTML = `<strong>${item.region} | ${item.title}</strong><p>${item.detail}</p><div class="aq-alert-meta"><span class="aq-pill">${item.priority}</span><span class="aq-pill">${item.timestamp}</span><span class="aq-pill">${item.user}</span></div>`;
-          card.addEventListener("click", () => {
-            selectedRegion = item.region;
-            paintRegionFocus();
-            switchCenterTab("alarm");
-          });
-          alertList.appendChild(card);
-        });
-      }
-    }
-    if (mini) {
-      mini.replaceChildren();
-      const items = opsCache.filter((item) => item.channel === "alarm").slice(0, 4);
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "aq-ops-message";
-        empty.textContent = "Sohbete baslamak icin mesaj yaz.";
-        mini.appendChild(empty);
-      } else {
-        items.forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "aq-ops-message emergency";
-          row.textContent = `${item.timestamp} | ${item.message}`;
-          mini.appendChild(row);
-        });
-      }
-    }
-    paintRegionFocus();
-  }
-
-  function renderOpsFeed() {
-    const feed = byId("aqOpsFeed");
-    if (!feed) return;
-    feed.replaceChildren();
-    if (!opsCache.length) {
-      const empty = document.createElement("div");
-      empty.className = "aq-ops-message";
-      empty.textContent = "Sohbete baslamak icin mesaj yaz.";
-      feed.appendChild(empty);
-      return;
-    }
-    opsCache.slice(0, 18).forEach((item) => {
-      const node = document.createElement("div");
-      node.className = `aq-ops-message ${item.channel === "emergency" || item.channel === "alarm" ? "emergency" : ""}`;
-      node.innerHTML = `<strong>${item.channel.toUpperCase()} | ${item.user}</strong><p>${item.message}</p><div class="aq-feed-meta"><span class="aq-pill">${item.priority}</span><span class="aq-pill">${item.timestamp}</span></div>`;
-      feed.appendChild(node);
-    });
-  }
-
-  async function refreshSharedData() {
-    try {
-      const requests = [fetchJson("/api/alerts"), fetchJson("/api/ops-feed")];
-      if (state?.sessionToken) {
-        requests.push(fetchJson("/api/history", { method: "GET" }));
-      }
-      const [alerts, ops, history] = await Promise.all(requests);
-      alertsCache = Array.isArray(alerts.items) ? alerts.items : [];
-      opsCache = Array.isArray(ops.items) ? ops.items : [];
-      if (Array.isArray(history)) {
-        historyCache = history.map(normalizeHistoryEntry);
-        if (state) state.historyList = historyCache;
-      }
-      renderAlerts();
-      renderOpsFeed();
-      renderHistoryViews();
-    } catch (_) {
-      // Shared feeds are opportunistic; keep UI responsive if backend is temporarily unavailable.
-    }
-  }
-
-  async function submitCenterNote() {
-    const note = byId("aqCenterNote");
-    const status = byId("aqCenterStatus");
-    try {
-      const data = await fetchJson("/api/contact-center", {
-        method: "POST",
-        body: JSON.stringify({ token: state?.sessionToken || "", note: note ? note.value.trim() : "" }),
-      });
-      if (note) note.value = "";
-      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Merkeze not gÃ¶nderildi.");
-    } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Merkez iletimi baÅŸarÄ±sÄ±z.");
-    }
-  }
-
-  async function submitAlarm() {
-    const regionInput = byId("aqAlarmRegion");
-    const titleInput = byId("aqAlarmTitle");
-    const detailInput = byId("aqAlarmDetail");
-    const status = byId("aqAlarmStatus");
-    const payload = {
-      token: state?.sessionToken || "",
-      region: regionInput ? regionInput.value.trim() : selectedRegion,
-      title: titleInput ? titleInput.value.trim() : "",
-      detail: detailInput ? detailInput.value.trim() : "",
-      priority: "KRITIK",
-    };
-    if (!payload.title || !payload.detail) {
-      if (typeof setStatus === "function") setStatus(status, "error", "BaÅŸlÄ±k ve detay zorunludur.");
-      return;
-    }
-    try {
-      const data = await fetchJson("/api/alerts", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      selectedRegion = data.item?.region || payload.region;
-      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Alarm kaydedildi.");
-      if (titleInput) titleInput.value = "";
-      if (detailInput) detailInput.value = "";
-      await refreshSharedData();
-      switchCenterTab("akis");
-    } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Alarm gÃ¶nderilemedi.");
-    }
-  }
-
-  async function submitOpsMessage(channel = "ops") {
-    const input = byId("aqOpsMessage");
-    const status = byId("aqOpsStatus");
-    const message = input ? input.value.trim() : "";
-    if (!message) {
-      if (typeof setStatus === "function") setStatus(status, "error", "Mesaj boÅŸ olamaz.");
-      return;
-    }
-    try {
-      const data = await fetchJson("/api/ops-feed", {
-        method: "POST",
-        body: JSON.stringify({
-          token: state?.sessionToken || "",
-          message,
-          priority: channel === "emergency" ? "KRITIK" : "BILGI",
-          channel,
-        }),
-      });
-      if (input) input.value = "";
-      if (typeof setStatus === "function") setStatus(status, "success", data.message || "Operasyon mesajÄ± paylaÅŸÄ±ldÄ±.");
-      await refreshSharedData();
-    } catch (error) {
-      if (typeof setStatus === "function") setStatus(status, "error", error.message || "Mesaj paylaÅŸÄ±lamadÄ±.");
-    }
-  }
-
-  function bindLegacyEvents() {
-    const overlay = byId("centerOverlay");
-    if (overlay && overlay.dataset.boundOverlay !== "1") {
-      overlay.dataset.boundOverlay = "1";
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) closeCenterPanel();
-      });
-    }
-    if (!window.__aqEscapeBound) {
-      window.__aqEscapeBound = true;
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          closeGuide();
-          closeCenterPanel();
-        }
-      });
-    }
-  }
-
-  function patchDomainChange() {
-    if (typeof setDomain !== "function" || window.__aqDomainPatched) return;
-    window.__aqDomainPatched = true;
-    const original = setDomain;
-    window.setDomain = function patchedSetDomain() {
-      const output = original.apply(this, arguments);
-      syncChatMode();
-      syncModuleCards();
-      paintRegionFocus();
-      return output;
-    };
-  }
-
-  function patchPreset() {
-    if (typeof injectTemplate !== "function" || window.__aqPresetPatched) return;
-    window.__aqPresetPatched = true;
-    const original = injectTemplate;
-    window.injectTemplate = function patchedInjectTemplate() {
-      original.apply(this, arguments);
-      if (!chatMode()) return;
-      const composer = byId("aqChatComposer");
-      if (!composer) return;
-      composer.value = "Bana normal bir yapay zeka sohbeti gibi cevap ver. Konuyu sade anlat, hafif sÄ±cak bir ton kullan.";
-      composer.focus();
-    };
-  }
-
-  function patchNavigation() {
-    const dashboardAction = q("#page-dashboard .page-actions");
-    if (dashboardAction && !byId("aqDashboardAlarm")) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.id = "aqDashboardAlarm";
-      button.className = "ghost-button";
-      button.textContent = "Acil Alarm";
-      button.addEventListener("click", () => {
-        switchCenterTab("alarm");
-        openCenterPanel();
-      });
-      dashboardAction.appendChild(button);
-    }
-  }
-
-  function domainLabel(domain) {
-    const item = (typeof DOMAINS !== "undefined" && DOMAINS[domain]) || {};
-    return item.display || item.title || domain || "Genel";
-  }
-
-  function scenarioLines(result) {
-    return safeArray(result?.senaryolar || result?.senaryo_analizi).map((item) => {
-      if (typeof item === "string") return item;
-      if (typeof scenarioToText === "function") return scenarioToText(item);
-      return [item?.baslik, item?.olasilik, item?.aciklama, item?.aksiyon].filter(Boolean).join(" | ");
-    });
-  }
-
-  function historyThreat(result) {
-    return result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "BILGI";
-  }
-
-  function normalizeHistoryEntry(item) {
-    const result = item?.result && typeof item.result === "object" ? item.result : item || {};
-    return {
-      id: item?.id || result.analysis_id || `AQ-${Date.now()}`,
-      domain: item?.domain || result.domain || state?.domain || "savunma",
-      timestamp: item?.timestamp || item?.time || result.timestamp || result.created_at || "--",
-      ozet: item?.ozet || item?.summary || result.ozet || "",
-      fallback_mode: Boolean(item?.fallback_mode || result.fallback_mode),
-      level: historyThreat(result),
-      user: item?.user || result.actor_username || "bilinmiyor",
-      role: item?.role || result.actor_role || "bilinmiyor",
-      provider: item?.provider || result.provider || "-",
-      model: item?.model || result.model || "-",
-      report_docx_url: item?.report_docx_url || `/api/report/${item?.id || result.analysis_id}/docx`,
-      result,
-    };
-  }
-
-  function ensureHistoryShell() {
-    const historyPage = byId("page-history");
-    if (!historyPage) return null;
-    q(".hero-strip p", historyPage)?.remove();
-    byId("historyTableWrap")?.classList.add("aq-hidden");
-    byId("historyEmpty")?.classList.add("aq-hidden");
-    let shell = byId("aqHistoryShell");
-    if (!shell) {
-      shell = document.createElement("div");
-      shell.id = "aqHistoryShell";
-      shell.className = "aq-history-grid";
-      const panel = q("#page-history .panel:last-of-type");
-      if (panel) panel.appendChild(shell);
-    }
-    return shell;
-  }
-
-  function renderHistoryEmpty(target, message) {
-    if (!target) return;
-    target.replaceChildren();
-    const empty = document.createElement("div");
-    empty.className = "aq-history-empty";
-    empty.textContent = message;
-    target.appendChild(empty);
-  }
-
-  async function downloadHistoryReport(entry) {
-    const headers = state?.sessionToken
-      ? {
-          Authorization: `Bearer ${state.sessionToken}`,
-          "X-Auth-Token": state.sessionToken,
-        }
-      : {};
-    const response = await fetch((API_BASE || "") + entry.report_docx_url, { headers });
-    if (!response.ok) throw new Error("Rapor dosyasi alinamadi.");
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `TC_ANATOLIA_Q_${entry.id}_${entry.domain}.docx`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-    if (typeof updateStats === "function") {
-      state.reportCount = Number(state.reportCount || 0) + 1;
-      updateStats();
-    }
-    if (typeof saveSession === "function") saveSession();
-  }
-
-  function openHistoryEntry(entry) {
-    if (!entry?.result) return;
-    if (typeof setDomain === "function") setDomain(entry.domain);
-    if (typeof renderResult === "function") renderResult(entry.result);
-    if (typeof switchPage === "function") switchPage("analysis");
-  }
-
-  function detailList(items) {
-    const values = Array.isArray(items) ? items.filter(Boolean) : [];
-    if (!values.length) return "<p>-</p>";
-    return `<ul>${values.map((item) => `<li>${escapeHtml(typeof item === "string" ? item : scenarioToText(item))}</li>`).join("")}</ul>`;
-  }
-
-  function buildHistoryCard(entry, compact = false) {
-    const result = entry.result || {};
-    const card = document.createElement("article");
-    card.className = "aq-history-card";
-    card.innerHTML = `
-      <div class="aq-history-head">
-        <div>
-          <h3 class="aq-history-title">${escapeHtml(domainLabel(entry.domain))} | ${escapeHtml(entry.id)}</h3>
-          <div class="aq-history-meta">
-            <span class="aq-pill">${escapeHtml(entry.timestamp)}</span>
-            <span class="aq-pill">${escapeHtml(entry.user)}</span>
-            <span class="aq-pill">${escapeHtml(entry.role)}</span>
-            <span class="aq-pill">${escapeHtml(entry.provider)}</span>
-            <span class="aq-pill">${escapeHtml(historyThreat(result))}</span>
-          </div>
-        </div>
-      </div>
-      <p class="aq-history-summary">${escapeHtml(entry.ozet || "Ozet bulunamadi.")}</p>
-      <div class="aq-history-sections">
-        <div class="aq-history-box">
-          <strong>Tehdit / Degerlendirme</strong>
-          <p>${escapeHtml(result.tehdit_analizi || result.risk_analizi || "Detay bulunamadi.")}</p>
-        </div>
-        <div class="aq-history-box">
-          <strong>Oncelikli Oneri</strong>
-          <p>${escapeHtml(result.oncelikli_oneri || "Oneri bulunamadi.")}</p>
-        </div>
-        <div class="aq-history-box">
-          <strong>Senaryolar</strong>
-          ${detailList(result.senaryolar || result.senaryo_analizi)}
-        </div>
-        <div class="aq-history-box">
-          <strong>Rapor Ozeti</strong>
-          ${detailList([result.report_package?.yonetici_ozeti, result.report_package?.sonuc_ve_eylem_cagrisi])}
-        </div>
-      </div>
-      <div class="aq-history-actions">
-        <button type="button" class="aq-btn" data-action="open">Detayi ac</button>
-        <button type="button" class="aq-btn ghost" data-action="docx">Rapor indir</button>
-      </div>
-    `;
-    if (compact) {
-      q(".aq-history-sections", card)?.style.setProperty("grid-template-columns", "1fr");
-    }
-    q('[data-action="open"]', card)?.addEventListener("click", () => openHistoryEntry(entry));
-    q('[data-action="docx"]', card)?.addEventListener("click", async () => {
-      const statusTarget = byId("analysisStatus") || byId("aqCenterStatus");
-      try {
-        if (typeof setStatus === "function") setStatus(statusTarget, "info", "Rapor dosyasi hazirlaniyor...");
-        await downloadHistoryReport(entry);
-        if (typeof setStatus === "function") setStatus(statusTarget, "success", "Rapor indirildi.");
-      } catch (error) {
-        if (typeof setStatus === "function") setStatus(statusTarget, "error", error.message || "Rapor indirilemedi.");
-      }
-    });
-    return card;
-  }
-
-  function renderHistoryViews() {
-    const shell = ensureHistoryShell();
-    const centerShell = byId("aqCenterHistoryFeed");
-    if (!historyCache.length) {
-      renderHistoryEmpty(shell, "Henüz detaylı analiz kaydı görünmüyor.");
-      renderHistoryEmpty(centerShell, "Merkez için görüntülenecek analiz kaydı bulunmuyor.");
-      return;
-    }
-
-    if (shell) {
-      shell.replaceChildren();
-      historyCache.forEach((entry) => shell.appendChild(buildHistoryCard(entry, false)));
-    }
-    if (centerShell) {
-      centerShell.replaceChildren();
-      historyCache.slice(0, 10).forEach((entry) => centerShell.appendChild(buildHistoryCard(entry, true)));
-    }
-  }
-
-  function patchHistoryFunctions() {
-    if (window.__aqHistoryPatched) return;
-    window.__aqHistoryPatched = true;
-
-    window.renderHistory = function patchedRenderHistory() {
-      historyCache = Array.isArray(state?.historyList) ? state.historyList.map(normalizeHistoryEntry) : [];
-      if (state) state.historyList = historyCache;
-      renderHistoryViews();
-    };
-
-    window.loadHistory = async function patchedLoadHistory(silent = false) {
-      if (!state?.sessionToken) return;
-      const status = byId("analysisStatus");
-      if (!silent && typeof setStatus === "function") setStatus(status, "info", "Gecmis ve rapor kayitlari yukleniyor...");
-      try {
-        const data = await fetchJson("/api/history", { method: "GET" });
-        const items = Array.isArray(data) ? data : Array.isArray(data?.history) ? data.history : [];
-        historyCache = items.map(normalizeHistoryEntry);
-        state.historyList = historyCache;
-        renderHistoryViews();
-        if (typeof updateStats === "function") updateStats();
-        if (typeof saveSession === "function") saveSession();
-        if (!silent && typeof setStatus === "function") setStatus(status, "success", "Gecmis kayitlari guncellendi.");
-      } catch (error) {
-        if (!silent && typeof setStatus === "function") setStatus(status, "warn", error.message || "Gecmis yuklenemedi.");
-      }
-    };
-
-    window.appendHistoryEntry = function patchedAppendHistoryEntry(result) {
-      const entry = normalizeHistoryEntry({
-        id: result?.analysis_id || `AQ-${Date.now()}`,
-        domain: state?.domain || "savunma",
-        timestamp: result?.timestamp || new Date().toLocaleString("tr-TR"),
-        ozet: result?.ozet || "",
-        result,
-      });
-      historyCache = [entry, ...historyCache.filter((item) => item.id !== entry.id)].slice(0, 20);
-      state.historyList = historyCache;
-      renderHistoryViews();
-      if (typeof updateStats === "function") updateStats();
-      if (typeof saveSession === "function") saveSession();
-    };
-  }
-
-  function ensureReportPackage(result) {
-    if (result?.report_package && typeof result.report_package === "object") return result.report_package;
-    return {
-      kapak: {
-        kurum: "BOLD Askeri Teknoloji ve Savunma Sanayi A.Åž.",
-        birim: "Stratejik Analiz ve Politika GeliÅŸtirme Birimi",
-        sistem: "T.C. ANATOLIA-Q Kuantum TabanlÄ± Ulusal Karar Destek Sistemi",
-        proje_kodu: "QTR-202412",
-        cikti_no: result?.analysis_id || "--",
-        belge_no: result?.analysis_id || "--",
-        baslik: `${domainLabel(state?.domain)} Durum DeÄŸerlendirmesi`,
-        tarih: result?.timestamp || result?.created_at || "--",
-        gizlilik: "GÄ°ZLÄ°LÄ°K DERECESÄ°: GÄ°ZLÄ°",
-        kapsam: domainLabel(state?.domain),
-      },
-      yonetici_ozeti: result?.ozet || "",
-      kritik_bulgular: [result?.tehdit_analizi || result?.risk_analizi || "Durum deÄŸerlendirmesi hazÄ±r."],
-      temel_oneriler: [result?.oncelikli_oneri || "Koordinasyon korunmalÄ±dÄ±r."],
-      tehdit_analizi_bolumu: result?.tehdit_analizi || result?.risk_analizi || "",
-      mevcut_kapasite: "Mevcut gÃ¶rÃ¼nÃ¼m karar destek perspektifinden Ã¶zetlenmiÅŸtir.",
-      onerilen_mimari: result?.kritik_baglanti || "Merkez koordinasyonu ve Ã§ok katmanlÄ± izleme Ã¶nerilir.",
-      bolgesel_analiz: result?.ozet || "",
-      uygulama_plani: [
-        { faz: "Faz 1", zaman: "Ä°lk 24 saat", icerik: "Teyit ve acil koordinasyon." },
-        { faz: "Faz 2", zaman: "1-7 gÃ¼n", icerik: "Kurumlar arasÄ± eÅŸgÃ¼dÃ¼m ve saha takibi." },
-        { faz: "Faz 3", zaman: "1-4 hafta", icerik: "KalÄ±cÄ± tedbir ve ikinci kademe planlama." },
-      ],
-      kurumsal_sorumluluklar: safeArray(result?.etkilenen_kurumlar),
-      teknik_standartlar: [
-        "KayÄ±t zinciri korunmalÄ±dÄ±r.",
-        "Merkez bildirimleri zaman damgasÄ± ile tutulmalÄ±dÄ±r.",
-        "Rapor Ã§Ä±ktÄ±sÄ± ortak operasyon masasÄ± ile uyumlu olmalÄ±dÄ±r.",
-      ],
-      riskler_ve_tedbirler: safeArray(result?.senaryolar).filter((item) => typeof item === "object"),
-      sonuc_ve_eylem_cagrisi: result?.oncelikli_oneri || "",
-    };
-  }
-
-  function buildOfficialReport(result) {
-    const report = ensureReportPackage(result);
-    if (typeof isChatMode === "function" && isChatMode()) {
-      const transcript = safeArray(state?.chatMessages)
-        .map((item) => `<li><strong>${escapeHtml(item?.role === "user" ? "KullanÄ±cÄ±" : "T.C. ANATOLIA-Q")}:</strong> ${escapeHtml(item?.content || "")}</li>`)
-        .join("");
-      return `
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>T.C. ANATOLIA-Q Sohbet Notu</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 28px; color: #111827; }
-              h1, h2 { margin-bottom: 10px; }
-              p, li { line-height: 1.6; }
-              .meta { margin-bottom: 18px; padding: 16px; background: #f3f6fb; border-radius: 12px; }
-            </style>
-          </head>
-          <body>
-            <h1>T.C. ANATOLIA-Q Genel Chat Notu</h1>
-            <div class="meta">
-              <p><strong>YanÄ±t ID:</strong> ${escapeHtml(result?.analysis_id || "--")}</p>
-              <p><strong>Alan:</strong> ${escapeHtml(domainLabel(state?.domain))}</p>
-              <p><strong>Ton:</strong> ${escapeHtml(result?.sohbet_tonu || "Rahat ve doÄŸal")}</p>
-            </div>
-            <h2>Sohbet DÃ¶kÃ¼mÃ¼</h2>
-            <ul>${transcript}</ul>
-            <h2>Devam SeÃ§enekleri</h2>
-            <ul>${scenarioLines(result).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-          </body>
-        </html>
-      `;
-    }
-
-    return `
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>T.C. ANATOLIA-Q Raporu</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 34px; color: #111827; }
-            h1, h2, h3 { margin-bottom: 10px; }
-            p, li { line-height: 1.7; }
-            .cover { border: 2px solid #111827; padding: 34px; margin-bottom: 28px; }
-            .meta { margin-bottom: 18px; padding: 16px; background: #f3f6fb; border-radius: 12px; }
-            .muted { color: #4b5563; }
-            .section { margin-top: 26px; }
-            .section h2 { border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
-            .pill { display: inline-block; margin-right: 8px; margin-bottom: 8px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 999px; background: #f8fafc; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #cbd5e1; text-align: left; vertical-align: top; padding: 10px; }
-          </style>
-        </head>
-        <body>
-          <section class="cover">
-            <p><strong>${escapeHtml(report.kapak?.kurum || "")}</strong></p>
-            <p class="muted">${escapeHtml(report.kapak?.birim || "")}</p>
-            <h1>${escapeHtml(report.kapak?.sistem || "T.C. ANATOLIA-Q")}</h1>
-            <p><strong>Proje Kodu:</strong> ${escapeHtml(report.kapak?.proje_kodu || "QTR-202412")}</p>
-            <p><strong>Sistem Ã‡Ä±ktÄ±sÄ± No:</strong> ${escapeHtml(report.kapak?.cikti_no || result?.analysis_id || "--")}</p>
-            <h2 style="border:none;padding:0;margin-top:22px">${escapeHtml(report.kapak?.baslik || "Analiz Raporu")}</h2>
-            <p><strong>Belge No:</strong> ${escapeHtml(report.kapak?.belge_no || result?.analysis_id || "--")}</p>
-            <p><strong>Tarih:</strong> ${escapeHtml(report.kapak?.tarih || result?.timestamp || "--")}</p>
-            <p><strong>Kapsam:</strong> ${escapeHtml(report.kapak?.kapsam || domainLabel(state?.domain))}</p>
-            <p><strong>Durum:</strong> ${escapeHtml(report.kapak?.gizlilik || "GÄ°ZLÄ°")}</p>
-          </section>
-          <div class="meta">
-            <p><strong>Analiz ID:</strong> ${escapeHtml(result?.analysis_id || "--")}</p>
-            <p><strong>Alan:</strong> ${escapeHtml(domainLabel(state?.domain))}</p>
-            <p><strong>Tehdit Seviyesi:</strong> ${escapeHtml(result?.tehdit_seviyesi || result?.genel_tehdit_seviyesi || "--")}</p>
-            <p><strong>Zaman Ã‡erÃ§evesi:</strong> ${escapeHtml(result?.zaman_cercevesi || "--")}</p>
-          </div>
-          <section class="section"><h2>YÃ–NETÄ°CÄ° Ã–ZETÄ°</h2><p>${escapeHtml(report.yonetici_ozeti || result?.ozet || "")}</p></section>
-          <section class="section"><h2>Kritik Bulgular</h2><ul>${safeArray(report.kritik_bulgular).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section class="section"><h2>Temel Ã–neriler</h2><ul>${safeArray(report.temel_oneriler).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section class="section"><h2>1. Tehdit Analizi</h2><p>${escapeHtml(report.tehdit_analizi_bolumu || result?.tehdit_analizi || result?.risk_analizi || "")}</p></section>
-          <section class="section"><h2>2. Mevcut Kapasite DeÄŸerlendirmesi</h2><p>${escapeHtml(report.mevcut_kapasite || "")}</p></section>
-          <section class="section"><h2>3. Ã–nerilen Tespit / Operasyon Mimarisi</h2><p>${escapeHtml(report.onerilen_mimari || result?.kritik_baglanti || "")}</p></section>
-          <section class="section"><h2>4. BÃ¶lge / Alan BazlÄ± DeÄŸerlendirme</h2><p>${escapeHtml(report.bolgesel_analiz || result?.ozet || "")}</p></section>
-          <section class="section"><h2>5. Uygulama PlanÄ± ve Zaman Ã‡izelgesi</h2><table><thead><tr><th>Faz</th><th>Zaman</th><th>Ä°Ã§erik</th></tr></thead><tbody>${safeArray(report.uygulama_plani).map((item) => `<tr><td>${escapeHtml(item.faz)}</td><td>${escapeHtml(item.zaman)}</td><td>${escapeHtml(item.icerik)}</td></tr>`).join("")}</tbody></table></section>
-          <section class="section"><h2>6. Kurumsal YapÄ± ve Sorumluluklar</h2><div>${safeArray(report.kurumsal_sorumluluklar).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}</div></section>
-          <section class="section"><h2>7. Teknik Standartlar ve Minimum Gereksinimler</h2><ul>${safeArray(report.teknik_standartlar).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section class="section"><h2>8. Riskler ve AzaltÄ±cÄ± Tedbirler</h2><ul>${safeArray(report.riskler_ve_tedbirler).map((item) => `<li><strong>${escapeHtml(item.baslik || "Risk")}:</strong> ${escapeHtml(item.aciklama || "")} <em>Tedbir:</em> ${escapeHtml(item.tedbir || "")}</li>`).join("")}</ul></section>
-          <section class="section"><h2>9. SonuÃ§ ve Eylem Ã‡aÄŸrÄ±sÄ±</h2><p>${escapeHtml(report.sonuc_ve_eylem_cagrisi || result?.oncelikli_oneri || "")}</p></section>
-          <section class="section"><h2>Ek Senaryo Seti</h2><ul>${scenarioLines(result).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-        </body>
-      </html>
-    `;
-  }
-
-  function patchReportBuilder() {
-    window.buildReport = buildOfficialReport;
-  }
-
-  function startPolling() {
-    if (pollTimer) return;
-    pollTimer = window.setInterval(refreshSharedData, POLL_MS);
-  }
-
-  function init() {
-    ensureStyles();
-    ensureGuideOverlay();
-    ensureGuideButtons();
-    hideLegacyCenterButtons();
-    ensureCenterFab();
-    ensureUnifiedCenterPanel();
-    ensureModuleDeck();
-    ensureChatShell();
-    patchLoginTexts();
-    patchDomainChange();
-    patchPreset();
-    patchNavigation();
-    patchHistoryFunctions();
-    pruneDashboardNoise();
-    patchReportBuilder();
-    bindChatComposer();
-    bindLegacyEvents();
-    syncChatMode();
-    syncModuleCards();
-    startPolling();
-    refreshSharedData();
-    renderChatTurns();
-    renderHistoryViews();
-    paintRegionFocus();
-    [300, 900, 1800].forEach((delay) => window.setTimeout(pruneDashboardNoise, delay));
-  }
-
-  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
+  document.addEventListener("DOMContentLoaded", render);
+  window.addEventListener("load", render);
 })();
