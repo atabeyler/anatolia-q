@@ -22,11 +22,17 @@
   ];
 
   const REMOVE_TEXTS = [
-    "Merkez doğrulama ve oturum yonetimi kurumsal e-posta hatti uzerinden ilerler.",
+    "Merkez doğrulama ve oturum yönetimi kurumsal e-posta hattı üzerinden ilerler.",
+    "Merkez do\u011frulama ve oturum yonetimi kurumsal e-posta hatti uzerinden ilerler.",
     "Merkez kanalı",
+    "Merkez kanal\u0131",
+    "Doğrudan merkez ile irtibat, oturum ve doğrulama akışlarını tek panelde takip etmek için merkez düğmesini kullan.",
     "Dogrudan merkez ile irtibat, oturum ve dogrulama akislarini tek panelde takip etmek icin merkez dugmesini kullan.",
     "Operasyon notu",
+    "Operasyon notu, hızlı analiz, geçmiş ve rapor çıktıları dağınık ekran hissi oluşturmadan aynı akışta kalır.",
+    "Aktör, zaman, lokasyon, tetikleyici, muhtemel hedef ve belirsizlik seviyesini aynı olay akışı içinde vermek sonuç kalitesini ciddi biçimde artırır.",
     "Aktor, zaman, lokasyon, tetikleyici, muhtemel hedef ve belirsizlik seviyesini ayni olay akisinda vermek sonuc kalitesini ciddi bicimde artirir.",
+    "Mesajını yaz ve gönder.",
     "Mesajini yaz ve gonder.",
   ];
 
@@ -171,6 +177,27 @@
     });
   };
 
+  const stripKnownCards = () => {
+    qa(".sidebar-card, .hero-card").forEach((card) => {
+      const clean = cleanForMatch(card.textContent);
+      if (
+        clean.includes(cleanForMatch("Merkez kanalı")) ||
+        clean.includes(cleanForMatch("Doğrudan merkez ile irtibat, oturum ve doğrulama akışlarını tek panelde takip etmek için merkez düğmesini kullan.")) ||
+        clean.includes(cleanForMatch("Operasyon notu")) ||
+        clean.includes(cleanForMatch("Operasyon notu, hızlı analiz, geçmiş ve rapor çıktıları dağınık ekran hissi oluşturmadan aynı akışta kalır."))
+      ) {
+        card.remove();
+      }
+    });
+
+    qa(".auth-footer .company-line").forEach((line) => {
+      const clean = cleanForMatch(line.textContent);
+      if (clean.includes(cleanForMatch("Merkez doğrulama ve oturum yönetimi kurumsal e-posta hattı üzerinden ilerler."))) {
+        line.remove();
+      }
+    });
+  };
+
   const dedupeByText = (selector, text) => {
     const matches = qa(selector).filter((node) => cleanForMatch(node.textContent) === cleanForMatch(text));
     matches.slice(1).forEach((node) => {
@@ -264,6 +291,7 @@
     ensureStyle();
     normalizeNodeTree();
     stripLegacyBlocks();
+    stripKnownCards();
     dedupeByText("button, .button, .ghost-button", "Yeni analiz baslat");
     dedupeByText(".section-kicker", "Turkiye alarm radari");
     ensureRadar();
