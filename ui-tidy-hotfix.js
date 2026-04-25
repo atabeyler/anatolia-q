@@ -18,6 +18,25 @@
     [/\s{2,}/g, " "],
   ];
 
+  const MOJIBAKE_REPLACEMENTS = [
+    ["\u00C4\u00B1", "\u0131"],
+    ["\u00C4\u00B0", "\u0130"],
+    ["\u00C4\u0178", "\u011F"],
+    ["\u00C4\u017E", "\u011E"],
+    ["\u00C5\u015F", "\u015F"],
+    ["\u00C5\u0178", "\u015E"],
+    ["\u00C3\u00BC", "\u00FC"],
+    ["\u00C3\u0153", "\u00DC"],
+    ["\u00C3\u00B6", "\u00F6"],
+    ["\u00C3\u2013", "\u00D6"],
+    ["\u00C3\u00A7", "\u00E7"],
+    ["\u00C3\u2021", "\u00C7"],
+    ["\u00E2\u20AC\u2122", "'"],
+    ["\u00E2\u20AC\u0153", "\""],
+    ["\u00E2\u20AC\u009D", "\""],
+    ["\u00E2\u20AC\u00A6", "..."],
+  ];
+
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
@@ -33,6 +52,9 @@
 
   function cleanText(value) {
     let text = String(value ?? "");
+    MOJIBAKE_REPLACEMENTS.forEach(([needle, replacement]) => {
+      text = text.split(needle).join(replacement);
+    });
     CHAT_TEXTS.forEach((item) => {
       if (text.includes(item)) text = text.replace(item, "");
     });
@@ -44,12 +66,12 @@
 
   function setText(selector, value) {
     const node = q(selector);
-    if (node) node.textContent = value;
+    if (node) node.textContent = cleanText(value);
   }
 
   function setAttr(selector, name, value) {
     const node = q(selector);
-    if (node) node.setAttribute(name, value);
+    if (node) node.setAttribute(name, cleanText(value));
   }
 
   function removeNode(selector) {
@@ -86,6 +108,28 @@
     });
   }
 
+  function stabilizeRadarPanel() {
+    const opsStrip = q("#aqOpsStrip");
+    if (!opsStrip) return;
+    opsStrip.hidden = false;
+    opsStrip.style.display = "grid";
+    opsStrip.style.visibility = "visible";
+    opsStrip.style.opacity = "1";
+    opsStrip.style.gridTemplateColumns = "minmax(0,1fr)";
+    opsStrip.style.alignItems = "start";
+    opsStrip.style.marginTop = "16px";
+
+    const radarCard =
+      opsStrip.closest(".aq-ops-card, .panel, .sidebar-card, .action-card") ||
+      opsStrip.parentElement;
+    if (radarCard) {
+      radarCard.hidden = false;
+      radarCard.style.display = "";
+      radarCard.style.visibility = "visible";
+      radarCard.style.opacity = "1";
+    }
+  }
+
   function fixLoginScreen() {
     setText("#loginScreen .hero-kicker", "Kuantum tabanl\u0131 ulusal karar destek sistemi");
     removeNode("#loginScreen .hero-copy");
@@ -113,7 +157,6 @@
     removeCardsByTitle("Mod\u00fcller", { skipSelector: "#moduleList" });
     removeCardsByTitle("Merkez y\u00f6nlendirme");
     removeCardsByTitle("Alan odakl\u0131 giri\u015f");
-    removeCardsByTitle("T\u00fcrkiye alarm radar\u0131", { keep: 1 });
     removeDuplicateButtons("Yeni analiz ba\u015flat", 1);
 
     const moduleList = q("#moduleList");
@@ -122,12 +165,7 @@
       moduleList.style.visibility = "visible";
     }
 
-    const opsStrip = q("#aqOpsStrip");
-    if (opsStrip) {
-      opsStrip.style.gridTemplateColumns = "minmax(0,1fr)";
-      opsStrip.style.alignItems = "start";
-      opsStrip.style.marginTop = "16px";
-    }
+    stabilizeRadarPanel();
 
     const radarStrip = q(".ops-radar-strip");
     if (radarStrip) {
@@ -205,6 +243,7 @@
     patchLoginFooter();
     tidyDashboard();
     patchSidebarModules();
+    stabilizeRadarPanel();
     removeNode("#aqChatMeta");
     qa(".aq-chat-empty").forEach((node) => node.remove());
     qa(".aq-chat-ident .aq-chat-tip").forEach((node) => node.remove());
