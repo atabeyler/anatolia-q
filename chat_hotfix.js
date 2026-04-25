@@ -2,34 +2,33 @@
   if (window.__aqChatPatchActive) return;
   window.__aqChatPatchActive = true;
 
-  const state = {
+  const chatState = {
     busy: false,
     messages: [],
   };
 
-  const textFixes = [
-    ["b1", "31"],
-    ["b0", "30"],
-    ["8", "f"],
-    ["e", "e"],
-    ["8", "f"],
-    ["e", "e"],
-    ["bc", "c"],
-    ["3", "c"],
-    ["b6", "6"],
-    ["", "6"],
-    ["a7", "7"],
-    ["", "7"],
-    [" ", "'"],
-    [" 3", '"'],
-    [" 	d", '"'],
-    [" 
-6", "..."],
+  const FIXES = [
+    ["\u00c4\u00b1", "\u0131"],
+    ["\u00c4\u00b0", "\u0130"],
+    ["\u00c4\u0178", "\u011f"],
+    ["\u00c4\u017e", "\u011e"],
+    ["\u00c5\u0178", "\u015f"],
+    ["\u00c5\u017e", "\u015e"],
+    ["\u00c3\u00bc", "\u00fc"],
+    ["\u00c3\u0153", "\u00dc"],
+    ["\u00c3\u00b6", "\u00f6"],
+    ["\u00c3\u2013", "\u00d6"],
+    ["\u00c3\u00a7", "\u00e7"],
+    ["\u00c3\u2021", "\u00c7"],
+    ["\u00e2\u20ac\u2122", "'"],
+    ["\u00e2\u20ac\u0153", '"'],
+    ["\u00e2\u20ac\u009d", '"'],
+    ["\u00e2\u20ac\u00a6", "..."],
   ];
 
   const norm = (value) => {
     let text = String(value ?? "");
-    textFixes.forEach(([from, to]) => {
+    FIXES.forEach(([from, to]) => {
       text = text.replaceAll(from, to);
     });
     return text;
@@ -54,7 +53,7 @@
   const getToken = () => {
     if (window.state?.sessionToken) return window.state.sessionToken;
     try {
-      const raw = localStorage.getItem("anatolia_q_session_v3") || localStorage.getItem("anatolia_q_session_v4");
+      const raw = localStorage.getItem("anatolia_q_session_v4") || localStorage.getItem("anatolia_q_session_v3");
       if (!raw) return "";
       const parsed = JSON.parse(raw);
       return parsed.token || parsed.sessionToken || "";
@@ -77,49 +76,44 @@
   };
 
   const setLoading = (active) => {
-    const load = byId("analysisLoad");
-    if (load) load.classList.toggle("active", active);
-    const runBtn = byId("runBtn");
-    if (runBtn) runBtn.disabled = active;
+    const bar = byId("analysisLoad");
+    if (bar) bar.classList.toggle("active", active);
+    const button = byId("runBtn");
+    if (button) button.disabled = active;
   };
 
   const ensureThread = () => {
-    const shell = byId("chatShell") || q(".chat-shell");
+    let shell = byId("chatShell") || q(".chat-shell");
     const resultArea = byId("resultArea");
-    if (shell) {
-      shell.classList.add("active");
-      if (resultArea) resultArea.classList.add("hidden");
-      return shell;
+    if (!shell) {
+      const anchor = q("#page-analysis .analysis-grid") || q("#page-analysis .panel");
+      if (!anchor) return null;
+      shell = document.createElement("div");
+      shell.id = "chatShell";
+      shell.className = "chat-shell active";
+      shell.innerHTML = [
+        '<div class="result-card full">',
+        '  <div class="section-kicker">Genel Chat</div>',
+        '  <h3 id="chatHeading">Genel Chat</h3>',
+        '  <p id="chatMeta" class="card-copy"></p>',
+        '  <div id="chatThread" class="chat-thread"></div>',
+        "</div>",
+      ].join("");
+      anchor.insertBefore(shell, anchor.firstChild);
     }
-
-    const anchor = q("#page-analysis .analysis-grid") || q("#page-analysis .panel");
-    if (!anchor) return null;
-
-    const wrap = document.createElement("div");
-    wrap.id = "chatShell";
-    wrap.className = "chat-shell active";
-    wrap.innerHTML = `
-      <div class="result-card full">
-        <div class="section-kicker">Genel Chat</div>
-        <h3 id="chatHeading">Genel Chat</h3>
-        <p id="chatMeta" class="card-copy"></p>
-        <div id="chatThread" class="chat-thread"></div>
-      </div>
-    `;
-    anchor.insertBefore(wrap, anchor.firstChild);
+    shell.classList.add("active");
     if (resultArea) resultArea.classList.add("hidden");
-    return wrap;
+    return shell;
   };
 
   const render = () => {
     const shell = ensureThread();
-    if (!shell) return;
-
     const thread = byId("chatThread");
-    if (!thread) return;
+    if (!shell || !thread) return;
+
     thread.replaceChildren();
 
-    state.messages.forEach((message) => {
+    chatState.messages.forEach((message) => {
       const row = document.createElement("div");
       row.className = `chat-row ${message.role === "user" ? "user" : "assistant"}`;
 
@@ -132,7 +126,7 @@
 
       const meta = document.createElement("p");
       meta.className = "chat-meta";
-      meta.textContent = norm(message.meta || (message.role === "user" ? "Kullan1c1 mesaj1" : "T.C. ANATOLIA-Q"));
+      meta.textContent = norm(message.meta || (message.role === "user" ? "Kullan\u0131c\u0131 mesaj\u0131" : "T.C. ANATOLIA-Q"));
 
       const text = document.createElement("p");
       text.className = "chat-text";
@@ -151,17 +145,20 @@
   };
 
   const pushMessage = (role, content, meta) => {
-    const message = { role, content: norm(content), meta: norm(meta) };
-    const last = state.messages[state.messages.length - 1];
-    if (last && last.role === message.role && last.content === message.content && last.meta === message.meta) return;
-    state.messages.push(message);
+    const entry = {
+      role,
+      content: norm(content),
+      meta: norm(meta),
+    };
+    const last = chatState.messages[chatState.messages.length - 1];
+    if (last && last.role === entry.role && last.content === entry.content && last.meta === entry.meta) return;
+    chatState.messages.push(entry);
     render();
   };
 
   const syncFromExisting = () => {
-    if (state.messages.length) return;
-    const rows = document.querySelectorAll("#chatThread .chat-row");
-    rows.forEach((row) => {
+    if (chatState.messages.length) return;
+    document.querySelectorAll("#chatThread .chat-row").forEach((row) => {
       const role = row.classList.contains("user") ? "user" : "assistant";
       const content = norm(q(".chat-text", row)?.textContent || "");
       const meta = norm(q(".chat-meta", row)?.textContent || "");
@@ -170,7 +167,7 @@
   };
 
   const sendChat = async () => {
-    if (!isChatMode() || state.busy) return;
+    if (!isChatMode() || chatState.busy) return;
 
     const input = byId("sitInput");
     const chatName = byId("chatNameInput");
@@ -178,22 +175,23 @@
 
     const situation = input.value.trim();
     if (!situation) {
-      setStatus("error", "Mesaj alan1 bo b1rak1lamaz.");
+      setStatus("error", "Mesaj alan\u0131 bo\u015f b\u0131rak\u0131lamaz.");
       return;
     }
 
     syncFromExisting();
-
-    state.busy = true;
+    chatState.busy = true;
     setLoading(true);
     setStatus("", "");
-    pushMessage("user", situation, chatName?.value?.trim() ? `${chatName.value.trim()} | kullan1c1 mesaj1` : "Kullan1c1 mesaj1");
+    pushMessage(
+      "user",
+      situation,
+      chatName?.value?.trim() ? `${chatName.value.trim()} | kullan\u0131c\u0131 mesaj\u0131` : "Kullan\u0131c\u0131 mesaj\u0131",
+    );
 
     try {
       const token = getToken();
-      const headers = {
-        "Content-Type": "application/json",
-      };
+      const headers = { "Content-Type": "application/json" };
       if (token) {
         headers.Authorization = `Bearer ${token}`;
         headers["X-Auth-Token"] = token;
@@ -206,7 +204,7 @@
           domain: "genel_chat",
           situation,
           chat_name: chatName?.value?.trim() || "",
-          chat_history: state.messages
+          chat_history: chatState.messages
             .filter((item) => item.role === "user" || item.role === "assistant")
             .slice(0, -1)
             .map((item) => ({ role: item.role, content: item.content })),
@@ -214,22 +212,24 @@
       });
 
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || data.message || `0stek baar1s1z (${response.status})`);
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || `\u0130stek ba\u015far\u0131s\u0131z (${response.status})`);
+      }
 
-      pushMessage("assistant", data.ozet || "K1sa sohbet cevab1 haz1r.", data.sohbet_tonu || "Rahat sohbet");
+      pushMessage("assistant", data.ozet || "K\u0131sa sohbet cevab\u0131 haz\u0131r.", data.sohbet_tonu || "Rahat sohbet");
 
       const lastSummary = byId("lastSummary");
       if (lastSummary) lastSummary.textContent = norm(data.ozet || "");
       const downloadBtn = byId("downloadBtn");
       if (downloadBtn) downloadBtn.disabled = false;
       input.value = "";
-      setStatus("success", "Sohbet cevab1 haz1r.");
+      setStatus("success", "Sohbet cevab\u0131 haz\u0131r.");
     } catch (error) {
-      state.messages.pop();
+      chatState.messages.pop();
       render();
-      setStatus("error", error.message || "Sohbet cevab1 cretilemedi.");
+      setStatus("error", error.message || "Sohbet cevab\u0131 \u00fcretilemedi.");
     } finally {
-      state.busy = false;
+      chatState.busy = false;
       setLoading(false);
     }
   };
@@ -238,8 +238,8 @@
     "click",
     (event) => {
       if (!isChatMode()) return;
-      const runBtn = event.target.closest("#runBtn");
-      if (!runBtn) return;
+      const button = event.target.closest("#runBtn");
+      if (!button) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       sendChat();
@@ -252,8 +252,7 @@
     (event) => {
       if (!isChatMode()) return;
       const input = event.target.closest("#sitInput, #chatNameInput");
-      if (!input) return;
-      if (event.key !== "Enter") return;
+      if (!input || event.key !== "Enter") return;
       if (input.id === "sitInput" && event.shiftKey) return;
       event.preventDefault();
       event.stopImmediatePropagation();
