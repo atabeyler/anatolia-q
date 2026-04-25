@@ -25,6 +25,12 @@
     [/\s{2,}/g, " "],
   ];
 
+  const REMOVE_TEXTS = [
+    "Merkez kanal\u0131",
+    "Do\u011frudan merkez ile irtibat, oturum ve do\u011frulama ak\u0131\u015flar\u0131n\u0131 tek panelde takip etmek i\u00e7in merkez d\u00fc\u011fmesini kullan.",
+    "Dogrudan merkez ile irtibat, oturum ve dogrulama akislarini tek panelde takip etmek icin merkez dugmesini kullan.",
+  ];
+
   const MOJIBAKE_REPLACEMENTS = [
     ["\u00C4\u00B1", "\u0131"],
     ["\u00C4\u00B0", "\u0130"],
@@ -111,6 +117,9 @@
     CLEAN_REPLACEMENTS.forEach(([pattern, replacement]) => {
       text = text.replace(pattern, replacement);
     });
+    REMOVE_TEXTS.forEach((item) => {
+      if (text.includes(item)) text = text.replace(item, "");
+    });
     return text.trim();
   }
 
@@ -158,6 +167,17 @@
     });
   }
 
+  function removeBlocksByCopy(targets) {
+    const normalizedTargets = targets.map((item) => normalize(item));
+    qa(".card-copy, .body-copy, .ops-line, p, span, h2, h3").forEach((node) => {
+      const text = normalize(node.textContent || "");
+      if (normalizedTargets.includes(text)) {
+        const card = node.closest(".action-card, .panel, .sidebar-card, .aq-ops-card") || node;
+        card.remove();
+      }
+    });
+  }
+
   function normalizeTree(root = document.body) {
     if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -167,6 +187,22 @@
       const next = cleanText(node.nodeValue);
       if (!next.trim()) return;
       if (next !== node.nodeValue) node.nodeValue = next;
+    });
+  }
+
+  function normalizeAttributes() {
+    [
+      "#loginUser",
+      "#loginPass",
+      "#loginCode",
+      "#sitInput",
+      "#chatNameInput",
+      "#aqChatNameInput",
+      "#aqChatComposer",
+    ].forEach((selector) => {
+      const node = q(selector);
+      if (!node) return;
+      if (node.placeholder) node.placeholder = cleanText(node.placeholder);
     });
   }
 
@@ -445,7 +481,6 @@
     const oldSend = byId("aqChatSend");
     const oldComposer = byId("aqChatComposer");
     if (!shell || !oldSend || !oldComposer) return;
-    if (!shell.classList.contains("active") && window.state?.domain !== "genel_chat") return;
 
     const send = oldSend.dataset.aqPatched === "1" ? oldSend : oldSend.cloneNode(true);
     if (send !== oldSend) oldSend.replaceWith(send);
@@ -483,6 +518,18 @@
     renderPatchedChatTurns();
   }
 
+  function patchRunAnalysis() {
+    if (typeof window.runAnalysis !== "function" || window.__aqRunAnalysisPatched) return;
+    window.__aqRunAnalysisPatched = true;
+    const original = window.runAnalysis;
+    window.runAnalysis = function patchedRunAnalysis() {
+      if (window.state?.domain === "genel_chat") {
+        return sendPatchedChat();
+      }
+      return original.apply(this, arguments);
+    };
+  }
+
   function fixLoginScreen() {
     setText("#loginScreen .hero-kicker", "Kuantum tabanli ulusal karar destek sistemi");
     removeNode("#loginScreen .hero-copy");
@@ -505,6 +552,7 @@
   }
 
   function tidyDashboard() {
+    removeBlocksByCopy(REMOVE_TEXTS);
     removeCardsByTitle("Merkez kanali");
     removeCardsByTitle("Gorev modulleri");
     removeCardsByTitle("Moduller", { skipSelector: "#moduleList" });
@@ -598,6 +646,7 @@
     ensureRadarFallback();
     tidyDashboard();
     patchSidebarModules();
+    patchRunAnalysis();
     stabilizeRadarPanel();
     bindRadar();
     paintRegionFocus();
@@ -625,6 +674,7 @@
       "#timelineText",
     ]);
     normalizeTree();
+    normalizeAttributes();
   }
 
   function init() {
@@ -632,6 +682,7 @@
     patchRenderResult();
     runCleanup();
     [300, 900, 1800].forEach((delay) => window.setTimeout(runCleanup, delay));
+    window.setTimeout(runCleanup, 3200);
   }
 
   if (document.readyState === "loading") {
