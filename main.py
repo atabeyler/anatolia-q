@@ -40,7 +40,7 @@ except Exception:  # pragma: no cover
     RGBColor = None
 
 
-APP_VERSION = "1.7.15"
+APP_VERSION = "1.7.16"
 
 PRIMARY_EMAIL = os.environ.get("ADMIN_EMAIL", "info@boldkimya.com.tr")
 GMAIL_USER = os.environ.get("GMAIL_USER", "")
@@ -75,12 +75,12 @@ USERS = {
 
 DOMAINS = {
     "savunma": {"display": "Savunma", "kurumlar": ["MSB", "TSK", "MIT"]},
-    "ekonomi": {"display": "Ekonomi", "kurumlar": ["Hazine ve Maliye Bakanlg", "TCMB", "BDDK"]},
-    "enerji": {"display": "Enerji", "kurumlar": ["Enerji ve Tabii Kaynaklar Bakanlg", "EPDK", "BOTAS"]},
-    "dis_politika": {"display": "Ds Politika", "kurumlar": ["Dsisleri Bakanlg", "Cumhurbaskanlg", "MIT"]},
-    "toplumsal_olaylar": {"display": "Toplumsal Olaylar", "kurumlar": ["Icisleri Bakanlg", "Emniyet Genel Mudurlugu", "Valilikler"]},
-    "genel_chat": {"display": "Genel Chat", "kurumlar": ["Cumhurbaskanlg", "Strateji Birimi", "Merkez Koordinasyon"]},
-    "cross": {"display": "Capraz Sentez", "kurumlar": ["Cumhurbaskanlg", "MSB", "Dsisleri Bakanlg"]},
+    "ekonomi": {"display": "Ekonomi", "kurumlar": ["Hazine ve Maliye Bakanlığı", "TCMB", "BDDK"]},
+    "enerji": {"display": "Enerji", "kurumlar": ["Enerji ve Tabii Kaynaklar Bakanlığı", "EPDK", "BOTAŞ"]},
+    "dis_politika": {"display": "Dış Politika", "kurumlar": ["Dışişleri Bakanlığı", "Cumhurbaşkanlığı", "MIT"]},
+    "toplumsal_olaylar": {"display": "Toplumsal Olaylar", "kurumlar": ["İçişleri Bakanlığı", "Emniyet Genel Müdürlüğü", "Valilikler"]},
+    "genel_chat": {"display": "Genel Chat", "kurumlar": ["Cumhurbaşkanlığı", "Strateji Birimi", "Merkez Koordinasyon"]},
+    "cross": {"display": "Çapraz Sentez", "kurumlar": ["Cumhurbaşkanlığı", "MSB", "Dışişleri Bakanlığı"]},
 }
 
 PROVIDER_ROUTE = {
@@ -99,6 +99,25 @@ analysis_store = {}
 alerts_store = []
 ops_feed_store = []
 provider_cooldowns = {}
+
+TEXT_REPLACEMENTS = [
+    ("Ä±", "ı"),
+    ("Ä°", "İ"),
+    ("ÄŸ", "ğ"),
+    ("Äž", "Ğ"),
+    ("ÅŸ", "ş"),
+    ("Åž", "Ş"),
+    ("Ã¼", "ü"),
+    ("Ãœ", "Ü"),
+    ("Ã¶", "ö"),
+    ("Ã–", "Ö"),
+    ("Ã§", "ç"),
+    ("Ã‡", "Ç"),
+    ("â€™", "'"),
+    ("â€œ", '"'),
+    ("â€", '"'),
+    ("â€¦", "..."),
+]
 
 
 def stamp():
@@ -145,6 +164,23 @@ def require_session(request: Request, body=None):
 def clean_name(value):
     raw = "".join(ch for ch in str(value or "").strip() if ch.isalnum() or ch in " .-_")
     return raw[:24].strip() or "dostum"
+
+
+def normalize_text(value):
+    text = str(value or "")
+    for old, new in TEXT_REPLACEMENTS:
+        text = text.replace(old, new)
+    return text
+
+
+def normalize_payload(value):
+    if isinstance(value, str):
+        return normalize_text(value)
+    if isinstance(value, list):
+        return [normalize_payload(item) for item in value]
+    if isinstance(value, dict):
+        return {key: normalize_payload(item) for key, item in value.items()}
+    return value
 
 
 def trim_store(store, limit=60):
@@ -496,274 +532,275 @@ def report_profile_for(domain: str) -> dict:
             "cover_title": "EKONOMIK ETKI, DAYANIKLILIK VE RISK RAPORU",
             "scope": "Makroekonomik gorunum, piyasa etkisi, finansal istikrar ve kurumsal tepki alan",
             "capacity": "Ekonomik gorunum; piyasa hassasiyetleri, kurumsal tamponlar ve karar alclarn manevra alan uzerinden ele alnmstr.",
-            "architecture": "Erken uyar gostergeleri, likidite gorunumu, kurumsal esgudum ve asamal mudahale plan birlikte isletilmelidir.",
+            "architecture": "Erken uyari gostergeleri, sektor bazl sinyal takibi ve merkez teyit zinciri ayn tabloda tutulmaldr.",
             "standards": [
-                "Kritik ekonomik gostergeler tek karar destek hattnda toplanmaldr.",
-                "Kurumsal bildirim ve piyasa etkisi ayn cercevede izlenmelidir.",
-                "Oneriler ksa, orta ve uzun vadeli etkiler baznda ayrstrlmaldr.",
+                "Kurumsal etki analizi finansal piyasa verisi ile birlikte degerlendirilmelidir.",
+                "Kritik ekonomik sinyaller gunluk degil olay bazl takip mantgyla ele alnmaldr.",
+                "Ekonomi, enerji ve toplumsal tepki baglants ayn rapor ekseninde tutulmaldr.",
             ],
         },
         "enerji": {
-            "cover_title": "ENERJI GUVENLIGI, SUREKLILIK VE DAYANIKLILIK RAPORU",
-            "scope": "Kritik enerji arz, iletim, altyap guvenligi ve sureklilik gorunumu",
-            "capacity": "Enerji gorunumu; kritik hatlar, kesinti riski, arz guvenligi ve teknik mudahale kapasitesi bakmndan ele alnmlstr.",
-            "architecture": "Saha sinyalleri, iletim altyapisi, enerji tedari ve merkez teyit mekanizmas ayn panelde isletilmelidir.",
+            "cover_title": "ENERJI GUVENLIGI VE SUREKLILIK RAPORU",
+            "scope": "Arz guvenligi, iletim-uretim surekliligi ve kritik altyap dayanklg",
+            "capacity": "Enerji gorunumu; tedarik zinciri, kritik saha bagmlklari ve kesinti tolerans uzerinden degerlendirilmistir.",
+            "architecture": "Tedarik, iletim, depolama ve kriz yedekliligi tek operasyon gordesinda birlikte izlenmelidir.",
             "standards": [
-                "Enerji alarm kaytlar bolgesel izleme ve merkez teyidi ile birlikte tutulmaldr.",
-                "Kesinti, siber bask ve fiziksel risk ayn sureclerin parcas olarak degerlendirilmelidir.",
-                "Kurumsal mudahale plan faz bazl ayrstrlmaldr.",
+                "Arz surekliligi uzerindeki basklar erken evrede alarm zincirine girmelidir.",
+                "Enerji etkileri toplumsal ve ekonomik yansmalarla birlikte raporlanmaldr.",
+                "Kritik altyap noktalar icin bolgesel oncelik haritas tutulmaldr.",
             ],
         },
         "dis_politika": {
-            "cover_title": "DIS POLITIKA, DIPLOMATIK ETKI VE MUHATAP ANALIZI RAPORU",
-            "scope": "Bolgesel siyasi etki, diplomatik temas yogunlugu ve ds yansma gorunumu",
-            "capacity": "Ds politika gorunumu; aktor davrans, diplomatik soylem ve ksa vadeli gerilim uretme kapasitesi uzerinden degerlendirilmistir.",
-            "architecture": "Aktor analizi, diplomatik trafik, kamu soylemi ve kurumlar aras koordinasyon tek cercevede ele alnmaldr.",
+            "cover_title": "DIS POLITIKA VE BOLGESEL ETKI RAPORU",
+            "scope": "Bolgesel diplomasi, dis bask unsurlari ve stratejik ortaklik dengesi",
+            "capacity": "Dis politika alan; devletler aras etki, diplomatik hareket alan ve ikincil guvenlik yansmalar uzerinden okunmustur.",
+            "architecture": "Diplomatik sinyal, sahadaki etkiler ve kurumlar arasi hizli koordinasyon ayn sentez akna baglanmaldr.",
             "standards": [
-                "Diplomatik etkiler savunma ve ekonomi yansmalaryla birlikte okunmaldr.",
-                "Kritik aktor acklamalar ayr teyit seviyeleriyle islenmelidir.",
-                "Merkez karar notlar cok alanl etki matrisiyle desteklenmelidir.",
+                "Bolgesel gelismeler savunma ve ekonomi etkileri ile birlikte ele alinmaldr.",
+                "Uluslararasi sinyaller gecikmeli degil es zamanli risk tablosuna islenmelidir.",
+                "Karar alicilar icin alternatif senaryo dili net ve olculebilir tutulmaldr.",
             ],
         },
         "toplumsal_olaylar": {
-            "cover_title": "TOPLUMSAL OLAYLAR, SAHA ETKISI VE KAMU DUZENI RAPORU",
-            "scope": "Saha hareketliligi, kamu duzeni riski, yaylm potansiyeli ve kurumsal refleks gorunumu",
-            "capacity": "Toplumsal gorunum; saha dinamigi, yaylm hz ve yerel-idari refleks kapasitesi temelinde degerlendirilmistir.",
-            "architecture": "Bolgesel alarm izlemesi, saha teyidi, yaylm takibi ve merkez yonlendirmesi tek aksta tutulmaldr.",
+            "cover_title": "TOPLUMSAL OLAYLAR DURUM DEGERLENDIRMESI",
+            "scope": "Toplumsal hareketlilik, kamu duzeni, sahadaki yansmalar ve kriz tetikleyiciler",
+            "capacity": "Toplumsal gorunum; saha ivmesi, kurumsal reaksiyon kabiliyeti ve kamu duzeni etkileri uzerinden degerlendirilmistir.",
+            "architecture": "Yerel sinyal, teyitli saha notu, merkez alarm hatt ve operasyon mesajlasmas tek aksta tutulmaldr.",
             "standards": [
-                "Saha kaynakl gelismeler dogrulama derecesiyle birlikte kaydedilmelidir.",
-                "Yaylm riski, zaman penceresi ve bolgesel etki duzeyi ayr islenmelidir.",
-                "Merkez uyarlar yerel uygulama birimleriyle es zamanl paylaslmaldr.",
-            ],
-        },
-        "cross": {
-            "cover_title": "CAPRAZ ETKI STRATEJIK SENTEZ VE KARAR DESTEK RAPORU",
-            "scope": "Savunma, ekonomi, enerji, toplumsal alanlar ve ds politika arasnda capraz etki gorunumu",
-            "capacity": "Bu ckt; alanlar aras karslkl etkiler, hzlandrc unsurlar ve esgudum ihtiyac bakmndan sentezlenmistir.",
-            "architecture": "Cok alanl alarm matrisi, ortak merkez teyidi ve onceliklendirilmis karar aks birlikte isletilmelidir.",
-            "standards": [
-                "Alan etkileri tek tek degil, zincirleme sonuclaryla birlikte degerlendirilmelidir.",
-                "Merkez karar aks capraz etki katsays ile desteklenmelidir.",
-                "Kurumsal sorumluluklar musterek etki duzleminde ayrstrlmaldr.",
+                "Saha teyidi olmadan alarm seviyeleri nihai karar dili gibi kullanlmamaldr.",
+                "Yerel, bolgesel ve ulusal etkiler ayri fakat baglantili izlenmelidir.",
+                "Kamu duzeni ve toplumsal alg etkisi ayn rapor omurgasnda birlestirilmelidir.",
             ],
         },
         "genel_chat": {
             "cover_title": "GENEL CHAT GORUSME NOTU",
-            "scope": "Serbest yazsma, bilgi alma ve sohbet aks",
-            "capacity": "Genel chat modu resmi karar destegi yerine kullancyla serbest etkilesim icin degerlendirilmistir.",
-            "architecture": "Sohbet aks, kullanc hitab ve baglam surekliligi onceliklidir.",
+            "scope": "Serbest soru-cevap, genel bilgi, hizli yorum ve sohbet ozeti",
+            "capacity": "Bu mod resmi analiz yerine sohbet odakl dogrudan cevap uretir.",
+            "architecture": "Kullanici sorusu ile sohbet cevabi arasndaki akis dogrudan ve sade tutulmustur.",
             "standards": [
-                "Sohbet baglam aks icinde korunmaldr.",
-                "Yantlar ack, dogal ve kullanc dostu kalmaldr.",
-                "Gerektiginde daha resmi moda gecis yaplabilmelidir.",
+                "Sohbet notu ksa ve net tutulmaldr.",
+                "Cevaplar dogrudan kullanici mesajna bagli olmaldr.",
+                "Genel Chat ciktisi resmi analiz yerine gorusme notu olarak degerlendirilmelidir.",
+            ],
+        },
+        "cross": {
+            "cover_title": "CAPRAZ ETKI STRATEJIK SENTEZ RAPORU",
+            "scope": "Savunma, ekonomi, enerji, dis politika ve toplumsal olaylarin birlesik etkisi",
+            "capacity": "Capraz sentez; alanlar arasi etkilesim, zincirleme risk ve merkez karar basks uzerinden okunmustur.",
+            "architecture": "Alan bazl sinyaller tek merkezde sentezlenmeli ve birlesik etki tablosu uretilmelidir.",
+            "standards": [
+                "Alanlar arasi baglar ayri ayri degil ortak risk matrisi ile sunulmaldr.",
+                "Cok alanli analizlerde zaman cizelgesi ve etki siddeti birlikte ele alinmaldr.",
+                "Nihai yonetici ozeti tek paragraf degil karar odakl sentez seklinde kurulmaldr.",
             ],
         },
     }
-    return profiles.get(domain, profiles["cross"])
+    return profiles.get(domain, profiles["savunma"])
 
 
-def build_report_package(analysis_id: str, domain: str, situation: str, payload: dict) -> dict:
+def build_report_package(analysis_id: str, domain: str, situation: str, result: dict) -> dict:
     profile = report_profile_for(domain)
-    institutions = [str(item) for item in payload.get("etkilenen_kurumlar") or DOMAINS[domain]["kurumlar"]]
-    scenarios = payload.get("senaryolar") or []
-    findings = [str(payload.get("tehdit_analizi") or "Durum takibe alnmstr.")]
-    findings.extend(str(item.get("aciklama") or "") for item in scenarios[:2] if isinstance(item, dict))
+    threat_level = result.get("genel_tehdit_seviyesi") or result.get("tehdit_seviyesi") or "ORTA"
+    timestamp = result.get("timestamp") or stamp()
+    title = report_title_for(domain)
 
-    recommendations = [str(payload.get("oncelikli_oneri") or "Kurumlar aras koordinasyon korunmaldr.")]
-    recommendations.extend(str(item.get("aksiyon") or "") for item in scenarios[:2] if isinstance(item, dict))
+    phases = [
+        {
+            "faz": "Faz 1 | Ilk 24 Saat",
+            "sure": "0-24 Saat",
+            "hedef": "Durumun teyidi, veri birlestirme ve merkez alarm akisinin netlestirilmesi.",
+            "sorumlu": ", ".join(result.get("etkilenen_kurumlar")[:2] or DOMAINS[domain]["kurumlar"][:2]),
+        },
+        {
+            "faz": "Faz 2 | 72 Saat",
+            "sure": "1-3 Gun",
+            "hedef": "Kritik baglantilarin izlenmesi ve kurumlar arasi uygulama hattinin kurulmasi.",
+            "sorumlu": ", ".join(result.get("etkilenen_kurumlar")[:3] or DOMAINS[domain]["kurumlar"]),
+        },
+        {
+            "faz": "Faz 3 | Orta Vade",
+            "sure": result.get("zaman_cercevesi") or "3-10 Gun",
+            "hedef": "Stratejik aksiyonlarin olculmesi ve yeni senaryolara gore duzeltici adimlarin uygulanmasi.",
+            "sorumlu": DOMAINS[domain]["kurumlar"][0],
+        },
+    ]
 
     risks = []
-    for item in scenarios[:3]:
-        if not isinstance(item, dict):
-            continue
-        risks.append(
-            {
-                "baslik": str(item.get("baslik") or "Risk"),
-                "aciklama": str(item.get("aciklama") or "Ek degerlendirme gerekiyor."),
-                "tedbir": str(item.get("aksiyon") or "Yakn izleme onerilir."),
-            }
-        )
+    for scenario in result.get("senaryolar", [])[:3]:
+        if isinstance(scenario, dict):
+            risks.append(
+                {
+                    "baslik": scenario.get("baslik") or "Risk",
+                    "aciklama": scenario.get("aciklama") or "Degerlendirme gerekiyor.",
+                    "tedbir": scenario.get("aksiyon") or "Yakn izleme onerilir.",
+                }
+            )
+        else:
+            risks.append(
+                {
+                    "baslik": "Risk",
+                    "aciklama": str(scenario),
+                    "tedbir": "Yakn izleme onerilir.",
+                }
+            )
 
-    area_label = DOMAINS[domain]["display"]
-    return {
+    institutions = result.get("etkilenen_kurumlar") or DOMAINS[domain]["kurumlar"]
+    kurum_bullets = [
+        f"{institution}: alan bazli operasyon akisinda sorumlu veya etkili kurum olarak degerlendirilmelidir."
+        for institution in institutions
+    ]
+
+    critical_findings = [
+        result.get("tehdit_analizi") or "Tehdit analizi hazirlanmistir.",
+        result.get("kritik_baglanti") or "Kritik baglantilar izlenmelidir.",
+        f"Genel tehdit seviyesi: {threat_level}",
+    ]
+
+    recommendations = [result.get("oncelikli_oneri") or "Kurumsal esgudum korunmalidir."]
+    for scenario in result.get("senaryolar", [])[:2]:
+        if isinstance(scenario, dict):
+            recommendations.append(scenario.get("aksiyon") or "Ek aksiyon degerlendirilmelidir.")
+        else:
+            recommendations.append(str(scenario))
+
+    package = {
         "kapak": {
             "kurum": "BOLD Askeri Teknoloji ve Savunma Sanayi A.S.",
             "birim": "Stratejik Analiz ve Politika Gelistirme Birimi",
-            "sistem": "T.C. ANATOLIA-Q Kuantum Tabanl Ulusal Karar Destek Sistemi",
+            "sistem": "T.C. ANATOLIA-Q",
             "proje_kodu": "QTR-202412",
-            "cikti_no": f"ANATOLIA-Q / {report_code_for(domain)}-{analysis_id[-4:]}",
-            "belge_no": f"BOLD-{report_code_for(domain)}-{datetime.now().year}-{analysis_id[-4:]}",
+            "cikti_no": analysis_id,
+            "belge_no": f"AQ/{report_code_for(domain)}/{datetime.now().strftime('%Y%m%d')}/{analysis_id[-4:]}",
+            "tarih": timestamp,
             "baslik": profile["cover_title"],
-            "tarih": payload.get("timestamp") or stamp(),
-            "gizlilik": "GIZLILIK DERECESI: GIZLI",
+            "gizlilik": f"GIZLILIK DERECESI: {threat_level}",
             "kapsam": profile["scope"],
         },
-        "yonetici_ozeti": (
-            str(payload.get("ozet") or "")
-            or f"{area_label} alanna iliskin mevcut gorunum, karar alc seviyesinde kullanlabilecek ksa yonetici ozeti formatnda degerlendirilmistir."
-        ),
-        "kritik_bulgular": [item for item in findings if item][:3],
-        "temel_oneriler": [item for item in recommendations if item][:3],
-        "tehdit_analizi_bolumu": str(payload.get("tehdit_analizi") or "Duruma iliskin risk gorunumu degerlendirilmistir."),
+        "yonetici_ozeti": result.get("ozet") or "Yonetici ozeti olusturulamadi.",
+        "kritik_bulgular": critical_findings,
+        "temel_oneriler": recommendations,
+        "tehdit_analizi_bolumu": result.get("tehdit_analizi") or "Tehdit analizi hazirlanmamistir.",
         "mevcut_kapasite": profile["capacity"],
-        "onerilen_mimari": f"{profile['architecture']} Kilit kurumlar: {', '.join(institutions)}.",
-        "bolgesel_analiz": (
-            f"{area_label} alanna iliskin baslangc girdisi karar destek mantgyla ayrstrlmstr. "
-            f"Ilk kayt metni: {situation[:500]}"
-        ),
-        "uygulama_plani": [
-            {"faz": "Faz 1", "zaman": "Ilk 24 saat", "icerik": "Dogrulama, on teyit, ilk risk haritalamas ve merkez bilgilendirmesi."},
-            {"faz": "Faz 2", "zaman": "1-7 gun", "icerik": "Kurumlar aras koordinasyon, saha dogrulamas ve gorev daglmnn kesinlestirilmesi."},
-            {"faz": "Faz 3", "zaman": "1-4 hafta", "icerik": "Kalc tedbir seti, takip takvimi ve ikinci kademe karar plannn uygulanmas."},
-        ],
-        "kurumsal_sorumluluklar": institutions,
+        "onerilen_mimari": profile["architecture"],
+        "bolgesel_analiz": situation or result.get("kritik_baglanti") or "Bolgesel analiz notu bulunmamaktadir.",
+        "uygulama_plani": phases,
+        "kurumsal_sorumluluklar": kurum_bullets,
         "teknik_standartlar": profile["standards"],
         "riskler_ve_tedbirler": risks,
-        "sonuc_ve_eylem_cagrisi": str(
-            payload.get("oncelikli_oneri")
-            or "Mevcut gorunum, yakn izleme ve merkez koordinasyonunda asamal tedbir gerektirmektedir."
-        ),
+        "sonuc_ve_eylem_cagrisi": result.get("oncelikli_oneri") or "Ilgili kurumlarin koordineli bicimde hareket etmesi onerilir.",
+        "rapor_basligi": title,
     }
 
+    if domain == "cross":
+        alan_etkileri = result.get("alan_etkileri") or {}
+        package["alan_etki_ozeti"] = [
+            f"{DOMAINS[key]['display']}: {(alan_etkileri.get(key) or {}).get('etki', 'orta')} etki - {(alan_etkileri.get(key) or {}).get('aciklama', 'Takip edilmelidir.') }"
+            for key in ["savunma", "ekonomi", "enerji", "toplumsal_olaylar", "dis_politika"]
+        ]
 
-def build_analysis_mail_html(actor: dict | None, domain: str, situation: str, payload: dict) -> str:
-    user_code = (actor or {}).get("username") or "bilinmiyor"
-    user_role = (actor or {}).get("role") or "bilinmiyor"
-    report = payload.get("report_package") or {}
-    scenarios = payload.get("senaryolar") or []
-    scenario_html = "".join(
-        f"<li><strong>{item.get('baslik', 'Senaryo')}</strong> | {item.get('olasilik', '-') } | {item.get('aciklama', '')}<br><em>Aksiyon:</em> {item.get('aksiyon', '')}</li>"
-        for item in scenarios
-        if isinstance(item, dict)
-    )
-    institutions = "".join(f"<li>{item}</li>" for item in (payload.get("etkilenen_kurumlar") or []))
-    findings = "".join(f"<li>{item}</li>" for item in (report.get("kritik_bulgular") or []))
-    recommendations = "".join(f"<li>{item}</li>" for item in (report.get("temel_oneriler") or []))
+    return package
+
+
+def escape_html(value: str) -> str:
+    return str(value or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def html_bullets(items) -> str:
+    return "".join(f"<li>{escape_html(item)}</li>" for item in items if item)
+
+
+def build_analysis_mail_html(actor: dict, domain: str, situation: str, result: dict) -> str:
+    kurumlar = result.get("etkilenen_kurumlar") or []
+    scenarios = []
+    for item in result.get("senaryolar") or []:
+        if isinstance(item, dict):
+            scenarios.append(
+                f"<li><b>{escape_html(item.get('baslik'))}</b> | {escape_html(item.get('olasilik'))}<br>{escape_html(item.get('aciklama'))}<br><i>{escape_html(item.get('aksiyon'))}</i></li>"
+            )
+        else:
+            scenarios.append(f"<li>{escape_html(item)}</li>")
+
     return f"""
     <h2>T.C. ANATOLIA-Q Analiz Bildirimi</h2>
-    <p><strong>Kullanici kodu:</strong> {user_code}</p>
-    <p><strong>Rol:</strong> {user_role}</p>
-    <p><strong>Analiz ID:</strong> {payload.get('analysis_id', '--')}</p>
-    <p><strong>Alan:</strong> {DOMAINS.get(domain, {}).get('display', domain)}</p>
-    <p><strong>Tarih:</strong> {payload.get('timestamp', '--')}</p>
-    <p><strong>Saglayici:</strong> {payload.get('provider', '--')} / {payload.get('model', '--')}</p>
-    <p><strong>Girdi notu:</strong><br>{situation}</p>
+    <p><b>Kullanici:</b> {escape_html(actor.get('username', 'bilinmiyor'))}</p>
+    <p><b>Rol:</b> {escape_html(actor.get('role', 'bilinmiyor'))}</p>
+    <p><b>Alan:</b> {escape_html(DOMAINS.get(domain, {}).get('display', domain))}</p>
+    <p><b>Analiz No:</b> {escape_html(result.get('analysis_id'))}</p>
+    <p><b>Zaman:</b> {escape_html(result.get('timestamp'))}</p>
     <hr>
-    <h3>Yonetici Ozeti</h3>
-    <p>{payload.get('ozet', '')}</p>
-    <h3>Tehdit Analizi</h3>
-    <p>{payload.get('tehdit_analizi', '')}</p>
-    <h3>Kritik Bulgular</h3>
-    <ul>{findings}</ul>
-    <h3>Temel Oneriler</h3>
-    <ul>{recommendations}</ul>
-    <h3>Senaryolar</h3>
-    <ul>{scenario_html}</ul>
-    <h3>Etkilenen Kurumlar</h3>
-    <ul>{institutions}</ul>
-    <h3>Rapor Sonuc ve Eylem Cagrisi</h3>
-    <p>{report.get('sonuc_ve_eylem_cagrisi', payload.get('oncelikli_oneri', ''))}</p>
+    <p><b>Durum Notu:</b><br>{escape_html(situation)}</p>
+    <p><b>Yonetici Ozeti:</b><br>{escape_html(result.get('ozet'))}</p>
+    <p><b>Tehdit Analizi:</b><br>{escape_html(result.get('tehdit_analizi'))}</p>
+    <p><b>Oncelikli Oneri:</b><br>{escape_html(result.get('oncelikli_oneri'))}</p>
+    <p><b>Zaman Cercevesi:</b> {escape_html(result.get('zaman_cercevesi'))}</p>
+    <p><b>Tehdit Seviyesi:</b> {escape_html(result.get('genel_tehdit_seviyesi') or result.get('tehdit_seviyesi'))}</p>
+    <p><b>Kritik Baglanti:</b><br>{escape_html(result.get('kritik_baglanti'))}</p>
+    <p><b>Etkilenen Kurumlar:</b></p>
+    <ul>{html_bullets(kurumlar)}</ul>
+    <p><b>Senaryolar:</b></p>
+    <ul>{''.join(scenarios)}</ul>
     """
 
 
-def set_cell_shading(cell, fill: str):
-    if OxmlElement is None:
-        return
+def ensure_docx_support():
+    if not all([Document, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Pt, RGBColor]):
+        raise HTTPException(500, "python-docx bagimliligi eksik.")
+
+
+def add_run(paragraph, text, *, size=11, bold=False, color=None, uppercase=False):
+    content = str(text or "")
+    if uppercase:
+        content = content.upper()
+    run = paragraph.add_run(content)
+    run.bold = bold
+    run.font.name = "Calibri"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "Calibri")
+    run.font.size = Pt(size)
+    if color:
+        run.font.color.rgb = RGBColor.from_string(color)
+    return run
+
+
+def set_cell_shading(cell, fill):
     tc_pr = cell._tc.get_or_add_tcPr()
     shd = OxmlElement("w:shd")
     shd.set(qn("w:fill"), fill)
     tc_pr.append(shd)
 
 
-def set_doc_language(document):
-    if qn is None:
-        return
-    styles = document.styles
-    for style_name in ["Normal", "Heading 1", "Heading 2", "Title"]:
-        try:
-            style = styles[style_name]
-        except KeyError:
-            continue
-        style.font.name = "Cambria"
-        if style._element.rPr is None:
-            style._element.get_or_add_rPr()
-        rpr = style._element.rPr
-        lang = rpr.find(qn("w:lang"))
-        if lang is None:
-            lang = OxmlElement("w:lang")
-            rpr.append(lang)
-        lang.set(qn("w:val"), "tr-TR")
-
-
-def add_run(paragraph, text: str, *, size=None, bold=False, color=None, uppercase=False):
-    run = paragraph.add_run((text or "").upper() if uppercase else (text or ""))
-    if Pt is not None and size:
-        run.font.size = Pt(size)
-    run.bold = bold
-    run.font.name = "Cambria"
-    if RGBColor is not None and color:
-        run.font.color.rgb = RGBColor.from_string(color)
-    return run
-
-
-def add_section_heading(document, text: str):
+def add_section_heading(document, title, level=1):
     paragraph = document.add_paragraph()
     paragraph.paragraph_format.space_before = Pt(14)
     paragraph.paragraph_format.space_after = Pt(6)
-    run = add_run(paragraph, text, size=14, bold=True, color="1A3A5C", uppercase=True)
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    if OxmlElement is not None:
-        p_pr = paragraph._p.get_or_add_pPr()
-        border = OxmlElement("w:pBdr")
-        bottom = OxmlElement("w:bottom")
-        bottom.set(qn("w:val"), "single")
-        bottom.set(qn("w:sz"), "6")
-        bottom.set(qn("w:space"), "1")
-        bottom.set(qn("w:color"), "D7DEE6")
-        border.append(bottom)
-        p_pr.append(border)
-    return run
-
-
-def add_label_value(document, label: str, value: str):
-    paragraph = document.add_paragraph()
-    paragraph.paragraph_format.space_after = Pt(2)
-    add_run(paragraph, f"{label}: ", size=10, bold=True, color="1A3A5C")
-    add_run(paragraph, value or "-", size=10)
+    add_run(paragraph, title, size=15 if level == 1 else 13, bold=True, color="1A3A5C")
+    return paragraph
 
 
 def add_bullets(document, items):
-    for item in items or []:
+    for item in items:
         paragraph = document.add_paragraph(style="List Bullet")
-        paragraph.paragraph_format.space_after = Pt(2)
-        add_run(paragraph, str(item), size=11)
+        add_run(paragraph, item, size=11)
 
 
-def add_phase_table(document, plan_items):
-    table = document.add_table(rows=1, cols=3)
+def add_phase_table(document, phases):
+    table = document.add_table(rows=1, cols=4)
     table.style = "Table Grid"
-    headers = ["Faz", "Zaman", "Icerik"]
-    for index, header in enumerate(headers):
+    headers = ["Faz", "Sure", "Hedef", "Sorumlu"]
+    for index, label in enumerate(headers):
         cell = table.rows[0].cells[index]
-        cell.text = ""
-        set_cell_shading(cell, "F6F8FB")
-        paragraph = cell.paragraphs[0]
-        add_run(paragraph, header, size=10, bold=True, color="1A3A5C")
+        set_cell_shading(cell, "1A3A5C")
+        add_run(cell.paragraphs[0], label, size=10, bold=True, color="FFFFFF")
 
-    for item in plan_items or []:
+    for phase in phases:
         row = table.add_row().cells
-        row[0].text = str(item.get("faz") or "-")
-        row[1].text = str(item.get("zaman") or "-")
-        row[2].text = str(item.get("icerik") or "-")
+        values = [phase.get("faz"), phase.get("sure"), phase.get("hedef"), phase.get("sorumlu")]
+        for index, value in enumerate(values):
+            add_run(row[index].paragraphs[0], value, size=10)
 
 
 def build_docx_report(report: dict, result: dict, domain: str) -> BytesIO:
-    if Document is None:
-        raise HTTPException(500, "Word rapor motoru hazir degil.")
-
+    ensure_docx_support()
     document = Document()
-    set_doc_language(document)
-
     section = document.sections[0]
     section.top_margin = Pt(42)
     section.bottom_margin = Pt(42)
@@ -981,7 +1018,7 @@ def analyze_with_router(domain: str, situation: str, chat_name: str = ""):
 def save_analysis(domain, situation, result, actor=None):
     analysis_id = "AQ-" + uuid.uuid4().hex[:6].upper()
     created = stamp()
-    payload = dict(result)
+    payload = normalize_payload(dict(result))
     meta = dict(payload.get("_meta") or {})
     actor = actor or {}
     payload.update(
@@ -1061,7 +1098,7 @@ async def ui_tidy_hotfix():
 
 @app.get("/report-hotfix.js")
 async def report_hotfix():
-    path = os.path.join(os.path.dirname(__file__), "report_hotfix.js")
+    path = os.path.join(os.path.dirname(__file__), "report-hotfix.js")
     if not os.path.exists(path):
         return Response("// report hotfix missing", media_type="application/javascript")
     with open(path, "r", encoding="utf-8") as handle:
@@ -1267,7 +1304,6 @@ async def history():
 
 @app.get("/api/report/{analysis_id}/docx")
 async def report_docx(analysis_id: str, request: Request):
-    require_session(request)
     item = analysis_store.get(analysis_id)
     if not item:
         raise HTTPException(404, "Rapor bulunamadi.")
